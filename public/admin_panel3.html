@@ -2088,19 +2088,28 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = (() => {
-          const { protocol, hostname, port } = window.location;
-          if (!port || port === '3000') {
-            return `${protocol}//${hostname}` + (port ? `:${port}` : '');
-          }
-          return `${protocol}//${hostname}:3000`;
-        })();
+        <!-- const apiBaseUrl = 'https://alertify-backend-9c06.onrender.com';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
             return originalFetch(`${apiBaseUrl}${input}`, init);
           }
           return originalFetch(input, init);
+        }; -->
+
+        const apiBaseUrl = (() => {
+            const { protocol, hostname, port } = window.location;
+            if (!port || port === '3000') {
+                return `${protocol}//${hostname}` + (port ? `:${port}` : '');
+            }
+            return `${protocol}//${hostname}:3000`;
+        })();
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = (input, init) => {
+            if (typeof input === 'string' && input.startsWith('/')) {
+                return originalFetch(`${apiBaseUrl}${input}`, init);
+            }
+            return originalFetch(input, init);
         };
         const inventoryTypes = {
           Furniture: {
@@ -2757,7 +2766,7 @@
             let trackingHTML = `
                     <h3>${data.name}</h3>
                     <p>
-                        <strong>ID:</strong> ${data.itemId} | 
+                        <strong>ID:</strong> ${data.itemId} |
                         <strong>Category:</strong> ${data.category} |
                         <strong>Location:</strong> ${data.location}
                     </p>
