@@ -998,13 +998,7 @@
             'https://api.iconify.design/mdi:white-balance-sunny.svg';
         }
 
-        const apiBaseUrl = (() => {
-          const { protocol, hostname, port } = window.location;
-          if (!port || port === '3000') {
-            return `${protocol}//${hostname}` + (port ? `:${port}` : '');
-          }
-          return `${protocol}//${hostname}:3000`;
-        })();
+        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
 
         loginForm.addEventListener('submit', async (e) => {
           e.preventDefault();

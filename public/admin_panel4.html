@@ -1774,13 +1774,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = (() => {
-          const { protocol, hostname, port } = window.location;
-          if (!port || port === '3000') {
-            return `${protocol}//${hostname}` + (port ? `:${port}` : '');
-          }
-          return `${protocol}//${hostname}:3000`;
-        })();
+        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
