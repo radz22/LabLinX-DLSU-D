@@ -5,6 +5,7 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const ws = require('ws');
+const cors = require('cors');
 const nodemailer = require('nodemailer'); // For email notifications
 const cron = require('node-cron'); // For scheduled reminders
 const passport = require('passport'); // NEW: For OAuth
@@ -30,6 +31,9 @@ function ensureEnv(variableName) {
 const SENDER_EMAIL = ensureEnv('SENDER_EMAIL');
 const SENDER_PASS = ensureEnv('SENDER_PASS');
 const ALLOWED_DOMAIN = ensureEnv('ALLOWED_DOMAIN');
+const DATABASE_URL = ensureEnv('DATABASE_URL');
+const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
+const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -77,6 +81,7 @@ const PORT = process.env.PORT || 3000;
 // ================== MIDDLEWARE ==================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: '*' }));
 app.use(
   session({
     secret: 'labsystem-secret-key-super-secure',
@@ -92,13 +97,30 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ================== DB CONNECTION ==================
-mongoose
-  .connect('mongodb://127.0.0.1:27017/lablinx', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
-  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(DATABASE_URL, { dbName: DATABASE_NAME });
+    console.log('✅ MongoDB Connected Successfully');
+    return;
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error);
+  }
+
+  if (!LOCAL_DATABASE_URL) {
+    console.error('❌ LOCAL_DATABASE_URL not configured. Shutting down.');
+    process.exit(1);
+  }
+
+  try {
+    await mongoose.connect(LOCAL_DATABASE_URL, { dbName: DATABASE_NAME });
+    console.log('✅ MongoDB Connected Successfully (Fallback)');
+  } catch (fallbackError) {
+    console.error('❌ Fallback MongoDB Connection Error:', fallbackError);
+    process.exit(1);
+  }
+}
+
+connectToDatabase();
 
 // ================== SCHEMAS ==================
 const userSchema = new mongoose.Schema({
