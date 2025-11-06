@@ -783,11 +783,9 @@ app.post('/api/account/request-update', isAuthenticated, async (req, res) => {
 
     // ⬇️ NEW: Domain check for profile update request
     if (email && !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
-      return res
-        .status(400)
-        .json({
-          message: `Update failed: Email must be a valid ${ALLOWED_DOMAIN} address.`,
-        });
+      return res.status(400).json({
+        message: `Update failed: Email must be a valid ${ALLOWED_DOMAIN} address.`,
+      });
     }
     // ⬆️ NEW
 
@@ -803,11 +801,9 @@ app.post('/api/account/request-update', isAuthenticated, async (req, res) => {
       status: 'Pending',
     });
     if (existingPendingRequest) {
-      return res
-        .status(409)
-        .json({
-          message: 'You already have a pending profile update request.',
-        });
+      return res.status(409).json({
+        message: 'You already have a pending profile update request.',
+      });
     }
 
     const newRequest = new ProfileUpdateRequest({
@@ -831,12 +827,10 @@ app.post('/api/account/request-update', isAuthenticated, async (req, res) => {
       await adminNotification.save();
     }
 
-    res
-      .status(201)
-      .json({
-        message:
-          'Profile update request submitted successfully. It is now pending for admin approval.',
-      });
+    res.status(201).json({
+      message:
+        'Profile update request submitted successfully. It is now pending for admin approval.',
+    });
   } catch (error) {
     if (error.code === 11000) {
       return res
@@ -1169,11 +1163,9 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
       status: 'Pending Replacement',
     });
     if (pendingIncident) {
-      return res
-        .status(403)
-        .json({
-          message: `Request blocked: You have a pending accountability for a damaged item (${pendingIncident.damagedItemInfo.name}). Please see the lab admin.`,
-        });
+      return res.status(403).json({
+        message: `Request blocked: You have a pending accountability for a damaged item (${pendingIncident.damagedItemInfo.name}). Please see the lab admin.`,
+      });
     }
     // --- END NEW ---
 
@@ -1309,22 +1301,18 @@ app.post('/api/borrow-by-barcode', isAdmin, async (req, res) => {
       status: 'Pending Replacement',
     });
     if (pendingIncident) {
-      return res
-        .status(403)
-        .json({
-          message: `BORROW BLOCKED: User has a pending accountability for: ${pendingIncident.damagedItemInfo.name}.`,
-        });
+      return res.status(403).json({
+        message: `BORROW BLOCKED: User has a pending accountability for: ${pendingIncident.damagedItemInfo.name}.`,
+      });
     }
     // --- END NEW ---
 
     // MODIFIED: Use the admin-aware function
     const item = await findItemInAllowedCategory(itemId, adminUsername);
     if (!item)
-      return res
-        .status(404)
-        .json({
-          message: `Item with ID ${itemId} not found in your managed inventories.`,
-        });
+      return res.status(404).json({
+        message: `Item with ID ${itemId} not found in your managed inventories.`,
+      });
     if (item.quantity < 1)
       return res
         .status(400)
@@ -1332,11 +1320,9 @@ app.post('/api/borrow-by-barcode', isAdmin, async (req, res) => {
 
     // --- MODIFIED: Block borrowing of damaged/maintenance/calibration items ---
     if (item.status !== 'Available') {
-      return res
-        .status(400)
-        .json({
-          message: `Item "${item.name}" is not available (Status: ${item.status}).`,
-        });
+      return res.status(400).json({
+        message: `Item "${item.name}" is not available (Status: ${item.status}).`,
+      });
     }
     // --- END MODIFICATION ---
 
@@ -1402,11 +1388,9 @@ app.post('/api/return-by-barcode', isAdmin, async (req, res) => {
       adminUsername
     );
     if (!item)
-      return res
-        .status(404)
-        .json({
-          message: `Item with ID ${itemId} not found in your managed inventories.`,
-        });
+      return res.status(404).json({
+        message: `Item with ID ${itemId} not found in your managed inventories.`,
+      });
 
     const request = await ItemRequest.findOne({
       itemId,
@@ -1712,11 +1696,9 @@ app.put(
     try {
       const request = await ProfileUpdateRequest.findById(req.params.id);
       if (!request || request.status !== 'Pending') {
-        return res
-          .status(404)
-          .json({
-            message: 'Request not found or has already been processed.',
-          });
+        return res.status(404).json({
+          message: 'Request not found or has already been processed.',
+        });
       }
 
       const userToUpdate = await User.findByIdAndUpdate(
@@ -1732,11 +1714,9 @@ app.put(
       if (!userToUpdate) {
         request.status = 'Rejected';
         await request.save();
-        return res
-          .status(404)
-          .json({
-            message: 'User to update not found. Request has been rejected.',
-          });
+        return res.status(404).json({
+          message: 'User to update not found. Request has been rejected.',
+        });
       }
 
       request.status = 'Approved';
@@ -2189,19 +2169,15 @@ app.put('/api/update-request/:id', isAdmin, async (req, res) => {
         req.session.user.username
       );
       if (!itemToUpdate || itemToUpdate.quantity < request.quantity) {
-        return res
-          .status(409)
-          .json({
-            message: 'Cannot approve request. Insufficient stock available.',
-          });
+        return res.status(409).json({
+          message: 'Cannot approve request. Insufficient stock available.',
+        });
       }
       // --- NEW: Block approving damaged/maintenance/calibration items ---
       if (itemToUpdate.status !== 'Available') {
-        return res
-          .status(409)
-          .json({
-            message: `Cannot approve request. Item is currently ${itemToUpdate.status}.`,
-          });
+        return res.status(409).json({
+          message: `Cannot approve request. Item is currently ${itemToUpdate.status}.`,
+        });
       }
       // --- END NEW ---
       const updatedItem = await findAndUpdateItemForAdmin(
