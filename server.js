@@ -81,7 +81,7 @@ const PORT = process.env.PORT || 3000;
 // ================== MIDDLEWARE ==================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(
   session({
     secret: 'labsystem-secret-key-super-secure',

@@ -792,7 +792,28 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // --- 1. CONFIGURATION & STATE ---
+      const apiBaseUrl = (() => {
+        const { protocol, hostname, port } = window.location;
+        if (!port || port === '3000') {
+          return `${protocol}//${hostname}` + (port ? `:${port}` : '');
+        }
+        return `${protocol}//${hostname}:3000`;
+      })();
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        if (typeof input === 'string' && input.startsWith('/')) {
+          return originalFetch(`${apiBaseUrl}${input}`, init);
+        }
+        return originalFetch(input, init);
+      };
       const body = document.body;
+      const logoutLink = document.querySelector('.logout-link');
+      if (logoutLink) {
+        logoutLink.addEventListener('click', (event) => {
+          event.preventDefault();
+          window.location.href = `${apiBaseUrl}/logout`;
+        });
+      }
       const toggleBtn = document.querySelector(".toggle-btn");
       const darkToggle = document.querySelector(".dark-toggle");
       const sidebarLinks = document.querySelectorAll("#sidebar nav a[data-page]");
@@ -869,8 +890,8 @@
       
       function connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const host = window.location.host;
-        const ws = new WebSocket(`${protocol}://${host}`);
+        const wsHost = `${window.location.hostname}:3000`;
+        const ws = new WebSocket(`${protocol}://${wsHost}`);
 
         ws.onopen = () => console.log('WebSocket Connected');
         ws.onmessage = (event) => {

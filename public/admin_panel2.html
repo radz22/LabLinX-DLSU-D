@@ -958,6 +958,20 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- 1. CONFIGURATION & STATE ---
+            const apiBaseUrl = (() => {
+                const { protocol, hostname, port } = window.location;
+                if (!port || port === '3000') {
+                    return `${protocol}//${hostname}` + (port ? `:${port}` : '');
+                }
+                return `${protocol}//${hostname}:3000`;
+            })();
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = (input, init) => {
+                if (typeof input === 'string' && input.startsWith('/')) {
+                    return originalFetch(`${apiBaseUrl}${input}`, init);
+                }
+                return originalFetch(input, init);
+            };
             const inventoryTypes = {
                 Science: { 
                     api: '/api/inventory2', store: [], tableBody: document.querySelector('#tableScience tbody'), 
@@ -980,6 +994,13 @@
             let requestStatusBarChartInstance = null;
 
             const body = document.body;
+            const logoutLink = document.querySelector('.logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    window.location.href = `${apiBaseUrl}/logout`;
+                });
+            }
             const editModal = document.getElementById('editModal');
             const statusEditModal = document.getElementById('statusEditModal');
             const editForm = document.getElementById('editForm');
@@ -2979,8 +3000,8 @@
             // --- 13. WEBSOCKET REAL-TIME REFRESH ---
             function connectWebSocket() {
                 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-                const host = window.location.host;
-                const ws = new WebSocket(`${protocol}://${host}`);
+                const wsHost = `${window.location.hostname}:3000`;
+                const ws = new WebSocket(`${protocol}://${wsHost}`);
 
                 ws.onopen = () => {
                     console.log('WebSocket Connected');
