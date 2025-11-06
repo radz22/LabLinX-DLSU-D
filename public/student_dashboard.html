@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF--8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Dashboard - LabLinX DLSU-D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Avenir:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        /* --- 1. Global Styles & DLSU Theme --- */
+        :root {
+            --primary-dark: #00503B; /* DLSU Green */
+            --primary-light: #007A5A;
+            --accent-gold: #FFCD00;
+            --text-dark: #111827;
+            --text-subtle: #6B7280;
+            --background-light: #F9FAFB;
+            --card-bg-light: #FFFFFF;
+            --border-light: #E5E7EB;
+           
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+           
+            --background-dark: #0F172A;
+            --card-bg-dark: #1E293B;
+            --text-dark-mode: #E2E8F0;
+            --text-subtle-dark-mode: #94A3B8;
+            --primary-dark-mode: var(--accent-gold); 
+            --border-dark: #334155;
+
+            --status-pending: #FBBF24;
+            --status-approved: #22C55E;
+            --status-rejected: #EF4444;
+            --status-in-use: #6366F1;
+            --status-maintenance: #A855F7;
+            --status-returned: #0EA5E9;
+
+            --font-family: 'Avenir', 'Poppins', sans-serif;
+            --transition-fast: all 0.2s ease-in-out;
+            --transition-base: all 0.3s ease-in-out;
+        }
+
+        /* Base Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+       
+        body, html {
+            font-family: var(--font-family);
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: var(--transition-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+       
+        a { text-decoration: none; color: inherit; }
+        h1, h2, h3 { color: var(--text-dark); font-weight: 600; }
+
+        /* Dark Mode */
+        body.dark {
+            background-color: var(--background-dark);
+            color: var(--text-dark-mode);
+        }
+        body.dark h1, body.dark h2, body.dark h3 {
+            color: var(--text-dark-mode);
+        }
+
+        /* --- 2. Sidebar Layout & Style --- */
+        #sidebar {
+            width: 260px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            z-index: 200;
+            border-right: 1px solid var(--primary-light);
+            transition: var(--transition-base);
+        }
+        body.dark #sidebar {
+            background-color: #1E293B;
+            border-right: 1px solid var(--border-dark);
+        }
+       
+        #sidebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2.5rem;
+            padding: 0 1rem;
+            cursor: pointer;
+        }
+        #sidebar .logo img { width: 40px; height: 40px; }
+        #sidebar .logo-title { font-weight: 700; font-size: 1.6rem; color: var(--accent-gold); }
+
+        #sidebar nav { display: flex; flex-direction: column; flex-grow: 1; }
+        #sidebar nav a {
+            color: #e0e0e0;
+            padding: 14px 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        body.dark #sidebar nav a { color: var(--text-subtle-dark-mode); }
+       
+        #sidebar nav a:hover {
+            background-color: var(--primary-light);
+            color: var(--accent-gold);
+        }
+        body.dark #sidebar nav a:hover {
+            background-color: var(--background-dark);
+            color: var(--primary-dark-mode);
+        }
+       
+        #sidebar nav a.active {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+        body.dark #sidebar nav a.active {
+            background: var(--primary-dark-mode);
+            color: var(--text-dark);
+        }
+       
+        .notification-badge {
+            background-color: var(--status-rejected);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px; right: 15px; display: none;
+        }
+        .nav-bottom { margin-top: auto; }
+
+        /* --- 3. Header / Topbar --- */
+        header {
+            margin-left: 260px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 150;
+            border-bottom: 1px solid var(--border-light);
+            transition: var(--transition-base);
+        }
+        body.dark header {
+            background-color: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid var(--border-dark);
+        }
+       
+        main {
+            margin-left: 260px;
+            padding: 2.5rem;
+            transition: margin-left 0.3s ease;
+        }
+       
+        .header-user-info { font-weight: 500; }
+        #studentName { font-weight: 600; color: var(--primary-dark); }
+        body.dark #studentName { color: var(--primary-dark-mode); }
+
+        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
+        .dark-toggle {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-subtle);
+            transition: var(--transition-fast);
+        }
+        .dark-toggle:hover { color: var(--text-dark); }
+        body.dark .dark-toggle:hover { color: var(--text-dark-mode); }
+        .dark-toggle svg { width: 24px; height: 24px; }
+       
+        /* --- 4. Main Content Sections --- */
+        main h1 { font-size: 2rem; margin-bottom: 0.5rem; color: var(--primary-dark); }
+        body.dark main h1 { color: var(--accent-gold); }
+        .page-subtitle {
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+            color: var(--text-subtle);
+        }
+       
+        .page-content { display: none; }
+        .page-content.active { display: block; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 5. Dashboard Cards --- */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.75rem;
+        }
+        .card {
+            background-color: var(--card-bg-light);
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border: 1px solid var(--border-light);
+        }
+        body.dark .card {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+        .card-icon {
+            width: 56px; height: 56px;
+            border-radius: 12px;
+            display: grid; place-items: center;
+            flex-shrink: 0;
+        }
+        .card-icon svg { width: 28px; height: 28px; }
+       
+        .card-body .counter {
+            font-size: 3rem; font-weight: 700;
+            line-height: 1; color: var(--primary-dark);
+        }
+        body.dark .card-body .counter { color: var(--text-dark-mode); }
+        .card-body span { color: var(--text-subtle); font-size: 1rem; }
+       
+        /* --- 6. Tables, Buttons, Badges --- */
+        .content-container {
+            background-color: var(--card-bg-light);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+        }
+        body.dark .content-container {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+       
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95rem;
+        }
+        table th, table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+        body.dark table th, body.dark table td { border-bottom: 1px solid var(--border-dark); }
+       
+        table th {
+            font-weight: 600;
+            color: var(--text-subtle);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.75px;
+        }
+       
+        table tbody tr:hover { background-color: #f3f4f6; }
+        body.dark table tbody tr:hover { background-color: #283347; }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-request { background-color: var(--primary-dark); color: var(--accent-gold); }
+        .btn-request:hover { background-color: var(--primary-light); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .btn-request:disabled {
+            background-color: #E5E7EB; color: var(--text-subtle);
+            cursor: not-allowed; box-shadow: none; transform: none;
+        }
+        .btn-cancel { background-color: var(--text-subtle); color: white; }
+        .btn-cancel:hover { background-color: var(--text-dark); }
+       
+        .status-badge {
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            text-align: center;
+        }
+        .status-Pending { background-color: #FEF3C7; color: #92400E; }
+        .status-Approved { background-color: #DCFCE7; color: #166534; }
+        .status-Rejected { background-color: #FEE2E2; color: #991B1B; }
+        .status-Returned { background-color: #E0F2FE; color: #0C4A6E; }
+        .status-Available { color: var(--status-approved); font-weight: 600; }
+        .status-In-Use { color: var(--status-in-use); font-weight: 600; }
+        .status-Maintenance { color: var(--status-maintenance); font-weight: 600; }
+       
+        #notification-list .notification-item {
+            border-left: 4px solid var(--primary-dark);
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-fast);
+        }
+        body.dark #notification-list .notification-item { border-left-color: var(--accent-gold); }
+        #notification-list .notification-item:hover { transform: translateX(5px); box-shadow: var(--shadow-md); }
+        #notification-list .notification-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem; color: var(--primary-dark) }
+        body.dark #notification-list .notification-title { color: var(--accent-gold); }
+       
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+        .toast {
+            padding: 14px 22px;
+            background-color: var(--primary-dark);
+            color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            margin-top: 10px;
+            opacity: 0;
+            transition: var(--transition-base);
+            transform: translateY(10px);
+        }
+        body.dark .toast { background-color: var(--text-dark-mode); color: var(--text-dark); }
+
+        /* --- 7. Filter & Modal Styles --- */
+        .filter-controls { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem; }
+        .filter-row { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; }
+        .search-bar { flex-grow: 1; min-width: 250px; }
+        .search-bar input, .filter-select select, .form-group input, .form-group textarea {
+            width: 100%; padding: 12px 16px;
+            border-radius: 8px; border: 1px solid var(--border-light);
+            font-size: 1rem; background-color: var(--card-bg-light);
+            color: var(--text-dark); transition: var(--transition-fast);
+        }
+        body.dark .search-bar input, body.dark .filter-select select,
+        body.dark .form-group input, body.dark .form-group textarea {
+            background-color: var(--background-dark);
+            border-color: var(--border-dark);
+            color: var(--text-dark-mode);
+        }
+        .search-bar input:focus, .filter-select select:focus,
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 80, 59, 0.4);
+            border-color: var(--primary-light);
+        }
+        .filter-select { display: flex; flex-direction: column; gap: 0.5rem; }
+        .filter-select label { font-size: 0.9rem; font-weight: 500; }
+       
+        .category-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+        .btn-category {
+            background-color: var(--card-bg-light);
+            color: var(--text-subtle);
+            border: 1px solid var(--border-light);
+            padding: 8px 18px; border-radius: 20px;
+            transition: var(--transition-fast); cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-category:hover { background-color: #f3f4f6; color: var(--text-dark); }
+        .btn-category.active {
+            background-color: var(--primary-dark); color: white;
+            border-color: var(--primary-dark); font-weight: 600;
+        }
+        body.dark .btn-category { background-color: #334155; border-color: #475569; }
+        body.dark .btn-category.active { background-color: var(--primary-dark-mode); color: var(--text-dark); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(5px);
+            display: grid; place-items: center;
+            z-index: 1000; opacity: 0; display: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            padding: 2.5rem; border-radius: 16px;
+            width: 90%; max-width: 550px;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95);
+            transition: var(--transition-base);
+            background-color: var(--card-bg-light);
+        }
+        body.dark .modal-content { background-color: var(--card-bg-dark); }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 1.5rem; margin-bottom: 1.5rem;
+        }
+        body.dark .modal-header { border-bottom-color: var(--border-dark); }
+        .modal-header h2 { font-size: 1.6rem; color: var(--primary-dark); }
+        body.dark .modal-header h2 { color: var(--accent-gold); }
+        .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+       
+        .account-form .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+       
+        /* --- 8. Responsive Design --- */
+        @media (max-width: 992px) {
+            #sidebar { width: 220px; }
+            header, main { margin-left: 220px; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding-bottom: 70px; }
+            #sidebar {
+                bottom: 0; top: auto; width: 100%; height: 70px;
+                flex-direction: row; justify-content: space-around;
+                border-top: 1px solid var(--border-light); padding: 0;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            }
+            body.dark #sidebar { border-top-color: var(--border-dark); background-color: var(--card-bg-dark); }
+            #sidebar .logo, .nav-bottom { display: none; cursor: pointer; }
+            #sidebar nav { flex-direction: row; width: 100%; justify-content: space-around; padding: 0; }
+            #sidebar nav a {
+                padding: 0; width: 25%; height: 100%;
+                flex-direction: column; align-items: center; justify-content: center;
+                border-radius: 0; gap: 4px; margin-bottom: 0;
+            }
+            #sidebar nav a span { font-size: 0.75rem; }
+            #sidebar nav a.active {
+                color: var(--accent-gold);
+                background: linear-gradient(to top, rgba(0, 80, 59, 0.2), transparent);
+                box-shadow: none;
+            }
+            body.dark #sidebar nav a.active {
+                color: var(--primary-dark-mode);
+                background: linear-gradient(to top, rgba(255, 205, 0, 0.1), transparent);
+            }
+           
+            header, main { margin-left: 0; }
+            header { padding: 0 1.5rem; }
+            main { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+            .filter-row { flex-direction: column; align-items: stretch; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <aside id="sidebar">
+        <div class="logo">
+            <img src="logo.png" alt="LabLinX Logo">
+            <div class="logo-title">LabLinX</div>
+        </div>
+        <nav>
+            <a data-page="dashboard" class="active">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Dashboard</span>
+            </a>
+            <a data-page="lab-equipment">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>Equipment</span>
+            </a>
+            <a data-page="item-requested">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span>My Requests</span>
+            </a>
+            <a data-page="notification">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span>Notifications</span>
+                <span class="notification-badge" id="notification-badge">0</span>
+            </a>
+            <div class="nav-bottom">
+                <a data-page="account">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Account</span>
+                </a>
+                <a href="/logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <header>
+        <div class="header-user-info">
+            Welcome, <span id="studentName">Student</span>!
+        </div>
+        <div class="header-actions">
+            <button class="dark-toggle" title="Toggle Dark Mode">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg class="moon-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div id="dashboard-content" class="page-content active">
+            <h1>Dashboard</h1>
+            <p class="page-subtitle">Overview of your lab activities and requests.</p>
+            <section class="dashboard-cards">
+                <article class="card">
+                    <div class="card-icon" style="background-color: #DBEAFE; color: #2563EB;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="counter" id="borrowedCount">0</h2>
+                        <span>Items Currently Borrowed</span>
+                    </div>
+                </article>
+                <article class="card">
+                     <div class="card-icon" style="background-color: #FEF3C7; color: #D97706;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="counter" id="pendingCount">0</h2>
+                        <span>Pending Requests</span>
+                    </div>
+                </article>
+                <article class="card">
+                    <div class="card-icon" style="background-color: #DCFCE7; color: #16A34A;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="counter" id="returnedCount">0</h2>
+                        <span>Total Items Returned</span>
+                    </div>
+                </article>
+            </section>
+        </div>
+
+        <div id="lab-equipment-content" class="page-content">
+            <h1>Available Lab Equipment</h1>
+            <p class="page-subtitle">Browse and request items from all available inventories.</p>
+            <section class="content-container">
+                <div class="filter-controls">
+                    <div class="filter-row">
+                        <div class="search-bar">
+                             <input type="text" id="equipmentSearch" placeholder="Search by name, category, or ID..." />
+                        </div>
+                        <div class="filter-select">
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter">
+                                <option value="All">All Statuses</option>
+                                <option value="Available">Available</option>
+                                <option value="In-Use">In-Use</option>
+                                <option value="Maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="filter-select">
+                            <label for="locationFilter">Location</label>
+                            <select id="locationFilter">
+                                <option value="All">All Locations</option>
+                            </select>
+                        </div>
+                         <div class="filter-select">
+                            <label for="actionFilter">Action</label>
+                            <select id="actionFilter">
+                                <option value="All">All Actions</option>
+                                <option value="Requestable">Requestable</option>
+                                <option value="Unavailable">Unavailable</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="category-buttons" id="categoryButtons">
+                        <button class="btn btn-category active" data-category="All">All</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item ID</th><th>Name</th><th>Category</th><th>Location</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipmentTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div id="item-requested-content" class="page-content">
+            <h1>My Requested Items</h1>
+            <p class="page-subtitle">Track the status of your equipment requests.</p>
+            <section class="content-container">
+                 <div class="filter-row" style="margin-bottom: 1.5rem;">
+                    <div class="search-bar">
+                        <input type="text" id="requestSearch" placeholder="Search by item name or ID..." />
+                    </div>
+                    <div class="filter-select">
+                        <label for="requestStatusFilter">Status</label>
+                        <select id="requestStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Returned">Returned</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item ID</th><th>Name</th><th>Start Date</th><th>Due Date</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+       
+        <div id="notification-content" class="page-content">
+            <h1>Notifications</h1>
+            <p class="page-subtitle">Updates on your requests and returns.</p>
+            <div id="notification-list">
+                <p>You have no new notifications.</p>
+            </div>
+        </div>
+
+        <div id="account-content" class="page-content">
+            <h1>My Account</h1>
+            <p class="page-subtitle">Manage your profile details and password.</p>
+       
+            <section class="content-container" style="margin-bottom: 2rem;">
+                <h2>Profile Information</h2>
+                <p style="color: var(--text-subtle); font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">Changes to your name and email require admin approval.</p>
+                <form id="profileUpdateForm" class="account-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="profileFirstName">First Name</label>
+                            <input type="text" id="profileFirstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileLastName">Last Name</label>
+                            <input type="text" id="profileLastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileEmail">Email Address</label>
+                            <input type="email" id="profileEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileUsername">Username</label>
+                            <input type="text" id="profileUsername" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileStudentID">Student ID</label>
+                            <input type="text" id="profileStudentID" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileGradeLevel">Grade Level</label>
+                            <input type="text" id="profileGradeLevel" disabled>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-request">Request Update</button>
+                    </div>
+                </form>
+            </section>
+       
+            <section class="content-container">
+                <h2>Change Password</h2>
+                <form id="passwordUpdateForm" class="account-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-request">Update Password</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+   
+    <div id="toast-container"></div>
+
+    <div id="requestModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Item: <span id="modalItemName"></span></h2>
+            </div>
+            <form id="requestForm">
+                <input type="hidden" id="modalItemId">
+                <div class="form-group">
+                    <label for="requestQuantity">Quantity:</label>
+                    <input type="number" id="requestQuantity" name="quantity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="dueDate">Due Date:</label>
+                    <input type="date" id="dueDate" name="dueDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="requestReason">Reason for Request:</label>
+                    <textarea id="requestReason" name="reason" rows="4" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel modal-close-btn">Cancel</button>
+                    <button type="submit" class="btn btn-request">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. Global State and DOM Elements ---
+            let allEquipment = [];
+            let myRequests = [];
+            let notifications = [];
+
+            const body = document.body;
+            const pages = {
+                'dashboard': document.getElementById('dashboard-content'),
+                'lab-equipment': document.getElementById('lab-equipment-content'),
+                'item-requested': document.getElementById('item-requested-content'),
+                'notification': document.getElementById('notification-content'),
+                'account': document.getElementById('account-content'),
+            };
+
+            const logo = document.querySelector('#sidebar .logo img');
+            logo.addEventListener('click', () => showPage('dashboard'));
+
+            const socket = new WebSocket("ws://192.168.18.28:3000"); 
+
+            socket.onopen = () => {
+                console.log("✅ Connected to WebSocket server");
+            };
+
+            socket.onmessage = (event) => {
+                console.log("WebSocket message received:", event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "refresh") {
+                        console.log("Received refresh event");
+                        fetchMyRequests();
+                        fetchMyNotifications();
+                        updateDashboardMetrics();
+                        fetchAllEquipment();
+
+                        if (window.showPage) {
+                            const activePage = document.querySelector('.page-content.active');
+                            if (activePage) {
+                                const pageId = activePage.id.replace('-content', '');
+                                window.showPage(pageId);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("❌ WebSocket message error:", err);
+                }
+            };
+
+            socket.onclose = () => {
+                console.log("❌ WebSocket connection closed");
+            };
+
+            const equipmentTableBody = document.getElementById('equipmentTableBody');
+            const requestsTableBody = document.getElementById('requestsTableBody');
+            const notificationList = document.getElementById('notification-list');
+            const notificationBadge = document.getElementById('notification-badge');
+            const darkToggle = document.querySelector('.dark-toggle');
+           
+            const requestModal = document.getElementById('requestModal');
+            const modalItemName = document.getElementById('modalItemName');
+            const modalItemId = document.getElementById('modalItemId');
+            const requestForm = document.getElementById('requestForm');
+           
+            const equipmentSearch = document.getElementById('equipmentSearch');
+            const categoryButtonsContainer = document.getElementById('categoryButtons');
+            const statusFilter = document.getElementById('statusFilter');
+            const locationFilter = document.getElementById('locationFilter');
+            const actionFilter = document.getElementById('actionFilter');
+           
+            const requestSearch = document.getElementById('requestSearch');
+            const requestStatusFilter = document.getElementById('requestStatusFilter');
+
+            const profileUpdateForm = document.getElementById('profileUpdateForm');
+            const passwordUpdateForm = document.getElementById('passwordUpdateForm');
+           
+            // --- 2. Initialization & Event Handling ---
+            const initializeApp = async () => {
+                setupDarkMode();
+                await fetchCurrentUser();
+                setupEventListeners();
+                await fetchMyRequests();
+                await fetchMyNotifications();
+                showPage('dashboard');
+            };
+
+            const setupEventListeners = () => {
+                document.querySelectorAll("#sidebar nav a[data-page]").forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showPage(link.dataset.page);
+                    });
+                });
+               
+                categoryButtonsContainer.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        categoryButtonsContainer.querySelector('.active')?.classList.remove('active');
+                        e.target.classList.add('active');
+                        renderEquipmentTable();
+                    }
+                });
+               
+                equipmentSearch.addEventListener('input', renderEquipmentTable);
+                statusFilter.addEventListener('change', renderEquipmentTable);
+                locationFilter.addEventListener('change', renderEquipmentTable);
+                actionFilter.addEventListener('change', renderEquipmentTable);
+               
+                requestSearch.addEventListener('input', renderRequestsTable);
+                requestStatusFilter.addEventListener('change', renderRequestsTable);
+               
+                darkToggle.addEventListener("click", () => {
+                    body.classList.toggle("dark");
+                    const isDarkMode = body.classList.contains("dark");
+                    localStorage.setItem("dark-mode", isDarkMode);
+                    darkToggle.querySelector(".sun-icon").style.display = isDarkMode ? "none" : "block";
+                    darkToggle.querySelector(".moon-icon").style.display = isDarkMode ? "block" : "none";
+                });
+
+                document.querySelectorAll('.modal-close-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        closeModal();
+                    });
+                });
+
+                requestModal.addEventListener('click', (e) => {
+                    if (e.target === requestModal) {
+                        closeModal();
+                    }
+                });
+
+                requestForm.addEventListener('submit', handleRequestFormSubmit);
+                profileUpdateForm.addEventListener('submit', handleProfileUpdate);
+                passwordUpdateForm.addEventListener('submit', handlePasswordUpdate);
+            };
+           
+            const setupDarkMode = () => {
+                const isDarkMode = localStorage.getItem('dark-mode') === 'true';
+                if (isDarkMode) {
+                    body.classList.add('dark');
+                }
+                darkToggle.querySelector('.sun-icon').style.display = isDarkMode ? 'none' : 'block';
+                darkToggle.querySelector('.moon-icon').style.display = isDarkMode ? 'block' : 'none';
+            };
+
+            // --- 3. Page Rendering and Data Fetching ---
+            window.showPage = (pageId) => {
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll("#sidebar nav a[data-page]").forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
+                pages[pageId].classList.add('active');
+
+                switch(pageId) {
+                    case 'lab-equipment': fetchAllEquipment(); break;
+                    case 'item-requested': fetchMyRequests(); break;
+                    case 'dashboard': updateDashboardMetrics(); break;
+                    case 'notification':
+                        renderNotifications();
+                        markNotificationsAsRead();
+                        break;
+                }
+            };
+
+            const fetchCurrentUser = async () => {
+                try {
+                    const response = await fetch('/api/current-user');
+                    if (!response.ok) throw new Error('Session expired');
+                    const currentUser = await response.json();
+                   
+                    document.getElementById('studentName').textContent = currentUser.fullName;
+                    document.getElementById('profileFirstName').value = currentUser.firstName;
+                    document.getElementById('profileLastName').value = currentUser.lastName;
+                    document.getElementById('profileEmail').value = currentUser.email;
+                    document.getElementById('profileUsername').value = currentUser.username;
+                    document.getElementById('profileStudentID').value = currentUser.studentID;
+                    document.getElementById('profileGradeLevel').value = currentUser.gradeLevel;
+
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                    showToast('Session expired. Please log in again.');
+                    setTimeout(() => window.location.href = '/', 1500);
+                }
+            };
+
+            const fetchAllEquipment = async () => {
+                console.log("Fetching all equipment...");
+                try {
+                    const response = await fetch('/api/all-inventory');
+                    if (!response.ok) throw new Error('Failed to load equipment.');
+                    allEquipment = await response.json();
+                   
+                    populateFilters();
+                    renderEquipmentTable();
+                } catch (error) {
+                    showToast('Failed to load equipment.');
+                    console.error('Error fetching all inventory:', error);
+                }
+            };
+
+            const fetchMyRequests = async () => {
+                try {
+                    const response = await fetch('/api/my-requests');
+                    if (!response.ok) throw new Error('Failed to load your requests.');
+                    myRequests = await response.json();
+                    renderRequestsTable();
+                } catch (error) {
+                    showToast('Failed to load your requests.');
+                    console.error('Error fetching my requests:', error);
+                }
+            };
+           
+            const updateDashboardMetrics = () => {
+                const borrowed = myRequests.filter(r => r.status === 'Approved').length;
+                const pending = myRequests.filter(r => r.status === 'Pending').length;
+                const returned = myRequests.filter(r => r.status === 'Returned').length;
+                document.getElementById('borrowedCount').textContent = borrowed;
+                document.getElementById('pendingCount').textContent = pending;
+                document.getElementById('returnedCount').textContent = returned;
+            };
+
+            // --- 4. UI Rendering & Filtering ---
+            const populateFilters = () => {
+                const categories = ['All', ...new Set(allEquipment.map(item => item.category))];
+                categoryButtonsContainer.innerHTML = categories.map(cat =>
+                    `<button class="btn btn-category ${cat === 'All' ? 'active' : ''}" data-category="${cat}">${cat}</button>`
+                ).join('');
+
+                const locations = ['All', ...new Set(allEquipment.map(item => item.location))];
+                locationFilter.innerHTML = locations.map(loc => `<option value="${loc}">${loc === 'All' ? 'All Locations' : loc}</option>`).join('');
+            };
+
+            const renderEquipmentTable = () => {
+                const searchTerm = equipmentSearch.value.toLowerCase();
+                const activeCategory = categoryButtonsContainer.querySelector('.active')?.dataset.category || 'All';
+                const currentStatus = statusFilter.value;
+                const currentLocation = locationFilter.value;
+                const currentAction = actionFilter.value;
+
+                let filtered = allEquipment.filter(item => {
+                    const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
+                    const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+                    const matchesStatus = currentStatus === 'All' || item.status === currentStatus;
+                    const matchesLocation = currentLocation === 'All' || item.location === currentLocation;
+
+                    let matchesAction = true;
+                    if (currentAction !== 'All') {
+                        const isRequestable = item.status === 'Available' && item.quantity > 0;
+                        matchesAction = (currentAction === 'Requestable') ? isRequestable : !isRequestable;
+                    }
+
+                    return matchesCategory && matchesSearch && matchesStatus && matchesLocation && matchesAction;
+                });
+
+                equipmentTableBody.innerHTML = '';
+                if (filtered.length === 0) {
+                    equipmentTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">No equipment matches your filters.</td></tr>`;
+                    return;
+                }
+                filtered.forEach(item => {
+                    const row = equipmentTableBody.insertRow();
+                    const isAvailable = item.status === 'Available' && item.quantity > 0;
+                    row.innerHTML = `
+                        <td><strong>${item.itemId}</strong></td>
+                        <td>${item.name}</td>
+                        <td>${item.category}</td>
+                        <td>${item.location}</td>
+                        <td><span class="status-${item.status.replace(/\s+/g, '')}">${item.status}${item.status === 'Available' ? ` (${item.quantity})` : ''}</span></td>
+                        <td>
+                            <button class="btn btn-request" ${isAvailable ? '' : 'disabled'} onclick="showRequestModal('${item.itemId}', '${item.name}', ${item.quantity})">
+                                ${isAvailable ? 'Request' : 'Unavailable'}
+                            </button>
+                        </td>
+                    `;
+                });
+            };
+
+            const renderRequestsTable = () => {
+                const searchTerm = requestSearch.value.toLowerCase();
+                const currentStatus = requestStatusFilter.value;
+
+                let filtered = myRequests.filter(req => {
+                    const matchesSearch = (req.itemName.toLowerCase().includes(searchTerm) || req.itemId.toLowerCase().includes(searchTerm));
+                    const matchesStatus = currentStatus === 'All' || req.status === currentStatus;
+                    return matchesSearch && matchesStatus;
+                });
+
+                requestsTableBody.innerHTML = '';
+                if (filtered.length === 0) {
+                    requestsTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">No requests match your filters.</td></tr>`;
+                    return;
+                }
+                filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate)).forEach(req => {
+                    const row = requestsTableBody.insertRow();
+                    const startDate = req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A';
+                    const dueDate = req.dueDate ? new Date(req.dueDate).toLocaleDateString() : 'N/A';
+                    const statusClass = `status-${req.status.replace(/\s+/g, '')}`;
+                   
+                    row.innerHTML = `
+                        <td><strong>${req.itemId}</strong></td><td>${req.itemName}</td><td>${startDate}</td>
+                        <td>${dueDate}</td><td><span class="status-badge ${statusClass}">${req.status}</span></td>
+                        <td>
+                            ${req.status === 'Pending' ? `<button class="btn btn-cancel" onclick="cancelRequest('${req._id}')">Cancel</button>` : '—'}
+                        </td>
+                    `;
+                });
+            };
+           
+            const updateNotificationBadge = () => {
+                const unreadCount = notifications.filter(n => !n.isRead).length;
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+            };
+
+            const fetchMyNotifications = async () => {
+                try {
+                    const response = await fetch('/api/my-notifications');
+                    if (!response.ok) throw new Error('Could not fetch notifications.');
+                    notifications = await response.json();
+                    updateNotificationBadge();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message);
+                }
+            };
+           
+            const renderNotifications = () => {
+                notificationList.innerHTML = '';
+                const sortedNotifications = notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                if (sortedNotifications.length === 0) {
+                    notificationList.innerHTML = '<p>You have no new notifications.</p>';
+                } else {
+                    sortedNotifications.forEach(n => {
+                        const item = document.createElement('div');
+                        item.className = 'notification-item';
+                        item.innerHTML = `
+                            <div class="notification-title">${n.title}</div>
+                            <div class="notification-message">${n.message}</div>
+                            <div class="notification-time">${new Date(n.createdAt).toLocaleString()}</div>
+                        `;
+                        notificationList.appendChild(item);
+                    });
+                }
+            };
+
+            const markNotificationsAsRead = async () => {
+                try {
+                    await fetch('/api/notifications/mark-read', { method: 'POST' });
+                    notifications.forEach(n => n.isRead = true);
+                    updateNotificationBadge();
+                } catch (error) {
+                    console.error('Failed to mark notifications as read:', error);
+                }
+            };
+
+            // --- 5. Modal & API Interaction Functions ---
+            const openModal = () => {
+                const modalContent = requestModal.querySelector('.modal-content');
+                requestModal.style.display = 'grid';
+                setTimeout(() => {
+                    requestModal.style.opacity = '1';
+                    modalContent.style.transform = 'scale(1)';
+                }, 10);
+            };
+
+            const closeModal = () => {
+                const modalContent = requestModal.querySelector('.modal-content');
+                requestModal.style.opacity = '0';
+                modalContent.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    requestModal.style.display = 'none';
+                    requestForm.reset();
+                }, 300);
+            };
+
+            window.showRequestModal = (itemId, itemName, maxQuantity) => {
+                modalItemId.value = itemId;
+                modalItemName.textContent = itemName;
+                const qtyInput = document.getElementById('requestQuantity');
+                qtyInput.max = maxQuantity;
+                qtyInput.placeholder = `Max available: ${maxQuantity}`;
+               
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('startDate').min = today;
+                document.getElementById('dueDate').min = today;
+               
+                openModal();
+            };
+
+            const handleRequestFormSubmit = async (e) => {
+                e.preventDefault();
+               
+                const itemId = requestForm.elements['modalItemId'].value;
+                const itemName = modalItemName.textContent;
+                const quantity = parseInt(requestForm.elements['quantity'].value, 10);
+                const startDate = requestForm.elements['startDate'].value;
+                const dueDate = requestForm.elements['dueDate'].value;
+                const reason = requestForm.elements['reason'].value;
+               
+                const itemCategory = allEquipment.find(item => item.itemId === itemId)?.category;
+
+                if (new Date(startDate) > new Date(dueDate)) {
+                    showToast('Start Date cannot be after Due Date.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/request-item', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ itemId, itemName, quantity, startDate, dueDate, reason, category: itemCategory })
+                    });
+                    if (!response.ok) throw new Error(await response.text());
+                    showToast('Request sent successfully!');
+                    closeModal();
+                    await fetchAllEquipment();
+                    await fetchMyRequests();
+                    updateDashboardMetrics();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`);
+                    console.error('Error submitting request:', error);
+                }
+            };
+           
+            const handleProfileUpdate = async (e) => {
+                e.preventDefault();
+                const updatedProfile = {
+                    firstName: document.getElementById('profileFirstName').value,
+                    lastName: document.getElementById('profileLastName').value,
+                    email: document.getElementById('profileEmail').value,
+                };
+
+                try {
+                    const response = await fetch('/api/account/request-update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedProfile)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message || 'Failed to submit request.');
+                    showToast(result.message);
+                } catch (error) {
+                    showToast(`Error: ${error.message}`);
+                }
+            };
+
+            const handlePasswordUpdate = async (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (newPassword !== confirmPassword) {
+                    showToast('New passwords do not match.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/account/password', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ currentPassword, newPassword })
+                    });
+                    const resultText = await response.text();
+                    if (!response.ok) throw new Error(resultText || 'Failed to update password.');
+                    showToast('Password updated successfully!');
+                    passwordUpdateForm.reset();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`);
+                }
+            };
+           
+            window.cancelRequest = async (requestId) => {
+                if (!confirm('Are you sure you want to cancel this request?')) return;
+                try {
+                    const response = await fetch(`/api/cancel-request/${requestId}`, { method: 'DELETE' });
+                    if (!response.ok) throw new Error(await response.text());
+                    showToast('Request cancelled.');
+                    await fetchAllEquipment();
+                    await fetchMyRequests();
+                    updateDashboardMetrics();
+                } catch (error) {
+                    showToast(`Error: ${error.message}`);
+                    console.error('Error cancelling request:', error);
+                }
+            };
+
+            // --- 6. Utility Functions ---
+            const showToast = (message) => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateY(0)';
+                }, 10);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(10px)';
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            };
+
+            // --- Go! ---
+            initializeApp();
+        });
+    </script>
+</body>
+</html>

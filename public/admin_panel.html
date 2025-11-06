@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel - LabLinX DLSU-D</title>
+  <style>
+    /* --- 1. Global Styles & Variables (DLSU Theme from admin_panel2) --- */
+    :root {
+        --primary-dark: #00503B; /* DLSU Deep Green */
+        --primary-light: #007A5A; /* DLSU Lighter Green */
+        --accent-gold: #FFCD00; /* DLSU Gold */
+        --text-light: #f8f9fa;
+        --text-dark: #343a40;
+        --background-light: #f4f6f9;
+        --background-dark: #181a1f;
+        --card-bg-light: #ffffff;
+        --card-bg-dark: #212529;
+        --border-light: #dee2e6;
+        --border-dark: #495057;
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #f0ad4e;
+        --info: #17a2b8;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --font-family: "Avenir", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Chart Container styles */
+    .chart-container {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .chart-card {
+        background-color: var(--card-bg-light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-light);
+    }
+    body.dark .chart-card {
+        background-color: var(--card-bg-dark);
+        border-color: var(--border-dark);
+    }
+    /* Reset & Base */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html { font-family: var(--font-family); background-color: var(--background-light); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
+    body.dark { background-color: var(--background-dark); color: var(--text-light); }
+    a { text-decoration: none; color: inherit; }
+
+    /* --- 2. Sidebar --- */
+    #sidebar { width: 250px; background-color: var(--primary-dark); height: 100vh; color: var(--text-light); position: fixed; top: 0; left: 0; display: flex; flex-direction: column; padding: 1.5rem 0; z-index: 200; transition: width 0.3s ease; border-right: 1px solid var(--primary-light); }
+    #sidebar .logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; padding: 0 1rem; }
+    #sidebar .logo img { width: 70px; height: 70px; margin-bottom: 0.5rem; border-radius: 50%; cursor: pointer; }
+    #sidebar .logo-title { color: var(--accent-gold); font-weight: 700; font-size: 1rem; opacity: 1; transition: opacity 0.2s ease; }
+    #sidebar nav { display: flex; flex-direction: column; width: 100%; margin-top: 1rem; flex-grow: 1; overflow-y: auto; }
+    #sidebar nav a { color: #e0e0e0; padding: 14px 25px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background-color 0.2s, color 0.2s, border-left-color 0.2s; border-left: 4px solid transparent; cursor: pointer; }
+    #sidebar nav a .link-content { display: flex; align-items: center; gap: 15px; }
+    #sidebar nav a svg { width: 20px; height: 20px; flex-shrink: 0; }
+    #sidebar nav a:hover { background-color: var(--primary-light); color: var(--accent-gold); }
+    #sidebar nav a.active { background-color: var(--accent-gold); color: var(--primary-dark); font-weight: 600; border-left-color: #fff; }
+    .logout-link { margin-top: auto; }
+    .notification-badge { background-color: var(--danger); color: white; font-size: 0.75rem; font-weight: bold; padding: 2px 7px; border-radius: 50%; display: none; }
+    body.sidebar-collapsed #sidebar { width: 80px; }
+    body.sidebar-collapsed .logo-title, body.sidebar-collapsed nav a span, body.sidebar-collapsed .notification-badge { display: none; }
+    body.sidebar-collapsed nav a { justify-content: center; }
+
+    /* --- 3. Header / Topbar --- */
+    header { margin-left: 250px; height: 65px; background-color: var(--card-bg-light); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 150; transition: margin-left 0.3s ease, background-color 0.3s ease; border-bottom: 1px solid var(--border-light); }
+    body.dark header { background-color: var(--card-bg-dark); border-bottom-color: var(--border-dark); }
+    body.sidebar-collapsed header { margin-left: 80px; }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .toggle-btn { background: none; border: none; cursor: pointer; color: var(--text-dark); }
+    body.dark .toggle-btn { color: var(--text-light); }
+    .toggle-btn svg { width: 24px; height: 24px; }
+    .top-actions { display: flex; align-items: center; gap: 1.5rem; }
+    .dark-toggle { background: none; border: none; cursor: pointer; color: var(--text-dark); }
+    body.dark .dark-toggle { color: var(--text-light); }
+    .dark-toggle svg { width: 22px; height: 22px; }
+    .profile img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary-dark); }
+
+    /* --- 4. Main Content --- */
+    main { margin-left: 250px; padding: 2.5rem; transition: margin-left 0.3s ease; }
+    body.sidebar-collapsed main { margin-left: 80px; }
+    main h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary-dark); }
+    body.dark main h1 { color: var(--accent-gold); }
+    .page-subtitle { margin-top: 0; margin-bottom: 2.5rem; font-size: 1.1rem; color: #6c757d; font-weight: 500; }
+    body.dark .page-subtitle { color: #adb5bd; }
+    .page-content { display: none; }
+    .page-content.active { display: block; }
+
+    /* --- 5. Dashboard Specific Styles --- */
+    .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+    .card { background-color: var(--card-bg-light); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); transition: transform 0.25s ease, box-shadow 0.25s ease; border: 1px solid var(--border-light); display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; }
+    body.dark .card { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    .card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .card-icon { width: 48px; height: 48px; border-radius: 8px; display: grid; place-items: center; }
+    .card-icon svg { width: 28px; height: 28px; color: #fff; }
+    .icon-aqua { background-color: #1abc9c; } .icon-red { background-color: #e74c3c; } .icon-green { background-color: #2ecc71; }
+    .card-header-text .title { font-weight: 600; font-size: 1rem; }
+    .card-header-text .subtitle { font-size: 0.85rem; color: #6c757d; }
+    body.dark .card-header-text .subtitle { color: #adb5bd; }
+    .card-body .counter { font-size: 2.8rem; font-weight: 700; line-height: 1; color: var(--primary-dark); }
+    body.dark .card-body .counter { color: var(--text-light); }
+    .card-body .items { font-size: 0.9rem; margin-top: 4px; color: #6c757d; }
+    body.dark .card-body .items { color: #adb5bd; }
+    .card-footer { margin-top: 1.5rem; font-size: 0.9rem; font-weight: 500; color: var(--primary-light); display: flex; align-items: center; gap: 5px; }
+    body.dark .card-footer { color: var(--accent-gold); }
+
+    /* --- 6. Inventory, Requests & Notifications Styles --- */
+    .inventory-card { background-color: var(--card-bg-light); border-radius: 8px; width: 100%; padding: 1.5rem 2rem; margin-bottom: 2rem; box-shadow: var(--shadow); border: 1px solid var(--border-light); }
+    body.dark .inventory-card { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+    .inventory-card h2 { margin-top: 0; margin-bottom: 1.5rem; font-size: 1.5rem; color: var(--primary-dark); border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem; }
+    body.dark .inventory-card h2 { color: var(--accent-gold); border-bottom-color: var(--border-dark); }
+    .filter-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .search-bar { flex-grow: 1; min-width: 250px; }
+    .search-bar input, .filter-select select, .filter-row button {
+        width: 100%; padding: 10px 15px;
+        border-radius: 6px; border: 1px solid var(--border-light);
+        font-size: 1rem; background-color: var(--card-bg-light);
+        color: var(--text-dark); transition: all 0.3s ease;
+    }
+    .filter-row button { 
+        width: auto; cursor: pointer; font-weight: 600;
+        background-color: #e9ecef; border-color: #ced4da;
+    }
+    .filter-row button:hover { background-color: #dde1e5; }
+    body.dark .search-bar input, body.dark .filter-select select, body.dark .filter-row button {
+        background-color: #2a2a2e; border-color: var(--border-dark); color: var(--text-light);
+    }
+    body.dark .filter-row button { background-color: #343a40; border-color: #495057; }
+    body.dark .filter-row button:hover { background-color: #495057; }
+    .search-bar input:focus, .filter-select select:focus {
+        outline: none; box-shadow: 0 0 0 3px rgba(0, 80, 59, 0.25);
+    }
+    .filter-select { display: flex; flex-direction: column; gap: 0.25rem; }
+    .filter-select label { font-size: 0.85rem; font-weight: 500; color: var(--text-subtle); }
+    body.dark .filter-select label { color: var(--text-subtle-dark-mode); }
+
+    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; align-items: flex-end; }
+    .add-form input, .add-form select { padding: 8px 12px; border-radius: 5px; border: 1px solid var(--border-light); font-size: 0.95rem; width: 100%; background-color: var(--card-bg-light); color: var(--text-dark); }
+    body.dark .add-form input, body.dark .add-form select { background-color: var(--card-bg-dark); border-color: var(--border-dark); color: var(--text-light); }
+    .add-form button { background-color: var(--primary-dark); color: var(--accent-gold); padding: 9px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.2s; white-space: nowrap; }
+    .add-form button:hover { background-color: var(--primary-light); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; table-layout: fixed; }
+    table th, table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light); word-wrap: break-word; }
+    body.dark table th, body.dark table td { border-bottom-color: var(--border-dark); }
+    table th { background-color: var(--background-light); color: var(--primary-dark); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+    body.dark table th { background-color: var(--background-dark); color: var(--text-light); }
+    table tr:last-child td { border-bottom: none; }
+    table tbody tr:hover { background-color: #fcf8e3; }
+    body.dark table tbody tr:hover { background-color: #2c2f33; }
+    table td .status-select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-light); font-weight: 500; background: transparent; color: var(--text-dark); }
+    body.dark table td .status-select { border-color: var(--border-dark); color: var(--text-light); }
+    body.dark table td .status-select option { background-color: var(--card-bg-dark); }
+    .status-Available { color: var(--success); } .status-In-Use { color: var(--warning); } .status-Maintenance { color: var(--danger); } .status-Damaged { color: var(--danger); }
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: white; text-align: center; }
+    .status-Pending { background-color: var(--warning); }
+    .status-Approved { background-color: var(--success); }
+    .status-Rejected { background-color: var(--danger); }
+    .status-Returned { background-color: #6c757d; }
+    .status-PastDue { background-color: #c82333; }
+    .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; }
+    .btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
+    .btn:hover { opacity: 0.85; }
+    .btn svg { width: 14px; height: 14px; }
+    .btn-edit { background-color: var(--success); color: white; }
+    .btn-delete { background-color: var(--danger); color: white; }
+    .btn-approve { background-color: var(--success); color: white; }
+    .btn-reject { background-color: var(--danger); color: white; }
+    .btn-return { background-color: var(--primary-dark); color: var(--accent-gold); }
+    .btn-restore { background-color: var(--info); color: white; }
+    #notification-list .notification-item { background-color: var(--card-bg-light); border-left: 5px solid var(--primary-light); margin-bottom: 1rem; padding: 1rem; border-radius: 5px; box-shadow: var(--shadow); }
+    body.dark #notification-list .notification-item { background-color: var(--card-bg-dark); border-left-color: var(--accent-gold); }
+    #notification-list .notification-title { font-weight: bold; color: var(--primary-dark); margin-bottom: 0.25rem; }
+    body.dark #notification-list .notification-title { color: var(--accent-gold); }
+    #notification-list .notification-message { color: #6c757d; }
+    body.dark #notification-list .notification-message { color: #adb5bd; }
+    #notification-list .notification-time { font-size: 0.8rem; color: #6c757d; margin-top: 0.5rem; text-align: right; }
+    body.dark #notification-list .notification-time { color: #adb5bd; }
+    
+    /* --- 7. Modal & Toast Styles --- */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background-color: var(--card-bg-light); margin: auto; padding: 25px; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    body.dark .modal-content { background-color: var(--card-bg-dark); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { margin: 0; color: var(--primary-dark); }
+    body.dark .modal-header h2 { color: var(--text-light); }
+    .close-button { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+    .close-button:hover, .close-button:focus { color: var(--text-dark); }
+    body.dark .close-button:hover, body.dark .close-button:focus { color: var(--text-light); }
+    .modal-content form { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .modal-content form label { font-weight: 600; margin-bottom: -10px; }
+    .modal-content form input, .modal-content form textarea, .modal-content form select { width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 5px; background-color: var(--card-bg-light); color: var(--text-dark); }
+    body.dark .modal-content form input, body.dark .modal-content form textarea, body.dark .modal-content form select { background-color: var(--card-bg-dark); border-color: var(--border-dark); color: var(--text-light); }
+    .modal-content form button { background-color: var(--primary-dark); color: white; padding: 12px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+    #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { padding: 12px 20px; background-color: var(--primary-dark); color: white; border-radius: 6px; box-shadow: var(--shadow); }
+    
+    /* ADDED STYLES for Return Condition Modal */
+    #returnConditionModal .modal-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--primary-dark);
+    }
+    body.dark #returnConditionModal .modal-header h2 {
+        color: var(--text-light);
+    }
+    #returnConditionForm select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px;
+        padding-right: 30px !important; 
+        font-weight: 600;
+    }
+    .modal-content p strong { 
+        color: var(--primary-dark); 
+    }
+    body.dark .modal-content p strong {
+        color: var(--accent-gold); 
+    }
+    /* END ADDED STYLES */
+
+    /* --- 8. Responsive Design --- */
+    @media screen and (max-width: 992px) {
+        .chart-container { grid-template-columns: 1fr; }
+    }
+    @media screen and (max-width: 768px) { body:not(.sidebar-collapsed) #sidebar { width: 80px; } body:not(.sidebar-collapsed) .logo-title, body:not(.sidebar-collapsed) nav a span { display: none; } body:not(.sidebar-collapsed) nav a { justify-content: center; } header, main { margin-left: 80px; } main { padding: 1.5rem; } .live-scan-container { grid-template-columns: 1fr; } }
+    @media screen and (max-width: 600px) { body { padding-bottom: 60px; } #sidebar { bottom: 0; top: auto; width: 100%; height: 60px; flex-direction: row; align-items: center; justify-content: space-around; border-top: 1px solid var(--border-light); padding: 0; } body.dark #sidebar { border-top-color: var(--border-dark); } #sidebar .logo { display: none; } #sidebar nav { margin-top: 0; flex-direction: row; width: 100%; justify-content: space-around; } #sidebar nav a { border-left: none; border-top: 4px solid transparent; } #sidebar nav a.active { border-top-color: #fff; border-left-color: transparent;} .logout-link { display: none; } header, main { margin-left: 0; } }
+
+    /* --- Period Buttons --- */
+    .period-btn {
+        background-color: #f0f0f0; color: var(--primary-dark); padding: 8px 16px; border-radius: 5px;
+        border: 1px solid var(--border-light); cursor: pointer; font-weight: 600;
+        margin-right: 10px; transition: background-color 0.2s, color 0.2s;
+    }
+    .period-btn:hover, .period-btn.active { background-color: var(--accent-gold); color: var(--primary-dark); }
+    body.dark .period-btn { background-color: var(--background-dark); border-color: var(--border-dark); color: var(--text-light); }
+    body.dark .period-btn:hover, body.dark .period-btn.active { background-color: var(--accent-gold); color: var(--primary-dark); }
+    
+    /* --- 9. Live Scan Styles --- */
+    .live-scan-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .live-scan-container .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .live-scan-container .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    .live-scan-container .scan-input {
+        font-size: 1.5rem;
+        padding: 15px;
+        text-align: center;
+        border: 2px dashed var(--border-light);
+        border-radius: 8px;
+        width: 100%;
+        background-color: var(--card-bg-light);
+        color: var(--text-dark);
+    }
+    .prefix-input {
+        font-size: 1.2rem;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        width: 100%;
+    }
+    body.dark .prefix-input {
+         background-color: var(--card-bg-dark);
+         border-color: var(--border-dark);
+         color: var(--text-light);
+    }
+
+    body.dark .live-scan-container .scan-input { 
+        border-color: var(--border-dark); 
+        background-color: var(--card-bg-dark);
+        color: var(--text-light);
+    }
+    .live-scan-container .scan-input:focus { 
+        border-style: solid; 
+        border-color: var(--primary-light); 
+        outline: none;
+    }
+    .live-scan-container .scan-input:read-only {
+        background-color: var(--background-light);
+        border-style: solid;
+        cursor: not-allowed;
+    }
+    body.dark .live-scan-container .scan-input:read-only {
+         background-color: var(--background-dark);
+    }
+
+    .scan-controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+    .scan-controls label { font-weight: 600; }
+    .scan-controls select { padding: 8px; border-radius: 5px; border: 1px solid var(--border-light); }
+    
+    .auto-submit-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto; /* Pushes it to the right */
+    }
+    .auto-submit-toggle label {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .status-box {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: 500;
+        text-align: center;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--background-light);
+        border: 1px solid var(--border-light);
+    }
+    body.dark .status-box { background-color: var(--background-dark); border-color: var(--border-dark); }
+    .status-box.success { border-left: 5px solid var(--success); color: var(--success); }
+    .status-box.error { border-left: 5px solid var(--danger); color: var(--danger); }
+    .status-box.info { border-left: 5px solid var(--info); color: var(--info); }
+    
+    .scan-action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        justify-content: center;
+    }
+    .scan-action-buttons button {
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        display: none; /* Initially hidden */
+    }
+    #scanAnotherItemBtn {
+        background-color: var(--primary-light);
+        color: white;
+    }
+    #scanAnotherItemBtn:hover {
+        background-color: var(--primary-dark);
+    }
+    #cancelScanBtn {
+        background-color: var(--danger);
+        color: white;
+    }
+    #cancelScanBtn:hover {
+        background-color: #a02c38;
+    }
+
+    #capturedStudentIdDisplay { font-weight: 600; margin-top: 1rem; color: var(--primary-light); }
+    body.dark #capturedStudentIdDisplay { color: var(--accent-gold); }
+
+    #trackingDetailsContainer h3 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.25rem; }
+    #trackingDetailsContainer .detail-item { font-weight: 600; }
+    #trackingBorrowerInfo {
+        background-color: #fff3cd;
+        color: #664d03;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-top: 1rem;
+        border: 1px solid #ffecb5;
+    }
+    body.dark #trackingBorrowerInfo {
+        background-color: #332701;
+        color: #ffc107;
+        border-color: #664d03;
+    }
+    #trackingHistoryLog {
+        margin-top: 1rem;
+        font-family: monospace;
+        font-size: 0.9rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    #trackingHistoryLog div {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
+  </style>
+</head>
+<body>
+
+  <aside id="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="LabLinX Logo">
+      <div class="logo-title">LabLinX DLSU-D</div>
+    </div>
+    <nav>
+      <a data-page="dashboard" class="active">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            <span>Dashboard</span>
+        </div>
+      </a>
+      <a data-page="live-scan">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" /></svg>
+            <span>Live Scan</span>
+        </div>
+      </a>
+      <a data-page="inventory">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+            <span>Inventory</span>
+        </div>
+      </a>
+      <a data-page="requests">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+            <span>Requests</span>
+        </div>
+      </a>
+      <a data-page="notifications">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            <span>Notifications</span>
+        </div>
+        <span id="notification-badge" class="notification-badge">0</span>
+      </a>
+      <a data-page="history">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+            <span>History</span>
+        </div>
+      </a>
+      <a data-page="reports">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h6M9 17H5a2 2 0 01-2-2v-6a2 2 0 012-2h4m6 10v4m0-4h4m-4 0H9" /></svg>
+            <span>Reports</span>
+        </div>
+      </a>
+      <a href="/logout" class="logout-link">
+        <div class="link-content">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            <span>Log Out</span>
+        </div>
+      </a>
+    </nav>
+  </aside>
+
+  <header>
+    <div class="header-left">
+        <button class="toggle-btn" title="Toggle Sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="top-actions">
+        <button class="dark-toggle" title="Toggle Dark Mode">
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      <a href="#" class="profile">
+        <img src="https://i.pravatar.cc/40" alt="User Profile Picture">
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div id="dashboard-content" class="page-content active">
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">Overview of All Inventories</p>
+        <section class="dashboard-cards">
+            <article class="card">
+                <div class="card-header"><div class="card-icon icon-aqua"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 21v-1.5M15.75 3v1.5M12 4.5v-1.5m0 18v-1.5M5.636 5.636l1.06-1.06M5.636 18.364l1.06 1.06M18.364 5.636l-1.06-1.06M18.364 18.364l-1.06 1.06M12 12a6 6 0 110-12 6 6 0 010 12z" /></svg></div><div class="card-header-text"><div class="title">Total Equipment Units</div><div class="subtitle">Sum of all item quantities</div></div></div>
+                <div class="card-body"><h2 class="counter" data-target="0">0</h2><div class="items">Units</div></div>
+                <a href="javascript:void(0)" class="card-footer" onclick="showPage('inventory')"><span>View Details</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></a>
+            </article>
+            <article class="card">
+                <div class="card-header"><div class="card-icon icon-red"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m-3 0l3-3m0 0l-3-3m3 3H9" /></svg></div><div class="card-header-text"><div class="title">Borrowed Items</div><div class="subtitle">Units currently in use</div></div></div>
+                <div class="card-body"><h2 class="counter" data-target="0">0</h2><div class="items">Units</div></div>
+                <a href="javascript:void(0)" class="card-footer" onclick="showPage('inventory')"><span>View Details</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></a>
+            </article>
+            <article class="card">
+                <div class="card-header"><div class="card-icon icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></div><div class="card-header-text"><div class="title">Items in Maintenance</div><div class="subtitle">Item types needing attention</div></div></div>
+                <div class="card-body"><h2 class="counter" data-target="0">0</h2><div class="items">Items</div></div>
+                <a href="javascript:void(0)" class="card-footer" onclick="showPage('inventory')"><span>View Details</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></a>
+            </article>
+        </section>
+    </div>
+
+    <div id="live-scan-content" class="page-content">
+        <h1>Live Scan Transaction</h1>
+        <p class="page-subtitle">Process transactions and view real-time item status and history.</p>
+        <div class="live-scan-container">
+            <section class="inventory-card">
+                <h2>Transaction Processor</h2>
+                <div class="scan-controls">
+                    <label for="scanMode">Mode:</label>
+                    <select id="scanMode">
+                        <option value="Borrowing" selected>Borrowing</option>
+                        <option value="Returning">Returning</option>
+                        <option value="Equipment Mode">Equipment Mode</option>
+                        <option value="Check Status">Check Status</option>
+                    </select>
+                    <div class="auto-submit-toggle">
+                        <input type="checkbox" id="autoSubmitCheck" checked>
+                        <label for="autoSubmitCheck">Auto-Submit</label>
+                    </div>
+                </div>
+                <form id="scanForm">
+                    <div class="form-group" id="studentIdPrefixGroup">
+                        <label for="studentIdPrefixInput">Prefix/Suffix for Student ID</label>
+                        <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                    </div>
+                    <div class="form-group" id="studentIdGroup">
+                        <label for="studentIdInput">1. Scan Student ID</label>
+                        <input type="text" id="studentIdInput" class="scan-input" placeholder="Scan Student ID to Borrow..." autocomplete="off">
+                    </div>
+                    <div id="itemIdGroup" style="display: none;">
+                        <div class="form-group" id="itemIdPrefixGroup">
+                            <label for="itemIdPrefixInput">Prefix/Suffix for Item</label>
+                            <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                        </div>
+                        <div class="form-group">
+                           <label for="itemIdInput">2. Scan Item Barcode</label>
+                           <input type="text" id="itemIdInput" class="scan-input" placeholder="Scan Item to Borrow..." autocomplete="off">
+                        </div>
+                    </div>
+                </form>
+                <div id="scanStatus" class="status-box">
+                    Awaiting scan...
+                </div>
+                <div class="scan-action-buttons">
+                    <button id="scanAnotherItemBtn">Scan Another Item</button>
+                    <button id="cancelScanBtn">Cancel Transaction</button>
+                </div>
+            </section>
+            <section class="inventory-card">
+                <h2>Live Tracking Details</h2>
+                <div id="trackingDetailsContainer">
+                    <p>Scan an item to see its details here.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="inventory-content" class="page-content">
+        <h1>Manage Lab Inventory</h1>
+        
+        <section class="inventory-card" style="padding: 1rem 2rem;">
+            <div class="filter-row" style="justify-content: flex-end; margin-bottom: 0;">
+                <button id="toggleInventoryArchiveBtn">View Archives</button>
+            </div>
+        </section>
+
+        <div id="inventory-active-container">
+            <p class="page-subtitle" style="margin-top: 2.5rem;">Add, edit, and manage lab equipment.</p>
+            <section class="inventory-card">
+                <h2>Add New Equipment</h2>
+                <form class="add-form" id="addForm">
+                    <input type="text" id="itemId" placeholder="Item ID (e.g., MIC-001)" required />
+                    <input type="text" id="itemName" placeholder="Equipment Name" required />
+                    <select id="category" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="General">General</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                    </select>
+                    <input type="number" id="quantity" placeholder="Quantity" min="0" required />
+                    <input type="text" id="location" placeholder="Location" required />
+                    <button type="submit">Add Item</button>
+                </form>
+            </section>
+            <section class="inventory-card">
+                <h2 id="inventoryTableTitle">Lab Equipment Inventory & Status</h2>
+                <div class="filter-row">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search equipment..." />
+                    </div>
+                    <div class="filter-select">
+                        <label for="inventoryStatusFilter">Status</label>
+                        <select id="inventoryStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                <table id="inventoryTable">
+                    <thead>
+                        <tr><th>Item ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </div>
+
+        <div id="inventory-archive-container" style="display: none;">
+            <p class="page-subtitle" style="margin-top: 2.5rem;">View and restore archived equipment.</p>
+            <section class="inventory-card">
+                <h2>Archived Inventory</h2>
+                <div class="filter-row">
+                    <div class="search-bar">
+                        <input type="text" id="searchInventoryArchive" placeholder="Search archived items..." />
+                    </div>
+                </div>
+                <table id="tableInventoryArchive">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Original Qty</th>
+                            <th>Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryArchiveTableBody"></tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+    <div id="requests-content" class="page-content">
+        <h1 id="requests-title">Manage Student Requests</h1> <p class="page-subtitle">Approve or reject pending equipment requests.</p>
+        <section class="inventory-card">
+            <div class="filter-row">
+                <div class="search-bar">
+                    <input type="text" id="requestSearch" placeholder="Search by student, item name, or ID..." />
+                </div>
+                <div class="filter-select">
+                    <label for="requestStatusFilter">Filter by Status</label>
+                    <select id="requestStatusFilter">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Returned">Returned</option>
+                    </select>
+                </div>
+                <button id="toggleTrashViewBtn">View Trash</button>
+            </div>
+            <table id="requestsTable">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Item ID</th>
+                        <th>Item Name</th>
+                        <th>Start Date</th> <th>Due Date</th>
+                        <th>Quantity</th>
+                        <th>Reason</th>
+                        <th>Status</th> <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <div id="notifications-content" class="page-content">
+        <h1>Notifications</h1>
+        <p class="page-subtitle">Latest activities and alerts.</p>
+        <div id="notification-list">
+        </div>
+    </div>
+
+    <div id="history-content" class="page-content">
+        <h1>Admin Action History</h1>
+        <p class="page-subtitle">A log of all administrative actions performed in the system.</p>
+         <section class="inventory-card">
+            <div class="filter-row">
+                <div class="filter-select" style="min-width: 250px;">
+                    <label for="historyActionFilter">Filter by Action</label>
+                    <select id="historyActionFilter">
+                        <option value="All">All Actions</option>
+                    </select>
+                </div>
+            </div>
+                 <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Admin</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <div id="reports-content" class="page-content">
+        <h1>Generate Reports</h1>
+        <p class="page-subtitle">View and print inventory, request, and user reports.</p>
+        <section class="inventory-card">
+          <label for="reportType">Select Report Type:</label>
+          <select id="reportType" required style="padding:8px; border-radius:5px; border:1px solid var(--border-light); margin-bottom:1rem; width: 250px;">
+            <option value="">Select Report Type</option>
+            <option value="inventory">Inventory Report</option>
+            <option value="requests">Requests Report</option>
+            <option value="usage">Usage Report</option>
+            <option value="accountability">User Accountability</option>
+          </select>
+          <div style="margin-bottom:1rem;">
+            <button id="dailyBtn" class="period-btn active">Daily</button>
+            <button id="weeklyBtn" class="period-btn">Weekly</button>
+            <button id="yearlyBtn" class="period-btn">Yearly</button>
+          </div>
+          <button id="generateReportBtn" style="background-color: var(--primary-dark); color: var(--accent-gold); padding: 10px 20px; border-radius: 5px; border:none; cursor:pointer; font-weight:600;">Generate Report</button>
+        </section>
+        <section class="inventory-card" id="reportResult" style="display:none; white-space: pre-wrap; font-family: monospace; font-size: 0.95rem;"></section>
+        <button id="printReportBtn" style="display:none; background-color: var(--primary-dark); color: var(--accent-gold); padding: 10px 20px; border-radius: 5px; border:none; cursor:pointer; font-weight:600; margin-top: 1rem;">Print Report</button>
+    </div>
+  </main>
+  
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="editModalTitle">Edit Equipment</h2>
+        <span class="close-button">&times;</span>
+      </div>
+      <form id="editForm">
+        </form>
+    </div>
+  </div>
+
+  <div id="statusEditModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Request Status</h2>
+            <span class="close-button">&times;</span>
+        </div>
+        <form id="statusEditForm">
+            <input type="hidden" id="statusRequestId">
+            <label for="statusSelect">Status</label>
+            <select id="statusSelect" required>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Returned">Returned</option>
+            </select>
+            <button type="submit">Update Status</button>
+        </form>
+    </div>
+  </div>
+
+  <div id="returnConditionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Return Condition Report 🛠️</h2>
+            <span class="close-button" id="closeReturnConditionModal">&times;</span>
+        </div>
+        <form id="returnConditionForm">
+            <input type="hidden" id="returnConditionItemId">
+            <input type="hidden" id="returnConditionBorrowerName">
+
+            <p style="margin-bottom: 1rem;">**Item:** <span id="modalItemName" style="font-weight: 600;"></span></p>
+            <p style="margin-bottom: 1.5rem;">**Borrowed By:** <span id="modalBorrowerName" style="font-weight: 600;"></span></p>
+
+            <label for="conditionSelect">Select Return Condition</label>
+            <select id="conditionSelect" required style="margin-bottom: 1rem;">
+                <option value="Good" selected>1 - Good Condition ✅</option>
+                <option value="Damaged">2 - Damaged ⚠️</option>
+                <option value-"Lost">3 - Lost 🚨</option>
+            </select>
+
+            <label for="damageNotes" id="damageNotesLabel" style="display: none;">Notes on Damage/Loss (Required)</label>
+            <textarea id="damageNotes" placeholder="Enter details about the damage, or confirm the item is lost." style="display: none; height: 80px;"></textarea>
+
+            <button type="submit" id="submitConditionBtn">Submit Return</button>
+        </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- 1. CONFIGURATION & STATE ---
+      const body = document.body;
+      const toggleBtn = document.querySelector(".toggle-btn");
+      const darkToggle = document.querySelector(".dark-toggle");
+      const sidebarLinks = document.querySelectorAll("#sidebar nav a[data-page]");
+      const addForm = document.getElementById('addForm');
+      const inventoryTableBody = document.getElementById('inventoryTable').querySelector('tbody');
+      const searchInput = document.getElementById('searchInput');
+      const inventoryStatusFilter = document.getElementById('inventoryStatusFilter'); // Added
+      const modal = document.getElementById('editModal');
+      const closeBtn = modal.querySelector('.close-button');
+      const editForm = document.getElementById('editForm');
+      
+      const requestsTableBody = document.getElementById('requestsTableBody');
+      const requestSearch = document.getElementById('requestSearch'); // Added
+      const requestStatusFilter = document.getElementById('requestStatusFilter'); // Added
+      const toggleTrashViewBtn = document.getElementById('toggleTrashViewBtn'); // Added
+      const requestsTitle = document.getElementById('requests-title'); // Added
+      
+      const notificationList = document.getElementById('notification-list');
+      const notificationBadge = document.getElementById('notification-badge');
+      const mainContentArea = document.querySelector('main');
+      
+      const scanForm = document.getElementById('scanForm');
+      const scanMode = document.getElementById('scanMode');
+      const scanStatus = document.getElementById('scanStatus');
+      const trackingDetailsContainer = document.getElementById('trackingDetailsContainer');
+      const autoSubmitCheck = document.getElementById('autoSubmitCheck');
+      const studentIdPrefixInput = document.getElementById('studentIdPrefixInput');
+      const studentIdInput = document.getElementById('studentIdInput');
+      const itemIdPrefixInput = document.getElementById('itemIdPrefixInput');
+      const itemIdInput = document.getElementById('itemIdInput');
+      const studentIdPrefixGroup = document.getElementById('studentIdPrefixGroup');
+      const studentIdGroup = document.getElementById('studentIdGroup');
+      const itemIdGroup = document.getElementById('itemIdGroup');
+      const scanAnotherItemBtn = document.getElementById('scanAnotherItemBtn'); // Added
+      const cancelScanBtn = document.getElementById('cancelScanBtn'); // Added
+      const statusEditModal = document.getElementById('statusEditModal'); // Added
+      
+      // Added inventory archive state
+      const toggleInventoryArchiveBtn = document.getElementById('toggleInventoryArchiveBtn');
+      const inventoryActiveContainer = document.getElementById('inventory-active-container');
+      const inventoryArchiveContainer = document.getElementById('inventory-archive-container');
+      const inventoryArchiveTableBody = document.getElementById('inventoryArchiveTableBody');
+      const searchInventoryArchive = document.getElementById('searchInventoryArchive');
+      const inventoryTableTitle = document.getElementById('inventoryTableTitle');
+      
+      // Added History/Reports state
+      const historyActionFilter = document.getElementById('historyActionFilter');
+      const reportTypeSelect = document.getElementById('reportType');
+      const generateReportBtn = document.getElementById('generateReportBtn');
+      const reportResult = document.getElementById('reportResult');
+      const printReportBtn = document.getElementById('printReportBtn');
+      let selectedPeriod = 'daily';
+      const periodBtns = document.querySelectorAll('.period-btn');
+
+      let allInventoryData = [];
+      let allRequestsData = [];
+      let notifications = []; // FIXED: Use server-driven notifications
+      let allHistoryLogs = []; // Added
+      let isViewingTrash = false; // Added
+      let isViewingInventoryArchive = false; // Added
+      let combinedArchivedInventory = []; // Added
+      
+      let currentBorrowingStudentId = null;
+      let equipmentModeCapturedItemId = null; // Added
+      let scanDebounceTimer = null;
+
+      // --- 2. INITIALIZATION & SOCKET ---
+      const initializeApp = () => {
+          setupEventListeners();
+          showPage('dashboard');
+          fetchAdminNotifications(); // FIXED: Fetch notifications on load
+          connectWebSocket(); // FIXED: Connect WebSocket
+      };
+      
+      function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const host = window.location.host;
+        const ws = new WebSocket(`${protocol}://${host}`);
+
+        ws.onopen = () => console.log('WebSocket Connected');
+        ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'refresh') {
+                    console.log('Refresh signal received');
+                    showToast('Data refreshed in real-time.');
+                    const activePage = document.querySelector('.page-content.active');
+                    if (activePage) {
+                        const pageId = activePage.id.replace('-content', '');
+                        // Refresh data for the current page
+                        switch(pageId) {
+                            case 'dashboard': updateDashboard(); break;
+                            case 'inventory':
+                                if (isViewingInventoryArchive) fetchArchivedInventory();
+                                else fetchInventory();
+                                break;
+                            case 'requests':
+                                if (isViewingTrash) fetchDeletedRequests();
+                                else fetchAllRequests();
+                                break;
+                            case 'history': fetchHistoryLogs(); break;
+                        }
+                    }
+                    if (!document.getElementById('notifications-content').classList.contains('active')) {
+                        fetchAdminNotifications(); // Always update badge
+                    }
+                }
+            } catch (e) { console.error('Error processing WebSocket message:', e); }
+        };
+        ws.onclose = () => {
+            console.log('WebSocket Disconnected. Reconnecting in 3s...');
+            setTimeout(connectWebSocket, 3000);
+        };
+        ws.onerror = (err) => {
+            console.error('WebSocket Error:', err);
+            ws.close();
+        };
+      }
+
+      // --- 3. EVENT LISTENERS ---
+      const setupEventListeners = () => {
+        toggleBtn.addEventListener("click", () => body.classList.toggle("sidebar-collapsed"));
+        darkToggle.addEventListener("click", () => {
+            body.classList.toggle("dark");
+            const isDarkMode = body.classList.contains("dark");
+            localStorage.setItem("dark-mode", isDarkMode); // Save preference
+            darkToggle.querySelector('.sun-icon').style.display = isDarkMode ? 'none' : 'block';
+            darkToggle.querySelector('.moon-icon').style.display = isDarkMode ? 'block' : 'none';
+        });
+        
+        // Check dark mode on load
+        if (localStorage.getItem("dark-mode") === "true") {
+            body.classList.add("dark");
+            darkToggle.querySelector('.sun-icon').style.display = 'none';
+            darkToggle.querySelector('.moon-icon').style.display = 'block';
+        }
+
+        sidebarLinks.forEach(link => {
+            if (link.dataset.page) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(link.dataset.page)
+                });
+            }
+        });
+        
+        addForm.addEventListener('submit', handleAddItem);
+        searchInput.addEventListener('input', renderTable); // FIXED: Changed from handleSearch
+        inventoryStatusFilter.addEventListener('change', renderTable); // FIXED: Added
+        
+        editForm.addEventListener('submit', handleUpdateItem);
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+        
+        // FIXED: Added listeners for Request filters
+        requestSearch.addEventListener('input', renderRequestsTable);
+        requestStatusFilter.addEventListener('change', renderRequestsTable);
+        toggleTrashViewBtn.addEventListener('click', toggleRequestView);
+        
+        // FIXED: Added listener for Status Edit Modal
+        document.getElementById('statusEditForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const requestId = document.getElementById('statusRequestId').value;
+            const newStatus = document.getElementById('statusSelect').value;
+            handleRequest(requestId, newStatus);
+            statusEditModal.style.display = 'none';
+        });
+
+        // FIXED: Added listener for Return Condition Modal
+        document.getElementById('returnConditionForm').addEventListener('submit', window.handleReturnConditionSubmission);
+        document.getElementById('conditionSelect').addEventListener('change', (e) => {
+            const notesLabel = document.getElementById('damageNotesLabel');
+            const notesTextarea = document.getElementById('damageNotes');
+            if (['Damaged', 'Lost'].includes(e.target.value)) {
+                notesLabel.style.display = 'block';
+                notesTextarea.style.display = 'block';
+                notesTextarea.required = true;
+            } else {
+                notesLabel.style.display = 'none';
+                notesTextarea.style.display = 'none';
+                notesTextarea.required = false;
+            }
+        });
+        document.getElementById('closeReturnConditionModal').onclick = () => document.getElementById('returnConditionModal').style.display = 'none';
+
+        // FIXED: Added listeners for archive
+        toggleInventoryArchiveBtn.addEventListener('click', toggleInventoryArchiveView);
+        searchInventoryArchive.addEventListener('input', renderArchiveTable);
+        
+        // FIXED: Added listeners for History/Reports
+        historyActionFilter.addEventListener('change', renderHistoryLogs);
+        periodBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                periodBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedPeriod = btn.id.replace('Btn', '');
+            });
+        });
+        generateReportBtn.addEventListener('click', handleGenerateReport);
+        printReportBtn.addEventListener('click', handlePrintReport);
+
+        window.onclick = (event) => { 
+            if (event.target == modal) modal.style.display = 'none';
+            if (event.target == statusEditModal) statusEditModal.style.display = 'none'; // Added
+            if (event.target == document.getElementById('returnConditionModal')) document.getElementById('returnConditionModal').style.display = 'none'; // Added
+        };
+
+        scanMode.addEventListener('change', resetScannerUI);
+        scanForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            processScan(document.activeElement);
+        });
+        const handleAutoSubmit = (event) => {
+            clearTimeout(scanDebounceTimer);
+            if (autoSubmitCheck.checked) {
+                scanDebounceTimer = setTimeout(() => {
+                    processScan(event.target);
+                }, 200);
+            }
+        };
+        studentIdInput.addEventListener('input', handleAutoSubmit);
+        itemIdInput.addEventListener('input', handleAutoSubmit);
+        scanAnotherItemBtn.addEventListener('click', scanAnotherItem); // Added
+        cancelScanBtn.addEventListener('click', cancelTransaction); // Added
+        
+        mainContentArea.addEventListener('click', (event) => {
+            const liveScanPage = document.getElementById('live-scan-content');
+            if (liveScanPage.classList.contains('active') && !event.target.closest('.live-scan-container form, .live-scan-container select')) {
+                if (itemIdGroup.style.display !== 'none') {
+                    itemIdPrefixInput.focus();
+                } else if (studentIdGroup.style.display !== 'none') {
+                    studentIdPrefixInput.focus();
+                }
+            }
+        });
+      };
+
+      // --- 4. PAGE NAVIGATION ---
+      window.showPage = (pageId) => {
+        document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+        document.getElementById(`${pageId}-content`).classList.add('active');
+        sidebarLinks.forEach(link => {
+            if (link.dataset.page) link.classList.toggle('active', link.dataset.page === pageId);
+        });
+
+        if (pageId === 'dashboard') updateDashboard();
+        else if (pageId === 'inventory') {
+            isViewingInventoryArchive = false; // Reset view
+            fetchInventory();
+        }
+        else if (pageId === 'requests') {
+            isViewingTrash = false; // Reset view
+            fetchAllRequests();
+        }
+        else if (pageId === 'notifications') renderNotifications();
+        else if (pageId === 'live-scan') initializeLiveScan();
+        else if (pageId === 'history') fetchHistoryLogs(); // Added
+        else if (pageId === 'reports') { /* Handled by button */ } // Added
+      };
+      
+      // --- 5. LIVE SCAN ---
+      function initializeLiveScan() {
+          resetScannerUI();
+      }
+      
+      function clearTrackingDetails() {
+          trackingDetailsContainer.innerHTML = '<p>Scan an item to see its details here.</p>';
+      }
+
+      // FIXED: Updated to support all modes
+      function resetScannerUI() {
+          currentBorrowingStudentId = null;
+          equipmentModeCapturedItemId = null;
+          studentIdInput.value = '';
+          itemIdInput.value = '';
+          studentIdPrefixInput.value = '';
+          itemIdPrefixInput.value = '';
+          studentIdInput.readOnly = false;
+          
+          scanStatus.textContent = 'Awaiting scan...';
+          scanStatus.className = 'status-box';
+          scanAnotherItemBtn.style.display = 'none';
+          cancelScanBtn.style.display = 'none';
+          
+          const mode = scanMode.value;
+          
+          studentIdPrefixGroup.style.display = 'none';
+          studentIdGroup.style.display = 'none';
+          itemIdGroup.style.display = 'none';
+
+          if (mode === 'Returning') {
+              itemIdGroup.style.display = 'block';
+              itemIdInput.placeholder = 'Scan item to RETURN...';
+              itemIdPrefixInput.focus();
+          } else if (mode === 'Equipment Mode') {
+              itemIdGroup.style.display = 'block';
+              itemIdInput.placeholder = 'Scan item to TRACK...';
+              itemIdPrefixInput.focus();
+          } else if (mode === 'Check Status') {
+              itemIdGroup.style.display = 'block';
+              itemIdInput.placeholder = 'Scan item to CHECK STATUS...';
+              itemIdPrefixInput.focus();
+          } else { // Borrowing
+              studentIdPrefixGroup.style.display = 'block';
+              studentIdGroup.style.display = 'block';
+              studentIdInput.placeholder = 'Scan student ID to BORROW...';
+              studentIdPrefixInput.focus();
+          }
+          
+          if (mode !== 'Equipment Mode') {
+            clearTrackingDetails();
+          }
+      }
+      
+      // FIXED: Added scanAnotherItem and cancelTransaction
+      window.scanAnotherItem = () => {
+        if (scanMode.value === 'Borrowing' && currentBorrowingStudentId) {
+            itemIdInput.value = '';
+            itemIdPrefixInput.value = '';
+            scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Scan next item.`;
+            scanStatus.className = 'status-box info';
+            scanAnotherItemBtn.style.display = 'none';
+            cancelScanBtn.style.display = 'inline-block';
+            itemIdPrefixInput.focus();
+        } else {
+            resetScannerUI();
+        }
+      };
+      
+      window.cancelTransaction = () => {
+        showToast('Transaction cancelled. Scanner reset.');
+        resetScannerUI();
+      };
+
+      async function fetchAndDisplayItemDetails(itemId) {
+          trackingDetailsContainer.innerHTML = '<p>Loading item details...</p>';
+          try {
+              const response = await fetch(`/api/item-details/${itemId}`);
+              if (!response.ok) {
+                  throw new Error('Item not found in any inventory.');
+              }
+              const data = await response.json();
+              const statusClass = (data.status || 'Available').replace(/[^a-zA-Z0-9]/g, '');
+              let trackingHTML = `<h3>${data.name}</h3><p><strong>ID:</strong> ${data.itemId} | <strong>Status:</strong> <span class="status-badge status-${statusClass}">${data.status}</span></p>`;
+              if (data.currentLoan) {
+                  trackingHTML += `<div id="trackingBorrowerInfo"><p class="detail-item">Currently Borrowed By:</p><span>${data.currentLoan.studentName} (${data.currentLoan.studentID})</span><br><span><strong>Due Date:</strong> ${new Date(data.currentLoan.dueDate).toLocaleDateString()}</span></div>`;
+              }
+              trackingHTML += `<h4>History</h4><div id="trackingHistoryLog">`;
+              if(data.history && data.history.length > 0) {
+                  data.history.forEach(log => {
+                      trackingHTML += `<div><strong>${log.action}</strong> by ${log.studentName || 'N/A'} on ${new Date(log.timestamp).toLocaleString()}</div>`;
+                  });
+              } else {
+                  trackingHTML += `<div>No transaction history for this item.</div>`;
+              }
+              trackingHTML += `</div>`;
+              trackingDetailsContainer.innerHTML = trackingHTML;
+              return { success: true, status: data.status, data: data }; // Return data
+          } catch (error) {
+              trackingDetailsContainer.innerHTML = `<p style="color: var(--danger);">${error.message}</p>`;
+              return { success: false, message: error.message };
+          }
+      }
+      
+      // FIXED: Added this function to handle the modal submission
+      window.handleReturnConditionSubmission = async (e) => {
+            e.preventDefault();
+            const modal = document.getElementById('returnConditionModal');
+            const finalItemId = document.getElementById('returnConditionItemId').value;
+            const returnCondition = document.getElementById('conditionSelect').value;
+            let damageNotes = document.getElementById('damageNotes').value.trim();
+            
+            if (['Damaged', 'Lost'].includes(returnCondition) && damageNotes === '') {
+                showToast('Notes on damage/loss are required for non-Good conditions.', 'error');
+                return;
+            }
+            modal.style.display = 'none';
+            try {
+                const response = await fetch('/api/return-by-barcode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        itemId: finalItemId,
+                        condition: returnCondition,
+                        damageNotes: damageNotes
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to process return.');
+                scanStatus.textContent = result.message;
+                scanStatus.className = 'status-box success';
+                showToast(result.message, 'success');
+                setTimeout(() => fetchAndDisplayItemDetails(finalItemId), 500);
+            } catch (error) {
+                scanStatus.textContent = error.message;
+                scanStatus.className = 'status-box error';
+                showToast(error.message, 'error');
+            } finally {
+                scanAnotherItemBtn.style.display = 'inline-block';
+                cancelScanBtn.style.display = 'inline-block';
+                itemIdInput.value = '';
+                itemIdPrefixInput.value = '';
+                itemIdPrefixInput.focus();
+            }
+      };
+
+      // FIXED: processScan to use prefixes and handle return modal
+      async function processScan(triggeredInput) {
+          const mode = scanMode.value;
+          // FIXED: Read from prefix inputs
+          const studentIdValue = studentIdPrefixInput.value.trim() + studentIdInput.value.trim();
+          const itemIdValue = itemIdPrefixInput.value.trim() + itemIdInput.value.trim();
+          
+          scanAnotherItemBtn.style.display = 'none';
+          cancelScanBtn.style.display = 'none';
+
+          if (mode === 'Borrowing') {
+              if (triggeredInput === studentIdInput && studentIdValue !== '' && studentIdInput.value.trim() !== '') {
+                  currentBorrowingStudentId = studentIdValue;
+                  studentIdInput.readOnly = true;
+                  scanStatus.textContent = `Student ID ${currentBorrowingStudentId} captured. Now scan the item.`;
+                  scanStatus.className = 'status-box info';
+                  itemIdGroup.style.display = 'block';
+                  itemIdPrefixInput.focus();
+                  cancelScanBtn.style.display = 'inline-block';
+                  return;
+              }
+              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '' && currentBorrowingStudentId) {
+                  const finalItemId = itemIdValue;
+                  const studentID = currentBorrowingStudentId;
+                  await fetchAndDisplayItemDetails(finalItemId);
+                  try {
+                     const response = await fetch('/api/borrow-by-barcode', {
+                          method: 'POST',
+                          headers: {'Content-Type': 'application/json'},
+                          body: JSON.stringify({ itemId: finalItemId, studentID })
+                     });
+                     const result = await response.json();
+                     if (!response.ok) throw new Error(result.message || 'Failed to process borrowing.');
+                     scanStatus.textContent = result.message;
+                     scanStatus.className = 'status-box success';
+                     showToast(result.message, 'success');
+                     setTimeout(() => fetchAndDisplayItemDetails(finalItemId), 500);
+                  } catch(error) {
+                     scanStatus.textContent = error.message;
+                     scanStatus.className = 'status-box error';
+                     showToast(error.message, 'error');
+                  } finally {
+                     scanAnotherItemBtn.style.display = 'inline-block';
+                     cancelScanBtn.style.display = 'inline-block';
+                     itemIdInput.value = ''; // Clear for next scan
+                     itemIdPrefixInput.value = '';
+                     itemIdPrefixInput.focus();
+                  }
+              }
+          } else if (mode === 'Returning') {
+              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '') {
+                  const finalItemId = itemIdValue;
+                  const itemDetails = await fetchAndDisplayItemDetails(finalItemId);
+                  
+                  itemIdInput.value = ''; // Clear for next scan
+                  itemIdPrefixInput.value = '';
+                  itemIdPrefixInput.focus();
+                  cancelScanBtn.style.display = 'inline-block';
+
+                  if (itemDetails.success && itemDetails.data.currentLoan) {
+                      // FIXED: Open modal instead of blind return
+                      const borrowerName = itemDetails.data.currentLoan.studentName;
+                      const modal = document.getElementById('returnConditionModal');
+                      document.getElementById('returnConditionItemId').value = finalItemId;
+                      document.getElementById('modalItemName').textContent = itemDetails.data.name;
+                      document.getElementById('modalBorrowerName').textContent = `${borrowerName} (${itemDetails.data.currentLoan.studentID})`;
+                      
+                      document.getElementById('conditionSelect').value = 'Good';
+                      document.getElementById('damageNotes').value = '';
+                      document.getElementById('damageNotesLabel').style.display = 'none';
+                      document.getElementById('damageNotes').style.display = 'none';
+                      document.getElementById('damageNotes').required = false;
+
+                      modal.style.display = 'flex';
+                  } else if (itemDetails.success && !itemDetails.data.currentLoan) {
+                      scanStatus.textContent = `Error: No active loan found for item ID ${finalItemId}.`;
+                      scanStatus.className = 'status-box error';
+                      scanAnotherItemBtn.style.display = 'inline-block';
+                  } else {
+                      scanStatus.textContent = itemDetails.message || `Error checking item ${finalItemId}.`;
+                      scanStatus.className = 'status-box error';
+                      scanAnotherItemBtn.style.display = 'inline-block';
+                  }
+              }
+          } else if (mode === 'Equipment Mode' || mode === 'Check Status') {
+              // This logic is from admin_panel2.html
+              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '') {
+                  const finalItemId = itemIdValue;
+                  if (mode === 'Equipment Mode') {
+                      equipmentModeCapturedItemId = finalItemId;
+                      await fetchAndDisplayItemDetails(finalItemId);
+                      scanStatus.textContent = `Tracking Item: ${finalItemId}. Scan Student ID to borrow.`;
+                      scanStatus.className = 'status-box info';
+                      studentIdPrefixGroup.style.display = 'block';
+                      studentIdGroup.style.display = 'block';
+      
+                      
+                      studentIdInput.placeholder = 'Scan Student ID...';
+                      studentIdInput.readOnly = false;
+                      studentIdPrefixInput.focus();
+                      cancelScanBtn.style.display = 'inline-block';
+                  } else { // Check Status
+                      const itemDetails = await fetchAndDisplayItemDetails(finalItemId);
+                      if (itemDetails.success) {
+                          scanStatus.textContent = `Displaying status for ${finalItemId}. Status: ${itemDetails.status}`;
+                          scanStatus.className = 'status-box info';
+                      } else {
+                          scanStatus.textContent = itemDetails.message || `Item ${finalItemId} not found.`;
+                          scanStatus.className = 'status-box error';
+                      }
+                      scanAnotherItemBtn.style.display = 'inline-block';
+                      cancelScanBtn.style.display = 'inline-block';
+                      itemIdInput.value = '';
+                      itemIdPrefixInput.value = '';
+                      itemIdPrefixInput.focus();
+                  }
+              } else if (mode === 'Equipment Mode' && triggeredInput === studentIdInput && studentIdValue !== '' && studentIdInput.value.trim() !== '' && equipmentModeCapturedItemId) {
+                  // This is the second step of Equipment Mode: processing the borrow
+                  const finalItemId = equipmentModeCapturedItemId;
+                  const studentID = studentIdValue;
+                  
+                  try {
+                     const response = await fetch('/api/borrow-by-barcode', {
+                          method: 'POST',
+                          headers: {'Content-Type': 'application/json'},
+                          body: JSON.stringify({ itemId: finalItemId, studentID })
+                     });
+                     const result = await response.json();
+                     if (!response.ok) throw new Error(result.message || 'Failed to process borrowing.');
+                     
+                     scanStatus.textContent = result.message;
+                     scanStatus.className = 'status-box success';
+                     showToast(result.message, 'success');
+                     fetchAndDisplayItemDetails(finalItemId); // Update details after borrow
+                  } catch(error) {
+                     scanStatus.textContent = error.message;
+                     scanStatus.className = 'status-box error';
+                     showToast(error.message, 'error');
+                  } finally {
+                     // Reset for the next item scan
+                     setTimeout(resetScannerUI, 2000);
+                  }
+              }
+          }
+      }
+      
+      // --- 6. DASHBOARD ---
+      const updateDashboard = async () => {
+        try {
+            const response = await fetch('/api/inventory');
+            if (!response.ok) throw new Error('Failed to fetch inventory');
+            const data = await response.json();
+            
+            // Store data for other functions
+            allInventoryData = data;
+            
+            // Calculate metrics based on originalQuantity for accuracy
+            const totalEquipment = data.reduce((sum, item) => sum + (item.originalQuantity || 0), 0);
+            const availableQty = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            const borrowedItems = totalEquipment - availableQty;
+            const maintenanceItems = data.filter(item => item.status === 'Maintenance' || item.status === 'Damaged').length;
+
+            document.querySelector('#dashboard-content .counter[data-target]').setAttribute('data-target', totalEquipment);
+            document.querySelector('#dashboard-content article:nth-of-type(2) .counter').setAttribute('data-target', borrowedItems);
+            document.querySelector('#dashboard-content article:nth-of-type(3) .counter').setAttribute('data-target', maintenanceItems);
+            animateCounters();
+        } catch (error) {
+            showToast("Error fetching dashboard data.");
+            console.error(error);
+        }
+      };
+      
+      const animateCounters = () => {
+          document.querySelectorAll("#dashboard-content .counter").forEach(counter => {
+              counter.innerText = '0';
+              const update = () => {
+                  const target = +counter.getAttribute("data-target");
+                  const count = +counter.innerText;
+                  const increment = Math.max(1, Math.ceil((target - count) / 10));
+                  if (count < target) {
+                      counter.innerText = `${Math.min(target, count + increment)}`;
+                      setTimeout(update, 40);
+                  } else { counter.innerText = target; }
+              };
+              update();
+          });
+      };
+      
+      // --- 7. INVENTORY (ACTIVE & ARCHIVE) ---
+      async function fetchInventory() {
+        try {
+            const response = await fetch('/api/inventory');
+            if (!response.ok) throw new Error('Failed to fetch');
+            allInventoryData = await response.json();
+            if (document.getElementById('inventory-content').classList.contains('active')) {
+                isViewingInventoryArchive = false;
+                renderTable();
+            }
+        } catch (error) { 
+            showToast(error.message); 
+            allInventoryData = [];
+            if (document.getElementById('inventory-content').classList.contains('active')) {
+                renderTable();
+            }
+        }
+      };
+      
+      async function fetchArchivedInventory() {
+        try {
+            const response = await fetch('/api/archived-inventory');
+            if (!response.ok) throw new Error('Failed to fetch archived inventory');
+            combinedArchivedInventory = await response.json(); 
+            if (document.getElementById('inventory-content').classList.contains('active')) {
+                isViewingInventoryArchive = true;
+                renderArchiveTable(); 
+            }
+        } catch (error) {
+            showToast(error.message);
+            combinedArchivedInventory = [];
+            renderArchiveTable();
+        }
+      }
+
+      // FIXED: renderTable to show calculated quantities
+      const renderTable = () => {
+        inventoryTableTitle.textContent = 'Lab Equipment Inventory & Status';
+        toggleInventoryArchiveBtn.textContent = 'View Archives';
+        inventoryActiveContainer.style.display = 'block';
+        inventoryArchiveContainer.style.display = 'none';
+        inventoryStatusFilter.style.display = 'block';
+        searchInput.placeholder = 'Search equipment...';
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusFilterValue = inventoryStatusFilter.value;
+
+        const filteredData = allInventoryData.filter(item => {
+            const originalQty = item.originalQuantity || item.quantity || 0;
+            const borrowedQty = originalQty - (item.quantity || 0);
+            // Determine current status based on quantity, unless it's Maintenance/Damaged
+            const currentStatus = (item.status === 'Maintenance' || item.status === 'Damaged') ? item.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
+            
+            const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+            const matchesStatus = statusFilterValue === 'All' || currentStatus === statusFilterValue;
+            return matchesSearch && matchesStatus;
+        });
+        
+        inventoryTableBody.innerHTML = '';
+        if (filteredData.length === 0) {
+            inventoryTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No equipment found.</td></tr>';
+            return;
+        }
+        filteredData.forEach(item => {
+            const originalQty = item.originalQuantity || item.quantity || 0;
+            const availableQty = item.quantity || 0;
+            const borrowedQty = originalQty - availableQty;
+            const status = (item.status === 'Maintenance' || item.status === 'Damaged') ? item.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
+            
+            const row = inventoryTableBody.insertRow();
+            row.innerHTML = `
+                <td>${item.itemId}</td>
+                <td>${item.name}</td>
+                <td>${item.category}</td>
+                <td>${originalQty}</td>
+                <td>${borrowedQty}</td>
+                <td>${availableQty}</td>
+                <td>${item.location}</td>
+                <td>
+                    <select class="status-select status-${status.replace(/[^a-zA-Z0-9]/g, '')}" onchange="updateStatus(this, '${item.itemId}')">
+                        <option value="Available" ${status === 'Available' ? 'selected' : ''}>Available</option>
+                        <option value="In-Use" ${status === 'In-Use' ? 'selected' : ''} disabled>In-Use</option>
+                        <option value="Maintenance" ${status === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                        <option value="Damaged" ${status === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                    </select>
+                </td>
+                <td class="actions-cell">
+                    <button class="btn btn-edit" onclick="openEditModal('inventory', '${item.itemId}')">Edit</button>
+                    <button class="btn btn-delete" onclick="archiveInventoryItem('${item.itemId}')">Archive</button>
+                </td>`;
+        });
+      };
+      
+      // FIXED: Added renderArchiveTable
+      function renderArchiveTable() {
+            inventoryTableTitle.textContent = 'Archived Inventory';
+            toggleInventoryArchiveBtn.textContent = 'View Active Inventory';
+            inventoryActiveContainer.style.display = 'none';
+            inventoryArchiveContainer.style.display = 'block';
+            searchInput.placeholder = 'Search archived items...';
+            
+            const searchTerm = searchInventoryArchive.value.toLowerCase();
+            const filteredData = combinedArchivedInventory.filter(item => {
+                return Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+            });
+            
+            inventoryArchiveTableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                inventoryArchiveTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No archived equipment found.</td></tr>`;
+                return;
+            }
+            filteredData.forEach(item => {
+                const originalQty = item.originalQuantity || item.quantity || 0;
+                const row = inventoryArchiveTableBody.insertRow();
+                const actionsHtml = `
+                    <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
+                    <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete Permanently</button>
+                `;
+                row.innerHTML = `
+                    <td>${item.itemId}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${originalQty}</td>
+                    <td>${item.location}</td>
+                    <td class="actions-cell">${actionsHtml}</td>`;
+            });
+        }
+        
+      // FIXED: Added toggleInventoryArchiveView
+      const toggleInventoryArchiveView = () => {
+            isViewingInventoryArchive = !isViewingInventoryArchive;
+            if (isViewingInventoryArchive) {
+                fetchArchivedInventory();
+            } else {
+                fetchInventory();
+            }
+      };
+
+      const handleAddItem = async (e) => {
+          e.preventDefault();
+          const newItem = {
+              itemId: document.getElementById('itemId').value,
+              name: document.getElementById('itemName').value,
+              category: document.getElementById('category').value,
+              quantity: parseInt(document.getElementById('quantity').value),
+              location: document.getElementById('location').value,
+          };
+          if (!newItem.category) {
+              showToast("Please select a category.");
+              return;
+          }
+          try {
+              const response = await fetch('/api/inventory', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(newItem)
+              });
+              if (!response.ok) throw new Error((await response.json()).message || 'Failed to add');
+              showToast('Equipment added!');
+              addForm.reset();
+              fetchInventory();
+          } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      // FIXED: handleUpdateItem now handles both inventory and requests
+      const handleUpdateItem = async (e) => {
+          e.preventDefault();
+          const formType = document.getElementById('editForm').dataset.type;
+          
+          if (formType === 'inventory') {
+              const itemId = document.getElementById('editItemId').value;
+              const updatedData = {
+                  name: document.getElementById('editItemName').value,
+                  category: document.getElementById('editCategory').value,
+                  quantity: parseInt(document.getElementById('editQuantity').value), // This is now originalQuantity
+                  location: document.getElementById('editLocation').value,
+              };
+              try {
+                  const response = await fetch(`/api/inventory/${itemId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updatedData)
+                  });
+                  if (!response.ok) throw new Error('Failed to update item');
+                  showToast('Item updated successfully!');
+                  modal.style.display = 'none';
+                  fetchInventory();
+              } catch (error) { showToast(`Error: ${error.message}`); }
+          } else if (formType === 'request') {
+                // Added: Logic for updating requests
+                const requestId = document.getElementById('editRequestId').value;
+                const updatedData = {
+                    itemName: document.getElementById('editItemName').value,
+                    quantity: parseInt(document.getElementById('editQuantity').value),
+                    reason: document.getElementById('editReason').value,
+                    startDate: document.getElementById('editStartDate').value,
+                    dueDate: document.getElementById('editDueDate').value,
+                };
+                try {
+                    const response = await fetch(`/api/edit-request/${requestId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedData),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message || 'Failed to update request');
+                    showToast('Request updated successfully!');
+                    modal.style.display = 'none';
+                    fetchAllRequests(); // Refresh requests
+                } catch (error) {
+                    showToast(`Error: ${error.message}`);
+                }
+            }
+      };
+
+      // FIXED: Renamed to archiveInventoryItem and points to DELETE
+      window.archiveInventoryItem = async (itemId) => {
+          if (!confirm(`Are you sure you want to archive item ${itemId}?`)) return;
+          try {
+              const response = await fetch(`/api/inventory/${itemId}`, { method: 'DELETE' });
+              if (!response.ok) throw new Error('Failed to archive item');
+              showToast('Item archived successfully.');
+              fetchInventory();
+          } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+      
+      // FIXED: Added archive restoration/deletion functions
+      window.restoreInventoryItem = async (itemId) => {
+        if (!confirm('Are you sure you want to restore this item?')) return;
+        try {
+            const res = await fetch(`/api/inventory/restore/${itemId}`, { method: 'PUT' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(result.message);
+            fetchArchivedInventory(); // Refresh archive list
+        } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      window.deleteInventoryItemPermanently = async (itemId) => {
+        if (!confirm('WARNING: This will permanently delete the item and all its history. Are you sure?')) return;
+        try {
+            const res = await fetch(`/api/inventory/permanent/${itemId}`, { method: 'DELETE' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(result.message);
+            fetchArchivedInventory(); // Refresh archive list
+        } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      // FIXED: updateStatus logic to handle "In-Use"
+      window.updateStatus = async (selectElement, itemId) => {
+          const newStatus = selectElement.value;
+          
+          if (newStatus === 'In-Use') { 
+            showToast("Status 'In-Use' is set automatically when items are borrowed.");
+            // Revert dropdown
+            const currentItem = allInventoryData.find(i => i.itemId === itemId);
+            const originalQty = currentItem.originalQuantity || currentItem.quantity || 0;
+            const borrowedQty = originalQty - (currentItem.quantity || 0);
+            const actualStatus = (currentItem.status === 'Maintenance' || currentItem.status === 'Damaged') ? currentItem.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
+            selectElement.value = actualStatus === 'In-Use' ? 'Available' : actualStatus; // Revert
+            return;
+          }
+          
+          try {
+              const response = await fetch(`/api/inventory/${itemId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: newStatus })
+              });
+              if (!response.ok) throw new Error('Failed to update status');
+              showToast(`Status for ${itemId} updated.`);
+              fetchInventory(); // Refresh table
+          } catch (error) {
+              showToast(`Error: ${error.message}`);
+              fetchInventory(); // Refresh table on error too
+          }
+      };
+      
+      // FIXED: openEditModal now handles inventory type
+      window.openEditModal = (type, id) => {
+        if (type === 'inventory') {
+            const item = allInventoryData.find(i => i.itemId === id);
+            if (item) {
+                document.getElementById('editModalTitle').innerText = 'Edit Equipment';
+                editForm.innerHTML = `
+                    <input type="hidden" id="editItemId" value="${item.itemId}">
+                    <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
+                    <label for="editCategory">Category</label>
+                    <select id="editCategory" required>
+                        <option value="General" ${item.category === 'General' ? 'selected' : ''}>General</option>
+                        <option value="Office Supplies" ${item.category === 'Office Supplies' ? 'selected' : ''}>Office Supplies</option>
+                    </select>
+                    <label for="editQuantity">Total Quantity</label><input type="number" id="editQuantity" value="${item.originalQuantity || item.quantity}" min="0" required />
+                    <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
+                    <button type="submit">Save Changes</button>
+                `;
+                editForm.dataset.type = 'inventory';
+            }
+        } else if (type === 'request') {
+            // Added: Logic for editing requests
+            const request = allRequestsData.find(r => r._id === id);
+            if (request) {
+                document.getElementById('editModalTitle').innerText = 'Edit Request';
+                editForm.innerHTML = `
+                    <input type="hidden" id="editRequestId" value="${request._id}">
+                    <label for="editItemName">Item Name</label><input type="text" id="editItemName" value="${request.itemName}" required />
+                    <label for="editQuantity">Quantity</label><input type="number" id="editQuantity" value="${request.quantity}" min="1" required />
+                    <label for="editReason">Reason</label><textarea id="editReason" required>${request.reason}</textarea>
+                    <label for="editStartDate">Start Date</label><input type="date" id="editStartDate" value="${request.startDate ? new Date(request.startDate).toISOString().split('T')[0] : ''}" required />
+                    <label for="editDueDate">Due Date</label><input type="date" id="editDueDate" value="${request.dueDate ? new Date(request.dueDate).toISOString().split('T')[0] : ''}" required />
+                    <button type="submit">Save Changes</button>`;
+                editForm.dataset.type = 'request';
+            }
+        }
+        modal.style.display = 'flex';
+      };
+      
+      // --- 8. REQUESTS ---
+      // FIXED: Added trash can logic
+      const toggleRequestView = () => {
+        isViewingTrash = !isViewingTrash;
+        if (isViewingTrash) {
+            fetchDeletedRequests();
+        } else {
+            fetchAllRequests();
+        }
+      };
+      
+      const fetchAllRequests = async () => {
+          try {
+              const response = await fetch('/api/admin-requests');
+              if (!response.ok) throw new Error('Failed to fetch requests');
+              allRequestsData = await response.json();
+              if (document.getElementById('requests-content').classList.contains('active')) {
+                  isViewingTrash = false;
+                  renderRequestsTable();
+              }
+          } catch (error) {
+              showToast(error.message);
+              if (document.getElementById('requests-content').classList.contains('active')) {
+                  requestsTableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">Failed to load requests.</td></tr>`;
+              }
+          }
+      };
+      
+      // FIXED: Added fetchDeletedRequests
+      async function fetchDeletedRequests() {
+        try {
+            const response = await fetch('/api/deleted-requests');
+            if (!response.ok) throw new Error('Failed to fetch deleted requests');
+            allRequestsData = await response.json();
+            if (document.getElementById('requests-content').classList.contains('active')) {
+                isViewingTrash = true;
+                renderRequestsTable();
+            }
+        } catch (error) {
+            showToast(error.message);
+        }
+      }
+
+      // FIXED: Updated renderRequestsTable
+      const renderRequestsTable = (data) => {
+          requestsTitle.textContent = isViewingTrash ? 'Deleted Requests (Trash)' : 'Manage Student Requests';
+          toggleTrashViewBtn.textContent = isViewingTrash ? 'View Active Requests' : 'View Trash';
+          requestStatusFilter.style.display = isViewingTrash ? 'none' : 'block';
+          
+          const searchTerm = requestSearch.value.toLowerCase();
+          const currentStatus = requestStatusFilter.value;
+          
+          let filtered = allRequestsData.filter(req => {
+            const matchesSearch = (req.studentName.toLowerCase().includes(searchTerm) || req.itemName.toLowerCase().includes(searchTerm) || req.itemId.toLowerCase().includes(searchTerm));
+            const matchesStatus = isViewingTrash || currentStatus === 'All' || req.status === currentStatus;
+            return matchesSearch && matchesStatus;
+          });
+
+          requestsTableBody.innerHTML = '';
+          const sortedData = filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+          if (sortedData.length === 0) {
+              const message = isViewingTrash ? 'The trash is empty.' : 'No student requests found.';
+              requestsTableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">${message}</td></tr>`;
+              return;
+          }
+          sortedData.forEach(req => {
+              const row = requestsTableBody.insertRow();
+              const startDate = req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A';
+              const dueDate = req.dueDate ? new Date(req.dueDate).toLocaleDateString() : 'N/A';
+              
+              let actions;
+              if (isViewingTrash) {
+                  actions = `
+                      <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
+                      <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+              } else {
+                  actions = `
+                      <button class="btn btn-edit" onclick="openEditModal('request', '${req._id}')">Edit</button>
+                      <button class="btn" style="background-color:var(--primary-light); color:white;" onclick="openStatusEditModal('${req._id}')">Status</button>
+                      <button class="btn btn-delete" onclick="moveRequestToTrash('${req._id}')">Delete</button>`;
+              }
+          
+              row.innerHTML = `
+                  <td>${req.studentName}</td>
+                  <td>${req.itemId}</td>
+                  <td>${req.itemName}</td>
+                  <td>${startDate}</td>
+                  <td>${dueDate}</td>
+                  <td>${req.quantity}</td>
+                  <td>${req.reason || 'N/A'}</td>
+                  <td><span class="status-badge status-${req.status.replace(/[^a-zA-Z0-9]/g, '')}">${req.status}</span></td>
+                  <td class="actions-cell">${actions}</td>`;
+          });
+      };
+      
+      // FIXED: Added openStatusEditModal
+      window.openStatusEditModal = (requestId) => {
+        const request = allRequestsData.find(r => r._id === requestId);
+        if (request) {
+            document.getElementById('statusRequestId').value = request._id;
+            document.getElementById('statusSelect').value = request.status;
+            statusEditModal.style.display = 'flex';
+        }
+      };
+
+      // FIXED: Switched to API endpoint
+      window.handleRequest = async (requestId, newStatus) => {
+          try {
+              const response = await fetch(`/api/update-request/${requestId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: newStatus })
+              });
+              const result = await response.json();
+              if (!response.ok) throw new Error(result.message || `Failed to ${newStatus} request`);
+              showToast(result.message || `Request ${newStatus.toLowerCase()} successfully.`);
+              fetchAllRequests();
+              fetchInventory(); // Refresh inventory on status change
+          } catch (error) {
+              showToast(`Error: ${error.message}`);
+          }
+      };
+      
+      // FIXED: Added trash functions
+      window.moveRequestToTrash = async (requestId) => {
+        if (!confirm('Are you sure you want to move this request to the trash?')) return;
+        try {
+            const res = await fetch(`/api/requests/${requestId}/delete`, { method: 'PUT' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(result.message);
+            fetchAllRequests();
+        } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      window.restoreRequest = async (requestId) => {
+        if (!confirm('Are you sure you want to restore this request?')) return;
+        try {
+            const res = await fetch(`/api/requests/${requestId}/restore`, { method: 'PUT' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(result.message);
+            fetchDeletedRequests();
+        } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      window.deleteRequestPermanently = async (requestId) => {
+        if (!confirm('WARNING: This will permanently delete the request and cannot be undone. Are you sure?')) return;
+        try {
+            const res = await fetch(`/api/requests/${requestId}/permanent`, { method: 'DELETE' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(result.message);
+            fetchDeletedRequests();
+        } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+      
+      // --- 9. NOTIFICATIONS (FIXED) ---
+      async function fetchAdminNotifications() {
+        try {
+            const response = await fetch('/api/admin/notifications');
+            if (!response.ok) throw new Error('Could not fetch notifications.');
+            notifications = await response.json();
+            if (document.getElementById('notifications-content').classList.contains('active')) {
+                renderNotifications();
+            }
+            updateNotificationBadge();
+        } catch (error) {
+            console.error(error);
+            showToast(error.message);
+        }
+      }
+      
+      const updateNotificationBadge = () => {
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+        notificationBadge.textContent = unreadCount;
+        notificationBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+      };
+      
+      const renderNotifications = () => {
+          notificationList.innerHTML = '';
+          if (notifications.length === 0) {
+              notificationList.innerHTML = '<p>No new notifications.</p>';
+          } else {
+              notifications.forEach(n => {
+                  const item = document.createElement('div');
+                  item.className = 'notification-item';
+                  item.innerHTML = `
+                      <div class="notification-title">${n.title}</div>
+                      <div class="notification-message">${n.message}</div>
+                      <div class="notification-time">${new Date(n.createdAt).toLocaleString()}</div>
+                  `;
+                  notificationList.appendChild(item);
+              });
+          }
+          // Mark as read on the server
+          fetch('/api/notifications/mark-read', { method: 'POST' });
+          notifications.forEach(n => n.read = true);
+          updateNotificationBadge();
+      };
+      
+      // --- 10. HISTORY & REPORTS (ADDED) ---
+      async function fetchHistoryLogs() {
+        try {
+            const response = await fetch('/api/admin/history');
+            if (!response.ok) throw new Error('Failed to fetch history logs.');
+            allHistoryLogs = await response.json(); 
+            
+            const actions = [...new Set(allHistoryLogs.map(log => log.action))];
+            historyActionFilter.innerHTML = '<option value="All">All Actions</option>';
+            actions.sort().forEach(action => {
+                const option = document.createElement('option');
+                option.value = action;
+                option.textContent = action;
+                historyActionFilter.appendChild(option);
+            });
+
+            renderHistoryLogs(); 
+        } catch (error) {
+            showToast(error.message);
+        }
+      }
+
+      function renderHistoryLogs() {
+        const tableBody = document.getElementById('historyTableBody');
+        const selectedAction = historyActionFilter.value;
+
+        const logs = selectedAction === 'All' 
+            ? allHistoryLogs 
+            : allHistoryLogs.filter(log => log.action === selectedAction);
+
+        tableBody.innerHTML = '';
+        if (logs.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No history found for this filter.</td></tr>';
+            return;
+        }
+        logs.forEach(log => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${log.adminUsername}</td>
+                <td>${log.action}</td>
+                <td>${log.details}</td>
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
+            `;
+        });
+      }
+
+      async function handleGenerateReport() {
+        const selectedReportType = reportTypeSelect.value;
+        reportResult.style.display = 'none';
+        printReportBtn.style.display = 'none';
+        if (!selectedReportType) { showToast('Please select a report type.'); return; }
+        
+        try {
+            await fetch('/api/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reportType: selectedReportType }) });
+        } catch (e) { console.error("Failed to log report generation", e); }
+        
+        showToast('Generating report...');
+        
+        try {
+            const now = new Date();
+            let startDate;
+            switch(selectedPeriod) {
+                case 'daily': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+                case 'weekly': const day = now.getDay(); startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (day === 0 ? 6 : day - 1)); break;
+                case 'yearly': startDate = new Date(now.getFullYear(), 0, 1); break;
+                default: startDate = new Date(0);
+            }
+
+            const startDateStr = startDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+            const endDateStr = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+            
+            let reportText = `<b>Report Type:</b> ${reportTypeSelect.options[reportTypeSelect.selectedIndex].text} (${selectedPeriod})<br>`;
+            reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br><br>`;
+            
+            // Fetch fresh data for the report
+            const invRes = await fetch('/api/inventory');
+            const allInventory = await invRes.json();
+            const reqRes = await fetch('/api/admin-requests');
+            const allRequests = await reqRes.json();
+            
+            const filteredRequests = allRequests.filter(r => new Date(r.requestDate) >= startDate);
+            const filteredReturnedRequests = allRequests.filter(r => r.status === 'Returned' && new Date(r.requestDate) >= startDate);
+
+            if (selectedReportType === 'inventory') {
+                const totalItems = allInventory.reduce((sum, i) => sum + (i.originalQuantity || 0), 0);
+                const availableItems = allInventory.reduce((sum, i) => sum + (i.quantity || 0), 0);
+                const inUseItems = totalItems - availableItems;
+                const maintenanceItems = allInventory.filter(i => i.status === 'Maintenance' || i.status === 'Damaged').length; 
+                
+                reportText += `<b>Summary (Current Active Inventory):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged: ${maintenanceItems}<br><br>`;
+                reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
+                reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+                
+                allInventory.forEach(item => {
+                    const originalQty = item.originalQuantity || item.quantity || 0;
+                    const availableQty = item.quantity || 0;
+                    const borrowedQty = originalQty - availableQty;
+                    const displayStatus = (item.status === 'Maintenance' || item.status === 'Damaged') ? item.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
+                    reportText += `<tr><td>${item.itemId}</td><td>${item.name}</td><td>${item.category}</td><td>${originalQty}</td><td>${borrowedQty}</td><td>${availableQty}</td><td>${item.location}</td><td>${displayStatus}</td></tr>`;
+                });
+                reportText += `</tbody></table>`;
+            } else if (selectedReportType === 'requests') {
+                reportText += `<b>Summary (Requests Submitted in Period):</b><br>Total Requests in Period: ${filteredRequests.length}<br>Pending: ${filteredRequests.filter(r => r.status === 'Pending').length}<br>Approved: ${filteredRequests.filter(r => r.status === 'Approved').length}<br>Rejected: ${filteredRequests.filter(r => r.status === 'Rejected').length}<br>Returned: ${filteredRequests.filter(r => r.status === 'Returned').length}<br><br>`;
+                reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
+                reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
+                filteredRequests.forEach(req => {
+                    reportText += `<tr><td>${req.studentName}</td><td>${req.itemName}</td><td>${req.quantity}</td><td>${req.status}</td><td>${new Date(req.requestDate).toLocaleDateString()}</td></tr>`;
+                });
+                reportText += `</tbody></table>`;
+            } else if (selectedReportType === 'usage') {
+                const approvedRequestsInPeriod = filteredRequests.filter(r => r.status === 'Approved');
+                const usageMap = {};
+                approvedRequestsInPeriod.forEach(req => {
+                    usageMap[req.itemName] = (usageMap[req.itemName] || 0) + req.quantity;
+                });
+                
+                reportText += `<b>Summary:</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                reportText += `<b>Most Used Items:</b><br><table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
+                reportText += `<thead><tr><th>Item Name</th><th>Quantity Borrowed (in period)</th></tr></thead><tbody>`;
+                const usageData = Object.entries(usageMap).sort((a,b) => b[1] - a[1]);
+                
+                if (usageData.length === 0) {
+                    reportText += `<tr><td colspan="2" style="text-align:center;">No items were approved for borrowing during this period.</td></tr>`;
+                } else {
+                    usageData.forEach(([name, count]) => {
+                        reportText += `<tr><td>${name}</td><td>${count}</td></tr>`;
+                    });
+                }
+                reportText += `</tbody></table>`;
+            } else if (selectedReportType === 'accountability') {
+                const accountabilityData = await fetch('/api/reports/user-accountability').then(res => res.json());
+
+                reportText += `<b>Summary:</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                reportText += `<h2>All-Time User Accountability Report</h2>`;
+                reportText += `<p>This report shows the lifetime return history and current pending incidents for all users.</p><br>`;
+                reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
+                reportText += `<thead><tr><th>Student Name</th><th>Total Returned</th><th style="color:var(--success);">Returned Good</th><th style="color:var(--danger);">Damaged/Lost</th><th style="color:var(--danger);">Pending Incidents</th></tr></thead><tbody>`;
+                
+                if (accountabilityData.length === 0) {
+                    reportText += `<tr><td colspan="5" style="text-align:center;">No accountability data found.</td></tr>`;
+                } else {
+                    accountabilityData.forEach(student => {
+                        reportText += `<tr>
+                            <td>${student.studentName}</td>
+                            <td>${student.totalReturned}</td>
+                            <td style="color:var(--success); font-weight:600;">${student.good}</td>
+                            <td style="color:var(--danger); font-weight:600;">${student.damaged}</td>
+                            <td style="color:var(--danger); font-weight:600;">${student.pendingIncidents}</td>
+                        </tr>`;
+                    });
+                }
+                reportText += `</tbody></table>`;
+            }
+            
+            reportResult.innerHTML = reportText;
+            reportResult.style.display = 'block';
+            printReportBtn.style.display = 'inline-block';
+            showToast('Report generated.');
+        } catch (error) { 
+            showToast(`Error generating report: ${error.message}`); 
+        }
+      }
+
+      function handlePrintReport() {
+        const printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.write(`<html><head><title>LabLinX Report</title><style>body { font-family: 'Times New Roman', serif; padding: 20px; font-size: 11pt; } table { border-collapse: collapse; width: 100%; margin-top: 15px; font-size: 10pt; } th, td { border: 1px solid #000; padding: 6px; text-align: left; } th { background-color: #f0f0f0; color: #000; font-weight: bold; text-transform: uppercase; } b { color: #000; } .report-header { text-align: center; margin-bottom: 25px; } .report-header img { width: 80px; height: 80px; margin-bottom: 10px; } .report-header h2 { margin: 0; font-size: 18pt; color: #00503B; font-weight: bold; } .report-header h3 { margin: 5px 0 0 0; font-size: 14pt; color: #007A5A; } .report-info { text-align: left; margin-top: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; } .report-info b { font-weight: 700; }</style></head><body><div class="report-header"><img src="logo.png" alt="University Logo" class="logo-image"><h2>De La Salle University - Dasmariñas</h2><h3>LabLinX Inventory Management System</h3></div><div class="report-content">${reportResult.innerHTML}</div></body></html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); }, 300);
+      }
+
+      // --- 11. UTILITY ---
+      window.showToast = (message, type = 'normal') => {
+          const container = document.getElementById('toast-container');
+          const toast = document.createElement('div');
+          toast.className = 'toast';
+          if (type === 'error') {
+            toast.style.backgroundColor = 'var(--danger)';
+          } else if (type === 'success') {
+            toast.style.backgroundColor = 'var(--success)';
+          }
+          toast.textContent = message;
+          container.appendChild(toast);
+          setTimeout(() => { 
+              toast.style.opacity = '0';
+              setTimeout(() => toast.remove(), 500);
+          }, 3000);
+      };
+
+      // --- GO! ---
+      initializeApp();
+    });
+  </script>
+</body>
+</html>
