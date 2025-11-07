@@ -41,15 +41,15 @@ const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
 const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use STARTTLS encryption (Port 587)
+  service: 'Gmail',
+  port: 25,
+  secure: false,
   auth: {
     user: SENDER_EMAIL,
-    pass: SENDER_PASS, // This must be the App Password
+    pass: SENDER_PASS,
   },
   tls: {
-    ciphers: 'SSLv3',
+    rejectUnauthorized: false,
   },
 });
 // ... rest of your code ...
