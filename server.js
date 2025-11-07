@@ -30,7 +30,12 @@ function ensureEnv(variableName) {
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
 const SENDER_EMAIL = ensureEnv('SENDER_EMAIL') || 'alagjonalynmae@gmail.com';
 const SENDER_PASS = ensureEnv('SENDER_PASS') || 'xikqzmiwirbgqykd';
-const ALLOWED_DOMAIN = ensureEnv('ALLOWED_DOMAIN' || '@gmail.com');
+const ALLOWED_EMAIL_DOMAINS = (
+  process.env.ALLOWED_EMAIL_DOMAINS || '@dlsud.edu.ph,@gmail.com'
+)
+  .split(',')
+  .map((domain) => domain.trim().toLowerCase())
+  .filter(Boolean);
 const DATABASE_URL = ensureEnv('DATABASE_URL');
 const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
 const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
@@ -51,14 +56,6 @@ const transporter = nodemailer.createTransport({
 
 // ================== EMAIL HELPER FUNCTION ==================
 const sendEmail = async (to, subject, htmlContent) => {
-  // ⬇️ Domain validation check: only allows sending to @dlsud.edu.ph recipients
-  if (to && !to.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
-    console.error(
-      `❌ Email blocked: Recipient '${to}' is outside the allowed domain ${ALLOWED_DOMAIN}`
-    );
-    return; // Prevent sending email to unauthorized domains
-  }
-
   const mailOptions = {
     from: `"LabLinx DLSU-D System" <${SENDER_EMAIL}>`,
     to: to,
