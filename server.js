@@ -39,19 +39,13 @@ const ALLOWED_EMAIL_DOMAINS = (
 const DATABASE_URL = ensureEnv('DATABASE_URL');
 const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
 const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
-
 const transporter = nodemailer.createTransport({
-  service: 'Gmail',
-  port: 25,
+  host: 'smtp.gmail.com',
+  port: 587,
   secure: false,
-  auth: {
-    user: SENDER_EMAIL,
-    pass: SENDER_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
+  auth: { user: SENDER_EMAIL, pass: SENDER_PASS },
 });
+
 // ... rest of your code ...
 
 // ================== EMAIL HELPER FUNCTION ==================
