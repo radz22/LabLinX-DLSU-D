@@ -28,9 +28,9 @@ function ensureEnv(variableName) {
 
 // ================== EMAIL SETUP (using Nodemailer) ==================
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
-const SENDER_EMAIL = ensureEnv('SENDER_EMAIL');
-const SENDER_PASS = ensureEnv('SENDER_PASS');
-const ALLOWED_DOMAIN = ensureEnv('ALLOWED_DOMAIN');
+const SENDER_EMAIL = ensureEnv('SENDER_EMAIL') || 'alagjonalynmae@gmail.com';
+const SENDER_PASS = ensureEnv('SENDER_PASS') || 'xikqzmiwirbgqykd';
+const ALLOWED_DOMAIN = ensureEnv('ALLOWED_DOMAIN' || '@dlsud.edu.ph');
 const DATABASE_URL = ensureEnv('DATABASE_URL');
 const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
 const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
