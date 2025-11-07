@@ -44,7 +44,25 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: { user: SENDER_EMAIL, pass: SENDER_PASS },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
+
+transporter
+  .verify()
+  .then(() => console.log('✉️  Mail transporter ready'))
+  .catch((error) =>
+    console.error('❌ Mail transporter configuration error:', error.message)
+  );
+
+function isEmailDomainAllowed(email) {
+  if (!email) return false;
+  const normalizedEmail = email.toLowerCase();
+  return ALLOWED_EMAIL_DOMAINS.some((domain) =>
+    normalizedEmail.endsWith(domain)
+  );
+}
 
 // ... rest of your code ...
 
@@ -563,11 +581,13 @@ app.post('/register', async (req, res) => {
     } = req.body;
 
     // ⬇️ NEW: Domain check added here to restrict registration email (from server.js)
-    if (email && !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+    if (email && !isEmailDomainAllowed(email)) {
       return res
         .status(400)
         .send(
-          `Registration failed: Email must be a valid ${ALLOWED_DOMAIN} address.`
+          `Registration failed: Email must end with any of the allowed domains (${ALLOWED_EMAIL_DOMAINS.join(
+            ', '
+          )}).`
         );
     }
     // ⬆️ NEW
@@ -795,9 +815,11 @@ app.post('/api/account/request-update', isAuthenticated, async (req, res) => {
     const { firstName, lastName, email } = req.body;
 
     // ⬇️ NEW: Domain check for profile update request
-    if (email && !email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
+    if (email && !isEmailDomainAllowed(email)) {
       return res.status(400).json({
-        message: `Update failed: Email must be a valid ${ALLOWED_DOMAIN} address.`,
+        message: `Update failed: Email must end with any of the allowed domains (${ALLOWED_EMAIL_DOMAINS.join(
+          ', '
+        )}).`,
       });
     }
     // ⬆️ NEW
