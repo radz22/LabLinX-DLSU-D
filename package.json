@@ -24,6 +24,7 @@
     "passport": "^0.7.0",
     "passport-microsoft": "^2.1.0",
     "path": "^0.12.7",
+    "resend": "^6.4.2",
     "ws": "^8.18.3"
   },
   "description": ""

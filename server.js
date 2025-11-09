@@ -1,4 +1,6 @@
 // ================== IMPORTS ==================
+
+const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -10,7 +12,7 @@ const nodemailer = require('nodemailer'); // For email notifications
 const cron = require('node-cron'); // For scheduled reminders
 const passport = require('passport'); // NEW: For OAuth
 const MicrosoftStrategy = require('passport-microsoft').Strategy; // NEW: For OAuth
-const dotenv = require('dotenv');
+const resend = new Resend(ensureEnv('RESEND_API_KEY'));
 
 dotenv.config();
 
@@ -74,12 +76,17 @@ const sendEmail = async (to, subject, htmlContent) => {
     subject: subject,
     html: htmlContent,
   };
+  const { error } = await resend.emails.send({
+    from: 'LabLinx DLSU-D System <${SENDER_EMAIL}>',
+    to: to,
+    subject: subject,
+    html: htmlContent,
+  });
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`📧 Email sent to ${to}: ${subject}`);
-  } catch (error) {
+  if (error) {
     console.error(`❌ Error sending email to ${to}:`, error.message);
+  } else {
+    console.log(`📧 Email sent to ${to}: ${subject}`);
   }
 };
 
