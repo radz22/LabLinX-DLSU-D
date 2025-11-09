@@ -1,4 +1,6 @@
 // ================== IMPORTS ==================
+const sgMail = require('@sendgrid/mail');
+const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -6,11 +8,9 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const ws = require('ws');
 const cors = require('cors');
-const nodemailer = require('nodemailer'); // For email notifications
 const cron = require('node-cron'); // For scheduled reminders
 const passport = require('passport'); // NEW: For OAuth
-const MicrosoftStrategy = require('passport-microsoft').Strategy; // NEW: For OAuth
-const dotenv = require('dotenv');
+const MicrosoftStrategy = require('passport-microsoft').Strategy; // NEW: For
 
 dotenv.config();
 
@@ -28,8 +28,7 @@ function ensureEnv(variableName) {
 
 // ================== EMAIL SETUP (using Nodemailer) ==================
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
-const SENDER_EMAIL = ensureEnv('SENDER_EMAIL') || 'alagjonalynmae@gmail.com';
-const SENDER_PASS = ensureEnv('SENDER_PASS') || 'xikqzmiwirbgqykd';
+const SENDGRID_FROM = ensureEnv('SENDGRID_FROM');
 const ALLOWED_EMAIL_DOMAINS = (
   process.env.ALLOWED_EMAIL_DOMAINS || '@dlsud.edu.ph,@gmail.com'
 )
@@ -39,22 +38,6 @@ const ALLOWED_EMAIL_DOMAINS = (
 const DATABASE_URL = ensureEnv('DATABASE_URL');
 const DATABASE_NAME = process.env.DATABASE_NAME || 'lablinx';
 const LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: { user: SENDER_EMAIL, pass: SENDER_PASS },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-
-transporter
-  .verify()
-  .then(() => console.log('✉️  Mail transporter ready'))
-  .catch((error) =>
-    console.error('❌ Mail transporter configuration error:', error.message)
-  );
 
 function isEmailDomainAllowed(email) {
   if (!email) return false;
@@ -64,22 +47,28 @@ function isEmailDomainAllowed(email) {
   );
 }
 
-// ... rest of your code ...
+sgMail.setApiKey(ensureEnv('SENDGRID_API_KEY'));
 
 // ================== EMAIL HELPER FUNCTION ==================
 const sendEmail = async (to, subject, htmlContent) => {
-  const mailOptions = {
-    from: `"LabLinx DLSU-D System" <${SENDER_EMAIL}>`,
-    to: to,
-    subject: subject,
-    html: htmlContent,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
+    const [response] = await sgMail.send({
+      from: `LabLinx DLSU-D System <${SENDGRID_FROM}>`,
+      to,
+      subject,
+      html: htmlContent,
+    });
+
+    if (response.statusCode >= 400) {
+      console.error(
+        `❌ Error sending email to ${to}: SendGrid responded with status ${response.statusCode}`
+      );
+      return;
+    }
+
     console.log(`📧 Email sent to ${to}: ${subject}`);
   } catch (error) {
-    console.error(`❌ Error sending email to ${to}:`, error.message);
+    console.error('❌ Unexpected error while sending email:', error);
   }
 };
 
