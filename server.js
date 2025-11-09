@@ -1,5 +1,5 @@
 // ================== IMPORTS ==================
-const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -28,7 +28,7 @@ function ensureEnv(variableName) {
 
 // ================== EMAIL SETUP (using Nodemailer) ==================
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
-const SENDER_EMAIL = ensureEnv('SENDER_EMAIL') || 'alagjonalynmae@gmail.com';
+const SENDGRID_FROM = ensureEnv('SENDGRID_FROM');
 const ALLOWED_EMAIL_DOMAINS = (
   process.env.ALLOWED_EMAIL_DOMAINS || '@dlsud.edu.ph,@gmail.com'
 )
@@ -47,21 +47,28 @@ function isEmailDomainAllowed(email) {
   );
 }
 
-const resend = new Resend(ensureEnv('RESEND_API_KEY'));
+sgMail.setApiKey(ensureEnv('SENDGRID_API_KEY'));
 
 // ================== EMAIL HELPER FUNCTION ==================
 const sendEmail = async (to, subject, htmlContent) => {
-  const { error } = await resend.emails.send({
-    from: `LabLinx DLSU-D System <${SENDER_EMAIL}>`,
-    to: to,
-    subject: subject,
-    html: htmlContent,
-  });
+  try {
+    const [response] = await sgMail.send({
+      from: `LabLinx DLSU-D System <${SENDGRID_FROM}>`,
+      to,
+      subject,
+      html: htmlContent,
+    });
 
-  if (error) {
-    console.error(`❌ Error sending email to ${to}:`, error.message);
-  } else {
+    if (response.statusCode >= 400) {
+      console.error(
+        `❌ Error sending email to ${to}: SendGrid responded with status ${response.statusCode}`
+      );
+      return;
+    }
+
     console.log(`📧 Email sent to ${to}: ${subject}`);
+  } catch (error) {
+    console.error('❌ Unexpected error while sending email:', error);
   }
 };
 
