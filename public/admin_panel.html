@@ -1689,12 +1689,8 @@
                 editForm.innerHTML = `
                     <input type="hidden" id="editItemId" value="${item.itemId}">
                     <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
-                    <label for="editCategory">Category</label>
-                    <select id="editCategory" required>
-                        <option value="General" ${item.category === 'General' ? 'selected' : ''}>General</option>
-                        <option value="Office Supplies" ${item.category === 'Office Supplies' ? 'selected' : ''}>Office Supplies</option>
-                    </select>
-                    <label for="editQuantity">Total Quantity</label><input type="number" id="editQuantity" value="${item.originalQuantity || item.quantity}" min="0" required />
+                    <label for="editCategory">Category</label><input type="text" id="editCategory" value="${item.category}" readonly />
+                    <input type="hidden" id="editQuantity" value="${item.originalQuantity || item.quantity}" />
                     <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
                     <button type="submit">Save Changes</button>
                 `;

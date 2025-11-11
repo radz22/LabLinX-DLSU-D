@@ -3449,9 +3449,9 @@
                     <label for="editCategory">Category</label><input type="text" id="editCategory" value="${
                       item.category
                     }" readonly />
-                    <label for="editQuantity">Total Quantity</label><input type="number" id="editQuantity" value="${
+                    <input type="hidden" id="editQuantity" value="${
                       item.originalQuantity || item.quantity
-                    }" min="0" required />
+                    }" />
                     <label for="editLocation">Location</label><input type="text" id="editLocation" value="${
                       item.location
                     }" required />
@@ -3587,16 +3587,36 @@
             if (!response.ok) throw new Error('Failed to archive item');
             showToast('Item archived successfully.');
             fetchInventory(type);
+            fetchArchivedInventory();
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
         };
+        function encodeItemId(value) {
+          if (typeof value !== 'string') return '';
+          return encodeURIComponent(value);
+        }
+        function escapeAttribute(value) {
+          return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        }
         window.restoreInventoryItem = async (itemId) => {
+          if (!itemId) {
+            showToast('Error: Missing item identifier to restore.');
+            return;
+          }
           if (!confirm('Are you sure you want to restore this item?')) return;
           try {
-            const res = await fetch(`/api/inventory/restore/${itemId}`, {
-              method: 'PUT',
-            });
+            const res = await fetch(
+              `/api/inventory/restore/${encodeItemId(itemId)}`,
+              {
+                method: 'PUT',
+              }
+            );
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             showToast(result.message);
@@ -3607,6 +3627,10 @@
           }
         };
         window.deleteInventoryItemPermanently = async (itemId) => {
+          if (!itemId) {
+            showToast('Error: Missing item identifier to delete.');
+            return;
+          }
           if (
             !confirm(
               'WARNING: This will permanently delete the item and all its history. Are you sure?'
@@ -3614,9 +3638,12 @@
           )
             return;
           try {
-            const res = await fetch(`/api/inventory/permanent/${itemId}`, {
-              method: 'DELETE',
-            });
+            const res = await fetch(
+              `/api/inventory/permanent/${encodeItemId(itemId)}`,
+              {
+                method: 'DELETE',
+              }
+            );
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             showToast(result.message);
@@ -3631,7 +3658,8 @@
             const response = await fetch('/api/archived-inventory');
             if (!response.ok)
               throw new Error('Failed to fetch archived inventory');
-            combinedArchivedInventory = await response.json();
+            const payload = await response.json();
+            combinedArchivedInventory = Array.isArray(payload) ? payload : [];
             if (
               document
                 .getElementById('inventory-content')
@@ -3660,13 +3688,15 @@
           }
           filteredData.forEach((item) => {
             const originalQty = item.originalQuantity || item.quantity || 0;
+            const resolvedItemId = item.itemId || '';
+            const safeItemIdAttr = escapeAttribute(resolvedItemId);
             const row = inventoryArchiveTableBody.insertRow();
             const actionsHtml = `
-                    <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
-                    <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete Permanently</button>
+                    <button class="btn btn-restore" onclick="restoreInventoryItem('${safeItemIdAttr}')">Restore</button>
+                    <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${safeItemIdAttr}')">Delete Permanently</button>
                 `;
             row.innerHTML = `
-                    <td>${item.itemId}</td>
+                    <td>${resolvedItemId}</td>
                     <td>${item.name}</td>
                     <td>${item.category}</td>
                     <td>${originalQty}</td>
