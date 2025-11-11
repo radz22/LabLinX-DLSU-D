@@ -348,7 +348,7 @@ const categoryAdminMap = {
 const adminCategoryMapping = {
   admin: ['General', 'Office Supplies'],
   admin2: ['Science', 'Sports'],
-  admin3: ['Tables &CChairs', 'Computer Lab', 'Food Lab', 'Music Instruments'],
+  admin3: ['Tables & Chairs', 'Computer Lab', 'Food Lab', 'Music Instruments'],
   admin4: ['Robotics'],
 };
 
