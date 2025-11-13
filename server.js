@@ -920,29 +920,56 @@ const createCrudRoutes = (apiPath, Model) => {
   });
   app.post(apiPath, isAdmin, async (req, res) => {
     try {
-      if (await Model.findOne({ itemId: req.body.itemId })) {
-        return res.status(409).json({ message: 'Item ID already exists.' });
+      const incomingData = req.body;
+      const itemsToInsert = Array.isArray(incomingData)
+        ? incomingData
+        : [incomingData];
+
+      const itemIds = itemsToInsert.map((item) => item.itemId);
+      const existingItems = await Model.find({ itemId: { $in: itemIds } });
+      if (existingItems.length > 0) {
+        const duplicates = existingItems.map((item) => item.itemId).join(', ');
+        return res.status(409).json({
+          message: `The following Item IDs already exist: ${duplicates}`,
+        });
       }
-      const newItem = { ...req.body, originalQuantity: req.body.quantity };
-      const savedItem = await new Model(newItem).save();
-      await logAdminAction(
-        req,
-        'Create Item',
-        `Created item '${savedItem.name}' (ID: ${savedItem.itemId})`
-      );
 
-      // Log item creation in its history
-      await new ItemHistory({
-        itemId: savedItem.itemId,
+      const itemsWithOriginalQty = itemsToInsert.map((item) => ({
+        ...item,
+        originalQuantity: item.quantity,
+        status: 'Available',
+      }));
+
+      const savedItems = await Model.insertMany(itemsWithOriginalQty);
+      const firstId = savedItems[0].itemId;
+      const lastId = savedItems[savedItems.length - 1].itemId;
+      const logDetail =
+        savedItems.length > 1
+          ? `Created ${savedItems.length} items (${firstId} to ${lastId})`
+          : `Created item '${savedItems[0].name}' (ID: ${firstId})`;
+
+      await logAdminAction(req, 'Create Item(s)', logDetail);
+
+      const historyLogs = savedItems.map((item) => ({
+        itemId: item.itemId,
         action: 'Created',
-      }).save();
+      }));
+      await ItemHistory.insertMany(historyLogs);
 
-      // 🔄 Broadcast refresh to all clients
       broadcastRefresh();
 
-      res.status(201).json(savedItem);
+      res.status(201).json(savedItems);
     } catch (e) {
-      res.status(500).json({ message: 'Error adding item.' });
+      console.error('Error adding item(s) to inventory:', e);
+      if (e.code === 11000) {
+        return res.status(409).json({
+          message:
+            'Duplicate Item ID detected. Please ensure your prefix is correct and try again.',
+        });
+      }
+      res.status(500).json({
+        message: 'Error adding item. Please check server console for details.',
+      });
     }
   });
   app.put(`${apiPath}/:itemId`, isAdmin, async (req, res) => {
