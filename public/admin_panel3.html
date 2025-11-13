@@ -551,22 +551,30 @@
       body.dark table td .status-select option {
         background-color: var(--card-bg-dark);
       }
-      .status-Available {
-        color: var(--success);
-      }
-      .status-In-Use {
-        color: var(--warning);
-      }
-      .status-Maintenance {
-        color: var(--danger);
-      }
       .status-badge {
         padding: 4px 10px;
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: 600;
-        color: white;
+        color: #343a40;
         text-align: center;
+      }
+      .status-Available {
+        background-color: rgba(46, 204, 113, 0.18);
+        color: #000;
+      }
+      .status-In-Use {
+        background-color: rgba(255, 193, 7, 0.22);
+        color: #000;
+      }
+      .status-Maintenance,
+      .status-Damaged {
+        background-color: rgba(220, 53, 69, 0.22);
+        color: #000;
+      }
+      .status-Calibration {
+        background-color: rgba(147, 112, 219, 0.22);
+        color: #000;
       }
       .status-Pending {
         background-color: var(--warning);
@@ -1559,9 +1567,19 @@
               <button id="toggleInventoryArchiveBtn">View Archives</button>
             </div>
           </section>
+          <p
+            class="page-subtitle"
+            style="
+              margin-top: 2.5rem;
+              border-top: 1px solid var(--border-light);
+              padding-top: 2.5rem;
+            "
+          >
+            Tables & Chairs
+          </p>
 
           <section class="inventory-card">
-            <h2>Add New Tables &amp; Chairs</h2>
+            <h2>Add New Furniture</h2>
             <form class="add-form" id="addFormFurniture">
               <input
                 type="text"

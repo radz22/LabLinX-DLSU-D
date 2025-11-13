@@ -170,14 +170,29 @@ body.dark table tbody tr:hover { background-color: #2c2f33; }
 table td .status-select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-light); font-weight: 500; background: transparent; color: var(--text-dark); }
 body.dark table td .status-select { border-color: var(--border-dark); color: var(--text-light); }
 body.dark table td .status-select option { background-color: var(--card-bg-dark); }
-.status-Available { color: var(--success); } .status-In-Use { color: var(--warning); } .status-Maintenance { color: var(--danger); }
-.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: white; text-align: center; }
+.status-Available {
+    background-color: rgba(46, 204, 113, 0.18);
+    color: #0f5132;
+}
+.status-In-Use {
+    background-color: rgba(255, 193, 7, 0.22);
+    color: #664d03;
+}
+.status-Maintenance,
+.status-Damaged {
+    background-color: rgba(220, 53, 69, 0.22);
+    color: #842029;
+}
+.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: #343a40; text-align: center; }
 .status-Pending { background-color: var(--warning); }
 .status-Approved { background-color: var(--success); }
 .status-Rejected { background-color: var(--danger); }
 .status-Returned { background-color: #6c757d; }
 /* --- ADDED: Calibration from admin_panel4.html --- */
-.status-Calibration { background-color: var(--calibration); }
+.status-Calibration {
+    background-color: rgba(147, 112, 219, 0.22);
+    color: #45307d;
+}
 .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; }
 .btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
 .btn:hover { opacity: 0.85; }
