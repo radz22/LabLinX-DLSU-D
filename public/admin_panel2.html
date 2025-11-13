@@ -2138,7 +2138,13 @@ function renderTable(type) {
         } else {
             // Active View: Only Edit Model remains
             headerActionsHtml = `
-                <button class="btn btn-edit" onclick="handleModelEditClick(event, '${type}', '${modelIdForActions}')">Edit Model</button>
+                <button
+                    class="btn btn-edit"
+                    data-item-ids="${group.items.map(i => i.itemId).join('|')}"
+                    onclick="handleModelEditClick(event, '${type}', '${modelIdForActions}')"
+                >
+                    Edit Model
+                </button>
             `;
         }
         
@@ -2355,34 +2361,35 @@ function updateMasterAndBulkActionUI() {
 
         async function handleUpdateItem(e) {
             e.preventDefault();
-            const formType = document.getElementById('editForm').dataset.type;
+            const editFormElement = document.getElementById('editForm');
+            const formType = editFormElement.dataset.type;
             if (formType === 'inventory') {
                 const itemId = document.getElementById('editItemId').value;
                 const type = document.getElementById('editItemType').value;
                 const config = inventoryTypes[type];
+                const itemIdsAttr = editFormElement.dataset.itemIds || itemId;
+                const itemIds = itemIdsAttr.split(',').filter(Boolean);
 
-                const originalItem = config.store.find(i => i.itemId === itemId);
-                const newTotalQuantity = parseInt(document.getElementById('editQuantity').value);
-                            
                 const updatedData = {
                     name: document.getElementById('editItemName').value,
                     category: document.getElementById('editCategory').value,
-                    originalQuantity: newTotalQuantity, // Always update originalQuantity
                     location: document.getElementById('editLocation').value,
                 };
 
-                // Recalculate 'available' quantity if total quantity was changed
-                if (originalItem && newTotalQuantity !== originalItem.originalQuantity) {
-                    const borrowedQty = originalItem.originalQuantity - originalItem.quantity;
-                    updatedData.quantity = newTotalQuantity - borrowedQty; // This is the new 'available'
-                }
-
                 try {
-                    const response = await fetch(`${config.api}/${itemId}`, { 
-                        method: 'PUT', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify(updatedData) });
-                    if (!response.ok) throw new Error('Failed to update item');
+                    const updateRequests = itemIds.map(async (id) => {
+                        const response = await fetch(`${config.api}/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedData),
+                        });
+                        if (!response.ok) {
+                            const errorBody = await response.json().catch(() => ({}));
+                            throw new Error(errorBody.message || `Failed to update item ${id}`);
+                        }
+                    });
+
+                    await Promise.all(updateRequests);
                     showToast('Item updated successfully!');
                     editModal.style.display = 'none';
                     fetchInventory(type);
@@ -2735,6 +2742,7 @@ function updateMasterAndBulkActionUI() {
                     <input type="password" id="editUserPassword" placeholder="Leave blank to keep current password">
                     <button type="submit">Save Changes</button>`;
                 editForm.dataset.type = 'user';
+                delete editForm.dataset.itemIds;
                 editForm.onsubmit = handleUpdateUser;
                 editModal.style.display = 'flex';
             }
@@ -2978,30 +2986,19 @@ function updateMasterAndBulkActionUI() {
             });
         }
 
-       window.openEditModal = (type, itemId) => {
+window.openEditModal = (type, itemId, itemIds = [itemId]) => {
     const config = inventoryTypes[type];
-    
-    // --- Step 1: Find the target item to get its general details (name, category) ---
-    const item = config.store.find(i => i.itemId === itemId);
-    
-    if (item) {
-        // --- Step 2: Calculate the Aggregate (Total) Quantity for the entire group (model) ---
-        // Since we are clicking 'Edit Model', we need the total count of all items 
-        // that share this item's name/model.
-        
-        const aggregateData = config.store.reduce((acc, currentItem) => {
-            // Group based on the item's name/model
-            if (currentItem.name === item.name) {
-                acc.totalQuantity += currentItem.originalQuantity || currentItem.quantity || 0;
-            }
-            return acc;
-        }, { totalQuantity: 0 });
+    const itemsToEdit = config.store.filter(i => itemIds.includes(i.itemId));
+    const item = itemsToEdit[0];
 
-        const totalQuantityToShow = aggregateData.totalQuantity;
-        
-        // --- Step 3: Populate the Modal with Aggregate Data ---
-        document.getElementById('editModalTitle').innerText = `Edit ${type} Model: ${item.name}`;
-        editForm.innerHTML = `
+    if (!item) return;
+
+    const totalQuantityToShow = itemsToEdit.reduce((sum, currentItem) => {
+        return sum + (currentItem.originalQuantity || currentItem.quantity || 0);
+    }, 0);
+
+    document.getElementById('editModalTitle').innerText = `Edit ${type} Model: ${item.name}`;
+    editForm.innerHTML = `
             <input type="hidden" id="editItemId" value="${item.itemId}">
             <input type="hidden" id="editItemType" value="${type}">
             <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
@@ -3009,10 +3006,10 @@ function updateMasterAndBulkActionUI() {
             <label for="editQuantity" style="display:none;">Total Quantity</label><input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
             <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
             <button type="submit">Save Changes</button>`;
-        editForm.dataset.type = 'inventory';
-        editForm.onsubmit = handleUpdateItem;
-        editModal.style.display = 'flex';
-    }
+    editForm.dataset.type = 'inventory';
+    editForm.dataset.itemIds = itemIds.join(',');
+    editForm.onsubmit = handleUpdateItem;
+    editModal.style.display = 'flex';
 };
                     
         window.openEditRequestModal = (requestId) => {
@@ -3028,6 +3025,7 @@ function updateMasterAndBulkActionUI() {
                     <label for="editDueDate">Due Date</label><input type="date" id="editDueDate" value="${request.dueDate ? new Date(request.dueDate).toISOString().split('T')[0] : ''}" required />
                     <button type="submit">Save Changes</button>`;
                 editForm.dataset.type = 'request';
+                delete editForm.dataset.itemIds;
                 editForm.onsubmit = handleUpdateItem;
                 editModal.style.display = 'flex';
             }
@@ -3581,14 +3579,9 @@ window.handleModelArchiveClick = (event, itemId, groupName, type) => {
     event.stopPropagation(); // Prevents row collapse
     
     if (isViewingInventoryArchive) {
-        // When in ARCHIVE VIEW, this button should trigger RESTORE
-        // NOTE: Since you are clicking 'Restore Model' (in the header), this should actually call the restore function.
-        // We will call the *single item* restore action to restore one item and let the user re-archive it.
-        // If you intended to RESTORE ALL items in the group, you need a different backend endpoint.
         restoreInventoryItem(itemId); 
         
     } else {
-        // When in ACTIVE INVENTORY VIEW, this button should trigger ARCHIVE ALL
         archiveInventoryModel(itemId, groupName, type);
     }
 };
@@ -3600,17 +3593,10 @@ window.handleModelDeleteClick = (event, itemId, groupName, type) => {
 
 window.handleModelEditClick = (event, type, itemId) => {
     event.stopPropagation(); // Prevents row collapse
-    openEditModal(type, itemId);
-};
-
-window.handleModelDeleteClick = (event, itemId, groupName, type) => {
-    event.stopPropagation(); // Prevents row collapse
-    deleteInventoryModelPermanently(itemId, groupName, type);
-};
-
-window.handleModelEditClick = (event, type, itemId) => {
-    event.stopPropagation(); // Prevents row collapse
-    openEditModal(type, itemId);
+    const button = event.currentTarget;
+    const itemIdsAttr = button.getAttribute('data-item-ids');
+    const itemIds = itemIdsAttr ? itemIdsAttr.split('|') : [itemId];
+    openEditModal(type, itemId, itemIds);
 };
 
 // ... (Rest of your existing JavaScript follows)
