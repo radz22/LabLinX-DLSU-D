@@ -402,6 +402,15 @@
       body.dark .equipment-group-toggle[aria-expanded='true'] {
         background-color: rgba(255, 205, 0, 0.15);
       }
+      .equipment-group-subtitle {
+        margin-left: 6px;
+        font-size: 0.85rem;
+        color: var(--text-subtle);
+        font-weight: 500;
+      }
+      body.dark .equipment-group-subtitle {
+        color: var(--text-subtle-dark-mode);
+      }
       .equipment-toggle-placeholder {
         border: 1px solid transparent;
       }
@@ -490,6 +499,10 @@
       }
       .status-Maintenance {
         color: var(--status-maintenance);
+        font-weight: 600;
+      }
+      .status-Unavailable {
+        color: var(--text-subtle);
         font-weight: 600;
       }
 
@@ -1700,6 +1713,7 @@
               groupedMap.set(key, {
                 baseId,
                 name: item.name || baseId,
+                category: item.category || 'Uncategorized',
                 items: [],
               });
             }
@@ -1707,54 +1721,144 @@
           });
 
           groupedMap.forEach((group, key) => {
-            const groupItems = group.items;
-            const [primaryItem, ...restItems] = groupItems;
-            const aggregatedQuantity = groupItems.reduce(
-              (sum, current) => sum + (Number(current.quantity) || 0),
+            const groupItems = [...group.items].sort((a, b) =>
+              (a.itemId || '').localeCompare(b.itemId || '')
+            );
+            const aggregatedAvailable = groupItems.reduce(
+              (sum, current) =>
+                sum + Math.max(Number(current.quantity) || 0, 0),
               0
             );
-
-            renderEquipmentRow(primaryItem, {
+            const groupStatus = deriveGroupStatus(
+              groupItems,
+              aggregatedAvailable
+            );
+            renderEquipmentSummaryRow({
               groupId: key,
-              hasToggle: restItems.length > 0,
-              extraCount: restItems.length,
-              labelOverride: group.name || group.baseId,
-              aggregatedQuantity,
+              baseId: group.baseId,
+              name: group.name,
+              category: group.category,
+              locationLabel: deriveGroupLocation(groupItems),
+              statusText: groupStatus.text,
+              statusClass: groupStatus.className,
+              itemCount: groupItems.length,
+              aggregatedAvailable,
+              primaryItemId: groupItems[0]?.itemId || group.baseId,
             });
-            restItems.forEach((detailItem) => {
-              renderEquipmentRow(detailItem, {
+
+            groupItems.forEach((item, index) => {
+              renderEquipmentDetailRow(item, {
                 groupId: key,
-                isDetail: true,
+                displayLabel:
+                  item.itemId ||
+                  `${group.baseId}-${String(index + 1).padStart(2, '0')}`,
               });
             });
           });
         };
 
-        function renderEquipmentRow(
+        function deriveGroupStatus(items, aggregatedAvailable) {
+          const normalizedStatuses = items.map((item) =>
+            (item.status || 'Available').trim()
+          );
+          if (aggregatedAvailable > 0) {
+            return {
+              text: `Available (${aggregatedAvailable})`,
+              className: 'status-Available',
+            };
+          }
+          if (normalizedStatuses.some((status) => status === 'Maintenance')) {
+            return { text: 'Maintenance', className: 'status-Maintenance' };
+          }
+          if (normalizedStatuses.some((status) => status === 'In-Use')) {
+            return { text: 'In-Use', className: 'status-In-Use' };
+          }
+          if (normalizedStatuses.some((status) => status === 'Damaged')) {
+            return { text: 'Damaged', className: 'status-Damaged' };
+          }
+          return { text: 'Unavailable', className: 'status-Unavailable' };
+        }
+
+        function deriveGroupLocation(items) {
+          const uniqueLocations = [
+            ...new Set(
+              items.map((item) => item.location || 'Unspecified Location')
+            ),
+          ];
+          return uniqueLocations.length === 1
+            ? uniqueLocations[0]
+            : 'Multiple Locations';
+        }
+
+        function renderEquipmentSummaryRow({
+          groupId,
+          baseId,
+          name,
+          category,
+          locationLabel,
+          statusText,
+          statusClass,
+          itemCount,
+          aggregatedAvailable,
+          primaryItemId,
+        }) {
+          const row = equipmentTableBody.insertRow();
+          row.classList.add('equipment-summary-row');
+          row.dataset.group = groupId;
+
+          const safeBaseId = sanitizeHtml(baseId);
+          const safeName = sanitizeHtml(name);
+          const safeCategory = sanitizeHtml(category);
+          const safeLocation = sanitizeHtml(locationLabel);
+          const safeStatusText = sanitizeHtml(statusText);
+          const safePrimaryId = sanitizeHtml(primaryItemId);
+          const safeGroupAttr = sanitizeHtml(groupId);
+          const itemCountBadge =
+            itemCount > 1
+              ? `<span class="equipment-group-count">+${itemCount - 1}</span>`
+              : '';
+
+          const toggleControl =
+            itemCount > 1
+              ? `<button class="equipment-group-toggle" data-group="${safeGroupAttr}" aria-expanded="false" title="Show all ${safeBaseId} entries">
+                    <span class="arrow-icon">▼</span>
+                 </button>`
+              : '<span class="equipment-toggle-placeholder"></span>';
+
+          row.innerHTML = `
+            <td>
+              ${toggleControl}
+              <strong>${safeBaseId}</strong>
+              <span class="equipment-group-subtitle">(${safeName})</span>
+              ${itemCountBadge}
+            </td>
+            <td>${safeName}</td>
+            <td>${safeCategory}</td>
+            <td>${safeLocation}</td>
+            <td><span class="${statusClass}">${safeStatusText}</span></td>
+            <td>
+              <button class="btn btn-request" ${
+                aggregatedAvailable > 0 ? '' : 'disabled'
+              } onclick="showRequestModal('${safePrimaryId}', '${safeName}', ${aggregatedAvailable})">
+                ${aggregatedAvailable > 0 ? 'Request' : 'Unavailable'}
+              </button>
+            </td>
+          `;
+        }
+
+        function renderEquipmentDetailRow(
           item,
-          {
-            groupId,
-            hasToggle = false,
-            isDetail = false,
-            extraCount = 0,
-            labelOverride,
-            aggregatedQuantity,
-          } = {}
+          { groupId, displayLabel = item.itemId || '' } = {}
         ) {
           if (!equipmentTableBody) return;
 
           const row = equipmentTableBody.insertRow();
           row.dataset.group = groupId;
+          row.classList.add('equipment-detail-row');
+          row.style.display = 'none';
 
-          if (isDetail) {
-            row.classList.add('equipment-detail-row');
-            row.style.display = 'none';
-          } else {
-            row.classList.add('equipment-summary-row');
-          }
-
-          const rawItemId = item.itemId || '';
-          const safeItemId = sanitizeHtml(rawItemId);
+          const safeItemId = sanitizeHtml(item.itemId || '');
+          const safeDisplayId = sanitizeHtml(displayLabel);
           const safeName = sanitizeHtml(item.name || '');
           const safeCategory = sanitizeHtml(item.category || '');
           const safeLocation = sanitizeHtml(item.location || '');
@@ -1762,53 +1866,29 @@
           const statusClass = rawStatus.replace(/\s+/g, '');
           const safeStatus = sanitizeHtml(rawStatus);
           const quantity = Number(item.quantity) || 0;
-          const displayLabel = labelOverride || safeItemId;
-          const quantityToShow =
-            !isDetail && typeof aggregatedQuantity === 'number'
-              ? aggregatedQuantity
-              : quantity;
           const statusLabel =
             rawStatus === 'Available'
-              ? `${safeStatus} (${quantityToShow})`
+              ? `${safeStatus} (${quantity})`
               : safeStatus;
-          const isAvailable = rawStatus === 'Available' && quantityToShow > 0;
-
-          const safeGroupAttr = sanitizeHtml(groupId);
-
-          const leadingControl =
-            !isDetail && hasToggle
-              ? `<button class="equipment-group-toggle" data-group="${safeGroupAttr}" aria-expanded="false" title="Show all ${safeItemId} entries">
-                    <span class="arrow-icon">▼</span>
-                 </button>`
-              : '<span class="equipment-toggle-placeholder"></span>';
-
-          const countBadge =
-            !isDetail && extraCount > 0
-              ? `<span class="equipment-group-count">+${extraCount}</span>`
-              : '';
+          const isAvailable = rawStatus === 'Available' && quantity > 0;
 
           row.innerHTML = `
-                        <td>
-                            ${
-                              isDetail
-                                ? '<span class="equipment-toggle-placeholder"></span>'
-                                : leadingControl
-                            }
-                            <strong>${displayLabel}</strong>
-                            ${countBadge}
-                        </td>
-                        <td>${safeName}</td>
-                        <td>${safeCategory}</td>
-                        <td>${safeLocation}</td>
-                        <td><span class="status-${statusClass}">${statusLabel}</span></td>
-                        <td>
-                            <button class="btn btn-request" ${
-                              isAvailable ? '' : 'disabled'
-                            } onclick="showRequestModal('${safeItemId}', '${safeName}', ${quantity})">
-                                ${isAvailable ? 'Request' : 'Unavailable'}
-                            </button>
-                        </td>
-                    `;
+            <td>
+              <span class="equipment-toggle-placeholder"></span>
+              <strong>${safeDisplayId}</strong>
+            </td>
+            <td>${safeName}</td>
+            <td>${safeCategory}</td>
+            <td>${safeLocation}</td>
+            <td><span class="status-${statusClass}">${statusLabel}</span></td>
+            <td>
+              <button class="btn btn-request" ${
+                isAvailable ? '' : 'disabled'
+              } onclick="showRequestModal('${safeItemId}', '${safeName}', ${quantity})">
+                ${isAvailable ? 'Request' : 'Unavailable'}
+              </button>
+            </td>
+          `;
         }
 
         const renderRequestsTable = () => {
