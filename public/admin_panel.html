@@ -156,14 +156,26 @@
     table td .status-select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-light); font-weight: 500; background: transparent; color: var(--text-dark); }
     body.dark table td .status-select { border-color: var(--border-dark); color: var(--text-light); }
     body.dark table td .status-select option { background-color: var(--card-bg-dark); }
-    .status-Available { color: var(--success); } .status-In-Use { color: var(--warning); } .status-Maintenance { color: var(--danger); } .status-Damaged { color: var(--danger); }
-    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: white; text-align: center; }
+    .status-Available {
+        background-color: rgba(46, 204, 113, 0.18);
+        color: #0f5132;
+    }
+    .status-In-Use {
+        background-color: rgba(255, 193, 7, 0.22);
+        color: #664d03;
+    }
+    .status-Maintenance,
+    .status-Damaged {
+        background-color: rgba(220, 53, 69, 0.22);
+        color: #842029;
+    }
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: #343a40; text-align: center; }
     .status-Pending { background-color: var(--warning); }
     .status-Approved { background-color: var(--success); }
     .status-Rejected { background-color: var(--danger); }
     .status-Returned { background-color: #6c757d; }
     .status-PastDue { background-color: #c82333; }
-    .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; }
+    .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; flex-direction: column; justify-content: center; align-items: center;}
     .btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
     .btn:hover { opacity: 0.85; }
     .btn svg { width: 14px; height: 14px; }
@@ -559,80 +571,66 @@
 
     <div id="inventory-content" class="page-content">
         <h1>Manage Lab Inventory</h1>
-        
+
         <section class="inventory-card" style="padding: 1rem 2rem;">
             <div class="filter-row" style="justify-content: flex-end; margin-bottom: 0;">
                 <button id="toggleInventoryArchiveBtn">View Archives</button>
             </div>
         </section>
 
-        <div id="inventory-active-container">
-            <p class="page-subtitle" style="margin-top: 2.5rem;">Add, edit, and manage lab equipment.</p>
-            <section class="inventory-card">
-                <h2>Add New Equipment</h2>
-                <form class="add-form" id="addForm">
-                    <input type="text" id="itemId" placeholder="Item ID (e.g., MIC-001)" required />
-                    <input type="text" id="itemName" placeholder="Equipment Name" required />
-                    <select id="category" required>
-                        <option value="" disabled selected>Select Category</option>
-                        <option value="General">General</option>
-                        <option value="Office Supplies">Office Supplies</option>
+        <p class="page-subtitle" style="margin-top: 2.5rem;">Add, edit, and manage lab equipment.</p>
+        <section class="inventory-card">
+            <h2>Add New Equipment</h2>
+            <form class="add-form" id="addFormInventory">
+                <input type="text" name="itemIdPrefix" placeholder="Item ID Prefix (e.g., GEN)" required />
+                <input type="text" name="name" placeholder="Equipment Name" required />
+                <select name="category" required>
+                    <option value="General" selected>General</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                </select>
+                <input type="number" name="quantity" placeholder="Quantity" min="1" required />
+                <input type="text" name="location" placeholder="Location" required />
+                <button type="submit">Add Item</button>
+            </form>
+        </section>
+        <section class="inventory-card">
+            <h2 id="inventoryTableTitle">Lab Equipment Inventory & Status</h2>
+            <div class="filter-row">
+                <div class="search-bar">
+                    <input type="text" id="searchInventory" placeholder="Search equipment..." />
+                </div>
+                <div class="filter-select">
+                    <label for="inventoryStatusFilter">Status</label>
+                    <select id="inventoryStatusFilter">
+                        <option value="All">All Statuses</option>
+                        <option value="Available">Available</option>
+                        <option value="In-Use">In-Use</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="Calibration">Calibration</option>
                     </select>
-                    <input type="number" id="quantity" placeholder="Quantity" min="0" required />
-                    <input type="text" id="location" placeholder="Location" required />
-                    <button type="submit">Add Item</button>
-                </form>
-            </section>
-            <section class="inventory-card">
-                <h2 id="inventoryTableTitle">Lab Equipment Inventory & Status</h2>
-                <div class="filter-row">
-                    <div class="search-bar">
-                        <input type="text" id="searchInput" placeholder="Search equipment..." />
-                    </div>
-                    <div class="filter-select">
-                        <label for="inventoryStatusFilter">Status</label>
-                        <select id="inventoryStatusFilter">
-                            <option value="All">All Statuses</option>
-                            <option value="Available">Available</option>
-                            <option value="In-Use">In-Use</option>
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="Damaged">Damaged</option>
-                        </select>
-                    </div>
                 </div>
+       
+            </div>
+            <div id="generalInventoryContainer">
                 <table id="inventoryTable">
-                    <thead>
-                        <tr><th>Item ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </section>
-        </div>
-
-        <div id="inventory-archive-container" style="display: none;">
-            <p class="page-subtitle" style="margin-top: 2.5rem;">View and restore archived equipment.</p>
-            <section class="inventory-card">
-                <h2>Archived Inventory</h2>
-                <div class="filter-row">
-                    <div class="search-bar">
-                        <input type="text" id="searchInventoryArchive" placeholder="Search archived items..." />
-                    </div>
-                </div>
-                <table id="tableInventoryArchive">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Category</th>
-                            <th>Original Qty</th>
+                            <th>Total Qty</th>
+                            <th>Borrowed</th>
+                            <th>Available</th>
                             <th>Location</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="inventoryArchiveTableBody"></tbody>
+                    <tbody></tbody>
                 </table>
-            </section>
-        </div>
+            </div>
+        </section>
     </div>
 
     <div id="requests-content" class="page-content">
@@ -728,6 +726,12 @@
     </div>
   </main>
   
+    <div id="bulkActionBar" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--primary-dark); padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; z-index: 999;">
+        <span id="selectedCount" style="color: var(--accent-gold); font-weight: 600; margin-right: 20px;">0 Items Selected</span>
+        <button class="btn btn-restore" onclick="bulkRestoreSelected()">Bulk Restore</button>
+        <button class="btn btn-delete" onclick="bulkDeleteSelected()">Delete Permanently</button>
+    </div>
+
   <div id="editModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -811,9 +815,9 @@
       const toggleBtn = document.querySelector(".toggle-btn");
       const darkToggle = document.querySelector(".dark-toggle");
       const sidebarLinks = document.querySelectorAll("#sidebar nav a[data-page]");
-      const addForm = document.getElementById('addForm');
+      const addFormInventory = document.getElementById('addFormInventory');
       const inventoryTableBody = document.getElementById('inventoryTable').querySelector('tbody');
-      const searchInput = document.getElementById('searchInput');
+      const searchInventory = document.getElementById('searchInventory');
       const inventoryStatusFilter = document.getElementById('inventoryStatusFilter'); // Added
       const modal = document.getElementById('editModal');
       const closeBtn = modal.querySelector('.close-button');
@@ -847,11 +851,18 @@
       
       // Added inventory archive state
       const toggleInventoryArchiveBtn = document.getElementById('toggleInventoryArchiveBtn');
-      const inventoryActiveContainer = document.getElementById('inventory-active-container');
-      const inventoryArchiveContainer = document.getElementById('inventory-archive-container');
-      const inventoryArchiveTableBody = document.getElementById('inventoryArchiveTableBody');
-      const searchInventoryArchive = document.getElementById('searchInventoryArchive');
       const inventoryTableTitle = document.getElementById('inventoryTableTitle');
+      const inventoryTypes = {
+        General: {
+          api: '/api/inventory',
+          store: [],
+          tableBody: inventoryTableBody,
+          searchInput: searchInventory,
+          addForm: addFormInventory,
+          statusFilter: inventoryStatusFilter,
+        },
+      };
+      const ACTIVE_INVENTORY_TYPE = 'General';
       
       // Added History/Reports state
       const historyActionFilter = document.getElementById('historyActionFilter');
@@ -862,13 +873,12 @@
       let selectedPeriod = 'daily';
       const periodBtns = document.querySelectorAll('.period-btn');
 
-      let allInventoryData = [];
       let allRequestsData = [];
       let notifications = []; // FIXED: Use server-driven notifications
       let allHistoryLogs = []; // Added
       let isViewingTrash = false; // Added
       let isViewingInventoryArchive = false; // Added
-      let combinedArchivedInventory = []; // Added
+      let selectedArchivedItems = [];
       
       let currentBorrowingStudentId = null;
       let equipmentModeCapturedItemId = null; // Added
@@ -901,8 +911,8 @@
                         switch(pageId) {
                             case 'dashboard': updateDashboard(); break;
                             case 'inventory':
-                                if (isViewingInventoryArchive) fetchArchivedInventory();
-                                else fetchInventory();
+                                if (isViewingInventoryArchive) fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+                                else fetchInventory(ACTIVE_INVENTORY_TYPE);
                                 break;
                             case 'requests':
                                 if (isViewingTrash) fetchDeletedRequests();
@@ -954,9 +964,10 @@
             }
         });
         
-        addForm.addEventListener('submit', handleAddItem);
-        searchInput.addEventListener('input', renderTable); // FIXED: Changed from handleSearch
-        inventoryStatusFilter.addEventListener('change', renderTable); // FIXED: Added
+        inventoryTypes[ACTIVE_INVENTORY_TYPE].addForm.addEventListener('submit', (e) => handleAddItem(e, ACTIVE_INVENTORY_TYPE));
+        inventoryTypes[ACTIVE_INVENTORY_TYPE].searchInput.addEventListener('input', () => renderInventoryTable(ACTIVE_INVENTORY_TYPE));
+        inventoryTypes[ACTIVE_INVENTORY_TYPE].statusFilter.addEventListener('change', () => renderInventoryTable(ACTIVE_INVENTORY_TYPE));
+        toggleInventoryArchiveBtn.addEventListener('click', toggleInventoryArchiveView);
         
         editForm.addEventListener('submit', handleUpdateItem);
         closeBtn.onclick = () => { modal.style.display = 'none'; };
@@ -1055,7 +1066,7 @@
         if (pageId === 'dashboard') updateDashboard();
         else if (pageId === 'inventory') {
             isViewingInventoryArchive = false; // Reset view
-            fetchInventory();
+            fetchInventory(ACTIVE_INVENTORY_TYPE);
         }
         else if (pageId === 'requests') {
             isViewingTrash = false; // Reset view
@@ -1366,9 +1377,6 @@
             if (!response.ok) throw new Error('Failed to fetch inventory');
             const data = await response.json();
             
-            // Store data for other functions
-            allInventoryData = data;
-            
             // Calculate metrics based on originalQuantity for accuracy
             const totalEquipment = data.reduce((sum, item) => sum + (item.originalQuantity || 0), 0);
             const availableQty = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
@@ -1402,317 +1410,711 @@
       };
       
       // --- 7. INVENTORY (ACTIVE & ARCHIVE) ---
-      async function fetchInventory() {
+      async function fetchInventory(type = ACTIVE_INVENTORY_TYPE) {
+        const config = inventoryTypes[type];
         try {
-            const response = await fetch('/api/inventory');
-            if (!response.ok) throw new Error('Failed to fetch');
-            allInventoryData = await response.json();
-            if (document.getElementById('inventory-content').classList.contains('active')) {
-                isViewingInventoryArchive = false;
-                renderTable();
-            }
-        } catch (error) { 
-            showToast(error.message); 
-            allInventoryData = [];
-            if (document.getElementById('inventory-content').classList.contains('active')) {
-                renderTable();
-            }
-        }
-      };
-      
-      async function fetchArchivedInventory() {
-        try {
-            const response = await fetch('/api/archived-inventory');
-            if (!response.ok) throw new Error('Failed to fetch archived inventory');
-            combinedArchivedInventory = await response.json(); 
-            if (document.getElementById('inventory-content').classList.contains('active')) {
-                isViewingInventoryArchive = true;
-                renderArchiveTable(); 
-            }
+          const response = await fetch(config.api);
+          if (!response.ok) throw new Error('Failed to fetch inventory.');
+          config.store = await response.json();
+          if (!isViewingInventoryArchive && document.getElementById('inventory-content').classList.contains('active')) {
+            renderInventoryTable(type);
+          }
         } catch (error) {
-            showToast(error.message);
-            combinedArchivedInventory = [];
-            renderArchiveTable();
+          showToast(error.message, 'error');
+          config.store = [];
+          if (!isViewingInventoryArchive && document.getElementById('inventory-content').classList.contains('active')) {
+            renderInventoryTable(type);
+          }
         }
       }
 
-      // FIXED: renderTable to show calculated quantities
-      const renderTable = () => {
-        inventoryTableTitle.textContent = 'Lab Equipment Inventory & Status';
-        toggleInventoryArchiveBtn.textContent = 'View Archives';
-        inventoryActiveContainer.style.display = 'block';
-        inventoryArchiveContainer.style.display = 'none';
-        inventoryStatusFilter.style.display = 'block';
-        searchInput.placeholder = 'Search equipment...';
-        
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusFilterValue = inventoryStatusFilter.value;
-
-        const filteredData = allInventoryData.filter(item => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const borrowedQty = originalQty - (item.quantity || 0);
-            // Determine current status based on quantity, unless it's Maintenance/Damaged
-            const currentStatus = (item.status === 'Maintenance' || item.status === 'Damaged') ? item.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
-            
-            const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
-            const matchesStatus = statusFilterValue === 'All' || currentStatus === statusFilterValue;
-            return matchesSearch && matchesStatus;
-        });
-        
-        inventoryTableBody.innerHTML = '';
-        if (filteredData.length === 0) {
-            inventoryTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No equipment found.</td></tr>';
-            return;
-        }
-        filteredData.forEach(item => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const availableQty = item.quantity || 0;
-            const borrowedQty = originalQty - availableQty;
-            const status = (item.status === 'Maintenance' || item.status === 'Damaged') ? item.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
-            
-            const row = inventoryTableBody.insertRow();
-            row.innerHTML = `
-                <td>${item.itemId}</td>
-                <td>${item.name}</td>
-                <td>${item.category}</td>
-                <td>${originalQty}</td>
-                <td>${borrowedQty}</td>
-                <td>${availableQty}</td>
-                <td>${item.location}</td>
-                <td>
-                    <select class="status-select status-${status.replace(/[^a-zA-Z0-9]/g, '')}" onchange="updateStatus(this, '${item.itemId}')">
-                        <option value="Available" ${status === 'Available' ? 'selected' : ''}>Available</option>
-                        <option value="In-Use" ${status === 'In-Use' ? 'selected' : ''} disabled>In-Use</option>
-                        <option value="Maintenance" ${status === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
-                        <option value="Damaged" ${status === 'Damaged' ? 'selected' : ''}>Damaged</option>
-                    </select>
-                </td>
-                <td class="actions-cell">
-                    <button class="btn btn-edit" onclick="openEditModal('inventory', '${item.itemId}')">Edit</button>
-                    <button class="btn btn-delete" onclick="archiveInventoryItem('${item.itemId}')">Archive</button>
-                </td>`;
-        });
-      };
-      
-      // FIXED: Added renderArchiveTable
-      function renderArchiveTable() {
-            inventoryTableTitle.textContent = 'Archived Inventory';
-            toggleInventoryArchiveBtn.textContent = 'View Active Inventory';
-            inventoryActiveContainer.style.display = 'none';
-            inventoryArchiveContainer.style.display = 'block';
-            searchInput.placeholder = 'Search archived items...';
-            
-            const searchTerm = searchInventoryArchive.value.toLowerCase();
-            const filteredData = combinedArchivedInventory.filter(item => {
-                return Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
-            });
-            
-            inventoryArchiveTableBody.innerHTML = '';
-            if (filteredData.length === 0) {
-                inventoryArchiveTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No archived equipment found.</td></tr>`;
-                return;
-            }
-            filteredData.forEach(item => {
-                const originalQty = item.originalQuantity || item.quantity || 0;
-                const row = inventoryArchiveTableBody.insertRow();
-                const actionsHtml = `
-                    <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
-                    <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete Permanently</button>
-                `;
-                row.innerHTML = `
-                    <td>${item.itemId}</td>
-                    <td>${item.name}</td>
-                    <td>${item.category}</td>
-                    <td>${originalQty}</td>
-                    <td>${item.location}</td>
-                    <td class="actions-cell">${actionsHtml}</td>`;
-            });
-        }
-        
-      // FIXED: Added toggleInventoryArchiveView
-      const toggleInventoryArchiveView = () => {
-            isViewingInventoryArchive = !isViewingInventoryArchive;
-            if (isViewingInventoryArchive) {
-                fetchArchivedInventory();
-            } else {
-                fetchInventory();
-            }
-      };
-
-      const handleAddItem = async (e) => {
-          e.preventDefault();
-          const newItem = {
-              itemId: document.getElementById('itemId').value,
-              name: document.getElementById('itemName').value,
-              category: document.getElementById('category').value,
-              quantity: parseInt(document.getElementById('quantity').value),
-              location: document.getElementById('location').value,
-          };
-          if (!newItem.category) {
-              showToast("Please select a category.");
-              return;
-          }
-          try {
-              const response = await fetch('/api/inventory', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(newItem)
-              });
-              if (!response.ok) throw new Error((await response.json()).message || 'Failed to add');
-              showToast('Equipment added!');
-              addForm.reset();
-              fetchInventory();
-          } catch (error) { showToast(`Error: ${error.message}`); }
-      };
-
-      // FIXED: handleUpdateItem now handles both inventory and requests
-      const handleUpdateItem = async (e) => {
-          e.preventDefault();
-          const formType = document.getElementById('editForm').dataset.type;
-          
-          if (formType === 'inventory') {
-              const itemId = document.getElementById('editItemId').value;
-              const updatedData = {
-                  name: document.getElementById('editItemName').value,
-                  category: document.getElementById('editCategory').value,
-                  quantity: parseInt(document.getElementById('editQuantity').value), // This is now originalQuantity
-                  location: document.getElementById('editLocation').value,
-              };
-              try {
-                  const response = await fetch(`/api/inventory/${itemId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(updatedData)
-                  });
-                  if (!response.ok) throw new Error('Failed to update item');
-                  showToast('Item updated successfully!');
-                  modal.style.display = 'none';
-                  fetchInventory();
-              } catch (error) { showToast(`Error: ${error.message}`); }
-          } else if (formType === 'request') {
-                // Added: Logic for updating requests
-                const requestId = document.getElementById('editRequestId').value;
-                const updatedData = {
-                    itemName: document.getElementById('editItemName').value,
-                    quantity: parseInt(document.getElementById('editQuantity').value),
-                    reason: document.getElementById('editReason').value,
-                    startDate: document.getElementById('editStartDate').value,
-                    dueDate: document.getElementById('editDueDate').value,
-                };
-                try {
-                    const response = await fetch(`/api/edit-request/${requestId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedData),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message || 'Failed to update request');
-                    showToast('Request updated successfully!');
-                    modal.style.display = 'none';
-                    fetchAllRequests(); // Refresh requests
-                } catch (error) {
-                    showToast(`Error: ${error.message}`);
-                }
-            }
-      };
-
-      // FIXED: Renamed to archiveInventoryItem and points to DELETE
-      window.archiveInventoryItem = async (itemId) => {
-          if (!confirm(`Are you sure you want to archive item ${itemId}?`)) return;
-          try {
-              const response = await fetch(`/api/inventory/${itemId}`, { method: 'DELETE' });
-              if (!response.ok) throw new Error('Failed to archive item');
-              showToast('Item archived successfully.');
-              fetchInventory();
-          } catch (error) { showToast(`Error: ${error.message}`); }
-      };
-      
-      // FIXED: Added archive restoration/deletion functions
-      window.restoreInventoryItem = async (itemId) => {
-        if (!confirm('Are you sure you want to restore this item?')) return;
+      async function fetchArchivedInventory(type = ACTIVE_INVENTORY_TYPE) {
+        const config = inventoryTypes[type];
         try {
-            const res = await fetch(`/api/inventory/restore/${itemId}`, { method: 'PUT' });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message);
-            showToast(result.message);
-            fetchArchivedInventory(); // Refresh archive list
-        } catch (error) { showToast(`Error: ${error.message}`); }
+          const response = await fetch('/api/archived-inventory');
+          if (!response.ok) throw new Error('Failed to fetch archived inventory.');
+          config.store = await response.json();
+          if (isViewingInventoryArchive && document.getElementById('inventory-content').classList.contains('active')) {
+            renderInventoryTable(type);
+          }
+        } catch (error) {
+          showToast(error.message, 'error');
+          config.store = [];
+          if (isViewingInventoryArchive && document.getElementById('inventory-content').classList.contains('active')) {
+            renderInventoryTable(type);
+          }
+        }
+      }
+
+      function getDisplayStatus(item) {
+        const originalQty = item.originalQuantity || item.quantity || 0;
+        const availableQty = item.quantity || 0;
+        const borrowedQty = originalQty - availableQty;
+        if (['Maintenance', 'Damaged', 'Calibration', 'Decommissioned'].includes(item.status)) {
+          return item.status;
+        }
+        return borrowedQty > 0 ? 'In-Use' : (item.status || 'Available');
+      }
+
+      function renderInventoryTable(type = ACTIVE_INVENTORY_TYPE) {
+        const config = inventoryTypes[type];
+        const table = document.getElementById('inventoryTable');
+        const thead = table.querySelector('thead');
+        const tableBody = config.tableBody;
+        const isArchiveView = isViewingInventoryArchive;
+
+        selectedArchivedItems = [];
+        renderBulkActionBar();
+
+        inventoryTableTitle.textContent = isArchiveView ? 'Archived Lab Equipment' : 'Lab Equipment';
+        toggleInventoryArchiveBtn.textContent = isArchiveView ? 'View Active Inventory' : 'View Archives';
+        config.searchInput.placeholder = isArchiveView ? 'Search archived items...' : 'Search equipment...';
+        if (config.statusFilter) {
+          config.statusFilter.parentElement.style.display = isArchiveView ? 'none' : 'flex';
+        }
+
+        const searchTerm = config.searchInput.value.toLowerCase();
+        const statusFilterValue = config.statusFilter.value;
+
+        const filteredData = config.store.filter((item) => {
+          const matchesSearch = Object.values(item).some((val) =>
+            String(val ?? '').toLowerCase().includes(searchTerm)
+          );
+          if (!matchesSearch) return false;
+          if (isArchiveView || statusFilterValue === 'All') return true;
+          const displayStatus = getDisplayStatus(item);
+          if (statusFilterValue === 'In-Use') {
+            return displayStatus === 'In-Use';
+          }
+          return displayStatus === statusFilterValue;
+        });
+
+        if (thead) {
+          thead.innerHTML = '';
+        }
+        const headerRow = thead.insertRow(0);
+        headerRow.innerHTML = `
+          <th><input type="checkbox" id="checkAllUnits" onclick="toggleAllUnits(this)"> ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Total Qty</th>
+          <th>Borrowed</th>
+          <th>Available</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Actions</th>
+        `;
+
+        tableBody.innerHTML = '';
+        if (filteredData.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">${isArchiveView ? 'No archived equipment found.' : 'No equipment found.'}</td></tr>`;
+          return;
+        }
+
+        const groupedData = filteredData.reduce((groups, item) => {
+          const groupKey = item.name || 'Unknown Item';
+          if (!groups[groupKey]) {
+            const prefixMatch = item.itemId.match(/^([A-Z]+)-/i);
+            groups[groupKey] = {
+              items: [],
+              prefix: prefixMatch ? prefixMatch[1].toUpperCase() : 'ID',
+              category: item.category || 'General',
+              location: item.location || 'N/A',
+            };
+          }
+          groups[groupKey].items.push(item);
+          return groups;
+        }, {});
+
+        let index = 0;
+        Object.keys(groupedData)
+          .sort((a, b) => a.localeCompare(b))
+          .forEach((groupName) => {
+            index += 1;
+            const groupId = `group-${type}-${index}`;
+            const group = groupedData[groupName];
+            const totals = group.items.reduce(
+              (acc, item) => {
+                const originalQty = item.originalQuantity || item.quantity || 0;
+                const availableQty = item.quantity || 0;
+                const borrowedQty = originalQty - availableQty;
+                acc.total += originalQty;
+                acc.borrowed += borrowedQty;
+                acc.available += availableQty;
+                return acc;
+              },
+              { total: 0, borrowed: 0, available: 0 }
+            );
+            const headerStatus = group.items.length ? getDisplayStatus(group.items[0]) : 'Available';
+            const headerStatusClass = headerStatus.replace(/[^a-zA-Z0-9]/g, '');
+
+            const itemIdsAttr = group.items.map((item) => item.itemId).join(',');
+            const isGroupChecked = group.items.every((item) => selectedArchivedItems.includes(item.itemId));
+            const headerActionsHtml = isArchiveView
+              ? `
+                <button class="btn btn-restore" data-item-ids="${itemIdsAttr}" onclick="handleModelRestoreClick(event, '${type}')">Restore Model</button>
+                <button class="btn btn-delete" data-item-ids="${itemIdsAttr}" onclick="handleModelDeleteClick(event, '${type}')">Delete Permanently</button>
+              `
+              : `
+                <button class="btn btn-edit" data-item-ids="${itemIdsAttr}" onclick="handleModelEditClick(event, '${type}')">Edit Model</button>
+                <button class="btn btn-delete" data-item-ids="${itemIdsAttr}" onclick="handleModelArchiveClick(event, '${type}')">Archive Model</button>
+              `;
+
+            const groupRow = tableBody.insertRow();
+            groupRow.id = `${groupId}-header`;
+            groupRow.classList.add('inventory-group-header');
+            groupRow.innerHTML = `
+              <td colspan="2" style="cursor:pointer; font-weight:700;">
+                <input type="checkbox" id="checkGroup-${groupId}" ${isGroupChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleGroupUnits(this, '${groupId}')">
+                <span onclick="toggleGroup('${groupId}')">▶ <strong>${group.prefix} (${groupName})</strong></span>
+              </td>
+              <td>${group.category}</td>
+              <td>${totals.total}</td>
+              <td>${totals.borrowed}</td>
+              <td>${totals.available}</td>
+              <td>${group.location}</td>
+              <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+              <td class="actions-cell">${headerActionsHtml}</td>
+            `;
+
+            group.items
+              .sort((a, b) => a.itemId.localeCompare(b.itemId))
+              .forEach((item) => {
+                const displayStatus = getDisplayStatus(item);
+                const statusClass = displayStatus.replace(/[^a-zA-Z0-9]/g, '');
+                const originalQty = item.originalQuantity || item.quantity || 0;
+                const availableQty = item.quantity || 0;
+                const borrowedQty = originalQty - availableQty;
+                const detailRow = tableBody.insertRow();
+                detailRow.classList.add('inventory-item-detail', groupId);
+                detailRow.style.display = 'none';
+                detailRow.innerHTML = `
+                  <td>
+                    <input type="checkbox" data-item-id="${item.itemId}" onclick="event.stopPropagation(); toggleItemSelection('${item.itemId}')">
+                    <span style="padding-left:5px;">${item.itemId}</span>
+                  </td>
+                  <td>${item.name}</td>
+                  <td>${item.category}</td>
+                  <td>${originalQty}</td>
+                  <td>${borrowedQty}</td>
+                  <td>${availableQty}</td>
+                  <td>${item.location}</td>
+                  <td>
+                    <select class="status-select status-${statusClass}" onchange="updateStatus('${type}', this, '${item.itemId}')">
+                      <option value="Available" ${displayStatus === 'Available' ? 'selected' : ''}>Available</option>
+                      <option value="In-Use" ${displayStatus === 'In-Use' ? 'selected' : ''} disabled>In-Use</option>
+                      <option value="Maintenance" ${displayStatus === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                      <option value="Damaged" ${displayStatus === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                      <option value="Calibration" ${displayStatus === 'Calibration' ? 'selected' : ''}>Calibration</option>
+                      <option value="Decommissioned" ${displayStatus === 'Decommissioned' ? 'selected' : ''} disabled>Decommissioned</option>
+                    </select>
+                  </td>
+                  <td class="actions-cell">
+                    ${
+                      isArchiveView
+                        ? `
+                          <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
+                          <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete</button>
+                        `
+                        : `
+                          <button class="btn btn-edit" onclick="openEditModal('${type}', '${item.itemId}')">Edit</button>
+                          <button class="btn btn-delete" onclick="archiveInventoryItem('${type}', '${item.itemId}')">Archive</button>
+                        `
+                    }
+                  </td>
+                `;
+              });
+          });
+
+        updateMasterAndBulkActionUI();
+      }
+
+      function findNextSequenceId(prefix, items) {
+        let maxNum = 0;
+        const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+        items.forEach((item) => {
+          const match = item.itemId.match(prefixPattern);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (!Number.isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        });
+        return maxNum + 1;
+      }
+
+      const handleAddItem = async (event, type = ACTIVE_INVENTORY_TYPE) => {
+        event.preventDefault();
+        const config = inventoryTypes[type];
+        const form = event.target;
+        const prefix = form.querySelector('[name="itemIdPrefix"]').value.toUpperCase().trim();
+        const name = form.querySelector('[name="name"]').value.trim();
+        const category = form.querySelector('[name="category"]').value;
+        const quantity = parseInt(form.querySelector('[name="quantity"]').value, 10);
+        const location = form.querySelector('[name="location"]').value.trim();
+
+        if (!prefix) {
+          showToast('Item ID Prefix cannot be empty.', 'error');
+          return;
+        }
+        if (!name) {
+          showToast('Equipment name is required.', 'error');
+          return;
+        }
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          showToast('Quantity must be 1 or more.', 'error');
+          return;
+        }
+
+        const nextSequenceNumber = findNextSequenceId(prefix, config.store);
+        const maxDigits = Math.max(2, String(nextSequenceNumber + quantity - 1).length);
+        const itemsToCreate = Array.from({ length: quantity }, (_, index) => {
+          const currentNumber = nextSequenceNumber + index;
+          const sequence = String(currentNumber).padStart(maxDigits, '0');
+          return {
+            itemId: `${prefix}-${sequence}`,
+            name,
+            category,
+            quantity: 1,
+            originalQuantity: 1,
+            location,
+            status: 'Available',
+          };
+        });
+
+        try {
+          const response = await fetch(config.api, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(itemsToCreate),
+          });
+          if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            throw new Error(errorBody.message || 'Failed to add equipment.');
+          }
+          showToast(`Successfully added ${quantity} item${quantity > 1 ? 's' : ''}.`, 'success');
+          form.reset();
+          fetchInventory(type);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      const handleUpdateItem = async (event) => {
+        event.preventDefault();
+        const formType = editForm.dataset.type;
+
+        if (formType === 'inventory') {
+          const type = editForm.dataset.inventoryType || ACTIVE_INVENTORY_TYPE;
+          const itemIds = (editForm.dataset.itemIds || '').split(',').filter(Boolean);
+          if (!itemIds.length) return;
+
+          const updatedPayload = {
+            name: document.getElementById('editItemName').value.trim(),
+            category: document.getElementById('editCategory').value,
+            location: document.getElementById('editLocation').value.trim(),
+          };
+
+          try {
+            await Promise.all(
+              itemIds.map(async (itemId) => {
+                const response = await fetch(`${inventoryTypes[type].api}/${itemId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(updatedPayload),
+                });
+                if (!response.ok) {
+                  const errorBody = await response.json().catch(() => ({}));
+                  throw new Error(errorBody.message || `Failed to update item ${itemId}.`);
+                }
+              })
+            );
+            showToast('Equipment updated successfully!', 'success');
+            modal.style.display = 'none';
+            if (isViewingInventoryArchive) {
+              fetchArchivedInventory(type);
+            } else {
+              fetchInventory(type);
+            }
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
+          return;
+        }
+
+        if (formType === 'request') {
+          const requestId = document.getElementById('editRequestId').value;
+          const updatedData = {
+            itemName: document.getElementById('editItemName').value,
+            quantity: parseInt(document.getElementById('editQuantity').value, 10),
+            reason: document.getElementById('editReason').value,
+            startDate: document.getElementById('editStartDate').value,
+            dueDate: document.getElementById('editDueDate').value,
+          };
+          try {
+            const response = await fetch(`/api/edit-request/${requestId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedData),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Failed to update request');
+            showToast('Request updated successfully!', 'success');
+            modal.style.display = 'none';
+            fetchAllRequests();
+          } catch (error) {
+            showToast(error.message, 'error');
+          }
+        }
+      };
+
+      window.archiveInventoryItem = async (type, itemId) => {
+        if (!confirm(`Archive item ${itemId}?`)) return;
+        try {
+          const response = await fetch(`${inventoryTypes[type].api}/${itemId}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to archive item.');
+          showToast(`Item ${itemId} archived.`, 'success');
+          fetchInventory(type);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.restoreInventoryItem = async (itemId) => {
+        if (!confirm('Restore this item?')) return;
+        try {
+          const response = await fetch(`/api/inventory/restore/${itemId}`, { method: 'PUT' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message || 'Failed to restore item.');
+          showToast(result.message, 'success');
+          fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
       };
 
       window.deleteInventoryItemPermanently = async (itemId) => {
-        if (!confirm('WARNING: This will permanently delete the item and all its history. Are you sure?')) return;
+        if (!confirm('WARNING: Permanently delete this item and its history?')) return;
         try {
-            const res = await fetch(`/api/inventory/permanent/${itemId}`, { method: 'DELETE' });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message);
-            showToast(result.message);
-            fetchArchivedInventory(); // Refresh archive list
-        } catch (error) { showToast(`Error: ${error.message}`); }
+          const response = await fetch(`/api/inventory/permanent/${itemId}`, { method: 'DELETE' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message || 'Failed to delete item.');
+          showToast(result.message, 'success');
+          fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
       };
 
-      // FIXED: updateStatus logic to handle "In-Use"
-      window.updateStatus = async (selectElement, itemId) => {
-          const newStatus = selectElement.value;
-          
-          if (newStatus === 'In-Use') { 
-            showToast("Status 'In-Use' is set automatically when items are borrowed.");
-            // Revert dropdown
-            const currentItem = allInventoryData.find(i => i.itemId === itemId);
-            const originalQty = currentItem.originalQuantity || currentItem.quantity || 0;
-            const borrowedQty = originalQty - (currentItem.quantity || 0);
-            const actualStatus = (currentItem.status === 'Maintenance' || currentItem.status === 'Damaged') ? currentItem.status : (borrowedQty > 0 ? 'In-Use' : 'Available');
-            selectElement.value = actualStatus === 'In-Use' ? 'Available' : actualStatus; // Revert
-            return;
-          }
-          
-          try {
-              const response = await fetch(`/api/inventory/${itemId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: newStatus })
-              });
-              if (!response.ok) throw new Error('Failed to update status');
-              showToast(`Status for ${itemId} updated.`);
-              fetchInventory(); // Refresh table
-          } catch (error) {
-              showToast(`Error: ${error.message}`);
-              fetchInventory(); // Refresh table on error too
-          }
-      };
-      
-      // FIXED: openEditModal now handles inventory type
-      window.openEditModal = (type, id) => {
-        if (type === 'inventory') {
-            const item = allInventoryData.find(i => i.itemId === id);
-            if (item) {
-                document.getElementById('editModalTitle').innerText = 'Edit Equipment';
-                editForm.innerHTML = `
-                    <input type="hidden" id="editItemId" value="${item.itemId}">
-                    <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
-                    <label for="editCategory">Category</label><input type="text" id="editCategory" value="${item.category}" readonly />
-                    <input type="hidden" id="editQuantity" value="${item.originalQuantity || item.quantity}" />
-                    <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
-                    <button type="submit">Save Changes</button>
-                `;
-                editForm.dataset.type = 'inventory';
-            }
-        } else if (type === 'request') {
-            // Added: Logic for editing requests
-            const request = allRequestsData.find(r => r._id === id);
-            if (request) {
-                document.getElementById('editModalTitle').innerText = 'Edit Request';
-                editForm.innerHTML = `
-                    <input type="hidden" id="editRequestId" value="${request._id}">
-                    <label for="editItemName">Item Name</label><input type="text" id="editItemName" value="${request.itemName}" required />
-                    <label for="editQuantity">Quantity</label><input type="number" id="editQuantity" value="${request.quantity}" min="1" required />
-                    <label for="editReason">Reason</label><textarea id="editReason" required>${request.reason}</textarea>
-                    <label for="editStartDate">Start Date</label><input type="date" id="editStartDate" value="${request.startDate ? new Date(request.startDate).toISOString().split('T')[0] : ''}" required />
-                    <label for="editDueDate">Due Date</label><input type="date" id="editDueDate" value="${request.dueDate ? new Date(request.dueDate).toISOString().split('T')[0] : ''}" required />
-                    <button type="submit">Save Changes</button>`;
-                editForm.dataset.type = 'request';
-            }
+      window.bulkArchiveSelected = async () => {
+        if (!selectedArchivedItems.length) {
+          showToast('No items selected.', 'warning');
+          return;
         }
+        if (!confirm(`Archive ${selectedArchivedItems.length} selected item(s)?`)) return;
+        try {
+          let archivedCount = 0;
+          for (const itemId of selectedArchivedItems) {
+            const response = await fetch(`${inventoryTypes[ACTIVE_INVENTORY_TYPE].api}/${itemId}`, {
+              method: 'DELETE',
+            });
+            if (response.ok) archivedCount += 1;
+          }
+          showToast(`Archived ${archivedCount} item(s).`, 'success');
+          selectedArchivedItems = [];
+          fetchInventory(ACTIVE_INVENTORY_TYPE);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.bulkRestoreSelected = async () => {
+        if (!selectedArchivedItems.length) {
+          showToast('No items selected.', 'warning');
+          return;
+        }
+        if (!confirm(`Restore ${selectedArchivedItems.length} selected item(s)?`)) return;
+        try {
+          let restoredCount = 0;
+          for (const itemId of selectedArchivedItems) {
+            const response = await fetch(`/api/inventory/restore/${itemId}`, { method: 'PUT' });
+            if (response.ok) restoredCount += 1;
+          }
+          showToast(`Restored ${restoredCount} item(s).`, 'success');
+          selectedArchivedItems = [];
+          fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.bulkDeleteSelected = async () => {
+        if (!selectedArchivedItems.length) {
+          showToast('No items selected.', 'warning');
+          return;
+        }
+        if (!confirm(`Permanently delete ${selectedArchivedItems.length} item(s)? This cannot be undone.`)) return;
+        try {
+          let deletedCount = 0;
+          for (const itemId of selectedArchivedItems) {
+            const response = await fetch(`/api/inventory/permanent/${itemId}`, { method: 'DELETE' });
+            if (response.ok) deletedCount += 1;
+          }
+          showToast(`Deleted ${deletedCount} item(s).`, 'success');
+          selectedArchivedItems = [];
+          fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      function renderBulkActionBar() {
+        const actionBar = document.getElementById('bulkActionBar');
+        if (!actionBar) return;
+        const count = selectedArchivedItems.length;
+        const countSpan = document.getElementById('selectedCount');
+        const restoreBtn = actionBar.querySelector('.btn-restore');
+        const deleteBtn = actionBar.querySelector('.btn-delete');
+
+        if (!count) {
+          actionBar.style.display = 'none';
+          return;
+        }
+
+        actionBar.style.display = 'flex';
+        countSpan.textContent = `${count} Item${count === 1 ? '' : 's'} Selected`;
+
+        if (isViewingInventoryArchive) {
+          restoreBtn.textContent = 'Bulk Restore';
+          restoreBtn.onclick = () => bulkRestoreSelected();
+          deleteBtn.textContent = 'Delete Permanently';
+          deleteBtn.onclick = () => bulkDeleteSelected();
+        } else {
+          restoreBtn.textContent = 'Bulk Archive';
+          restoreBtn.onclick = () => bulkArchiveSelected();
+          deleteBtn.textContent = 'Cancel Selection';
+          deleteBtn.onclick = () => {
+            selectedArchivedItems = [];
+            document.querySelectorAll('.inventory-item-detail input[type="checkbox"]').forEach((cb) => {
+              cb.checked = false;
+            });
+            const masterCheckbox = document.getElementById('checkAllUnits');
+            if (masterCheckbox) masterCheckbox.checked = false;
+            renderBulkActionBar();
+          };
+        }
+      }
+
+      window.toggleGroup = (groupId) => {
+        const detailRows = document.querySelectorAll(`.${groupId}`);
+        if (!detailRows.length) return;
+        const shouldShow = detailRows[0].style.display === 'none';
+        detailRows.forEach((row) => {
+          row.style.display = shouldShow ? '' : 'none';
+        });
+        const headerRow = document.getElementById(`${groupId}-header`);
+        if (headerRow) {
+          const indicator = headerRow.querySelector('span');
+          if (indicator) {
+            indicator.innerHTML = indicator.innerHTML.replace(shouldShow ? '▶' : '▼', shouldShow ? '▼' : '▶');
+          }
+        }
+      };
+
+      window.toggleGroupUnits = (checkbox, groupId) => {
+        const detailCheckboxes = document.querySelectorAll(`.${groupId} input[type="checkbox"]`);
+        detailCheckboxes.forEach((cb) => {
+          cb.checked = checkbox.checked;
+          const itemId = cb.dataset.itemId;
+          if (!itemId) return;
+          if (checkbox.checked) {
+            if (!selectedArchivedItems.includes(itemId)) selectedArchivedItems.push(itemId);
+          } else {
+            selectedArchivedItems = selectedArchivedItems.filter((id) => id !== itemId);
+          }
+        });
+        updateMasterAndBulkActionUI();
+      };
+
+      window.toggleItemSelection = (itemId) => {
+        if (selectedArchivedItems.includes(itemId)) {
+          selectedArchivedItems = selectedArchivedItems.filter((id) => id !== itemId);
+        } else {
+          selectedArchivedItems.push(itemId);
+        }
+        updateMasterAndBulkActionUI();
+      };
+
+      window.toggleAllUnits = (checkbox) => {
+        const detailCheckboxes = document.querySelectorAll('.inventory-item-detail input[type="checkbox"]');
+        selectedArchivedItems = [];
+        detailCheckboxes.forEach((cb) => {
+          cb.checked = checkbox.checked;
+          const itemId = cb.dataset.itemId;
+          if (checkbox.checked && itemId) {
+            selectedArchivedItems.push(itemId);
+          }
+        });
+        updateMasterAndBulkActionUI();
+      };
+
+      function updateMasterAndBulkActionUI() {
+        renderBulkActionBar();
+        const allCheckboxes = document.querySelectorAll('.inventory-item-detail input[type="checkbox"]');
+        const masterCheckbox = document.getElementById('checkAllUnits');
+        if (masterCheckbox) {
+          masterCheckbox.checked = allCheckboxes.length > 0 && selectedArchivedItems.length === allCheckboxes.length;
+        }
+      }
+
+      window.handleModelEditClick = (event, type) => {
+        event.stopPropagation();
+        const itemIdsAttr = event.currentTarget.dataset.itemIds || '';
+        const itemIds = itemIdsAttr.split(',').filter(Boolean);
+        if (!itemIds.length) return;
+        openEditModal(type, itemIds[0], itemIds);
+      };
+
+      window.handleModelArchiveClick = async (event, type) => {
+        event.stopPropagation();
+        const itemIds = (event.currentTarget.dataset.itemIds || '').split(',').filter(Boolean);
+        if (!itemIds.length) return;
+        if (!confirm(`Archive ${itemIds.length} item(s) for this model?`)) return;
+        try {
+          let archivedCount = 0;
+          for (const itemId of itemIds) {
+            const response = await fetch(`${inventoryTypes[type].api}/${itemId}`, { method: 'DELETE' });
+            if (response.ok) archivedCount += 1;
+          }
+          showToast(`Archived ${archivedCount} item(s).`, 'success');
+          fetchInventory(type);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.handleModelRestoreClick = async (event, type) => {
+        event.stopPropagation();
+        const itemIds = (event.currentTarget.dataset.itemIds || '').split(',').filter(Boolean);
+        if (!itemIds.length) return;
+        if (!confirm(`Restore ${itemIds.length} item(s)?`)) return;
+        try {
+          let restoredCount = 0;
+          for (const itemId of itemIds) {
+            const response = await fetch(`/api/inventory/restore/${itemId}`, { method: 'PUT' });
+            if (response.ok) restoredCount += 1;
+          }
+          showToast(`Restored ${restoredCount} item(s).`, 'success');
+          fetchArchivedInventory(type);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.handleModelDeleteClick = async (event, type) => {
+        event.stopPropagation();
+        const itemIds = (event.currentTarget.dataset.itemIds || '').split(',').filter(Boolean);
+        if (!itemIds.length) return;
+        if (!confirm(`Permanently delete ${itemIds.length} item(s)? This cannot be undone.`)) return;
+        try {
+          let deletedCount = 0;
+          for (const itemId of itemIds) {
+            const response = await fetch(`/api/inventory/permanent/${itemId}`, { method: 'DELETE' });
+            if (response.ok) deletedCount += 1;
+          }
+          showToast(`Deleted ${deletedCount} item(s).`, 'success');
+          fetchArchivedInventory(type);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.openEditModal = (type, itemId, itemIds = [itemId]) => {
+        if (type === 'request') {
+          const request = allRequestsData.find((r) => r._id === itemId);
+          if (request) {
+            document.getElementById('editModalTitle').innerText = 'Edit Request';
+            editForm.innerHTML = `
+              <input type="hidden" id="editRequestId" value="${request._id}">
+              <label for="editItemName">Item Name</label><input type="text" id="editItemName" value="${request.itemName}" required />
+              <label for="editQuantity">Quantity</label><input type="number" id="editQuantity" value="${request.quantity}" min="1" required />
+              <label for="editReason">Reason</label><textarea id="editReason" required>${request.reason}</textarea>
+              <label for="editStartDate">Start Date</label><input type="date" id="editStartDate" value="${request.startDate ? new Date(request.startDate).toISOString().split('T')[0] : ''}" required />
+              <label for="editDueDate">Due Date</label><input type="date" id="editDueDate" value="${request.dueDate ? new Date(request.dueDate).toISOString().split('T')[0] : ''}" required />
+              <button type="submit">Save Changes</button>`;
+            editForm.dataset.type = 'request';
+            modal.style.display = 'flex';
+          }
+          return;
+        }
+
+        const config = inventoryTypes[type];
+        const itemsToEdit = config.store.filter((item) => itemIds.includes(item.itemId));
+        if (!itemsToEdit.length) {
+          showToast('Unable to locate item details.', 'error');
+          return;
+        }
+        const primary = itemsToEdit[0];
+        document.getElementById('editModalTitle').innerText = `Edit ${primary.name}`;
+        editForm.innerHTML = `
+          <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${primary.name}" required />
+          <label for="editCategory">Category</label><input type="text" id="editCategory" value="${primary.category}" readonly />
+          <label for="editLocation">Location</label><input type="text" id="editLocation" value="${primary.location || ''}" required />
+          <button type="submit">Save Changes</button>
+        `;
+        editForm.dataset.type = 'inventory';
+        editForm.dataset.inventoryType = type;
+        editForm.dataset.itemIds = itemIds.join(',');
         modal.style.display = 'flex';
+      };
+
+      window.updateStatus = async (type, selectElement, itemId) => {
+        const newStatus = selectElement.value;
+        const store = inventoryTypes[type].store;
+        const currentItem = store.find((item) => item.itemId === itemId);
+        if (!currentItem) {
+          showToast(`Item ${itemId} not found.`, 'error');
+          return;
+        }
+
+        if (newStatus === 'In-Use') {
+          showToast("Status 'In-Use' is managed by borrowing workflows.", 'warning');
+          selectElement.value = getDisplayStatus(currentItem);
+          return;
+        }
+
+        try {
+          const response = await fetch(`${inventoryTypes[type].api}/${itemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus }),
+          });
+          if (!response.ok) throw new Error('Failed to update status.');
+          showToast(`Status for ${itemId} updated to ${newStatus}.`, 'success');
+          if (isViewingInventoryArchive) {
+            fetchArchivedInventory(type);
+          } else {
+            fetchInventory(type);
+          }
+        } catch (error) {
+          showToast(error.message, 'error');
+          if (isViewingInventoryArchive) {
+            fetchArchivedInventory(type);
+          } else {
+            fetchInventory(type);
+          }
+        }
+      };
+
+      const toggleInventoryArchiveView = () => {
+        isViewingInventoryArchive = !isViewingInventoryArchive;
+        selectedArchivedItems = [];
+        if (isViewingInventoryArchive) {
+          fetchArchivedInventory(ACTIVE_INVENTORY_TYPE);
+        } else {
+          fetchInventory(ACTIVE_INVENTORY_TYPE);
+        }
       };
       
       // --- 8. REQUESTS ---
@@ -1832,7 +2234,7 @@
               if (!response.ok) throw new Error(result.message || `Failed to ${newStatus} request`);
               showToast(result.message || `Request ${newStatus.toLowerCase()} successfully.`);
               fetchAllRequests();
-              fetchInventory(); // Refresh inventory on status change
+              fetchInventory(ACTIVE_INVENTORY_TYPE); // Refresh inventory on status change
           } catch (error) {
               showToast(`Error: ${error.message}`);
           }

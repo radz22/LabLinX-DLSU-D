@@ -551,22 +551,30 @@
       body.dark table td .status-select option {
         background-color: var(--card-bg-dark);
       }
-      .status-Available {
-        color: var(--success);
-      }
-      .status-In-Use {
-        color: var(--warning);
-      }
-      .status-Maintenance {
-        color: var(--danger);
-      }
       .status-badge {
         padding: 4px 10px;
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: 600;
-        color: white;
+        color: #343a40;
         text-align: center;
+      }
+      .status-Available {
+        background-color: rgba(46, 204, 113, 0.18);
+        color: #000;
+      }
+      .status-In-Use {
+        background-color: rgba(255, 193, 7, 0.22);
+        color: #000;
+      }
+      .status-Maintenance,
+      .status-Damaged {
+        background-color: rgba(220, 53, 69, 0.22);
+        color: #000;
+      }
+      .status-Calibration {
+        background-color: rgba(147, 112, 219, 0.22);
+        color: #000;
       }
       .status-Pending {
         background-color: var(--warning);
@@ -622,6 +630,14 @@
       .btn-restore {
         background-color: var(--info);
         color: white;
+      }
+      .btn-delete-permanent {
+        background-color: #8b0000;
+        color: white;
+        font-weight: 700;
+      }
+      .btn-delete-permanent:hover {
+        background-color: #a52a2a;
       }
       #notification-list .notification-item {
         background-color: var(--card-bg-light);
@@ -1542,53 +1558,71 @@
       <div id="inventory-content" class="page-content">
         <h1>Manage Facility Inventories</h1>
 
-        <section class="inventory-card" style="padding: 1rem 2rem">
-          <div
-            class="filter-row"
-            style="justify-content: flex-end; margin-bottom: 0"
-          >
-            <button id="toggleInventoryArchiveBtn">View Archives</button>
-          </div>
-        </section>
-
         <div id="inventory-active-container">
-          <p class="page-subtitle" style="margin-top: 2.5rem">
+          <section class="inventory-card" style="padding: 1rem 2rem">
+            <div
+              class="filter-row"
+              style="justify-content: flex-end; margin-bottom: 0"
+            >
+              <button id="toggleInventoryArchiveBtn">View Archives</button>
+            </div>
+          </section>
+          <p
+            class="page-subtitle"
+            style="
+              margin-top: 2.5rem;
+              border-top: 1px solid var(--border-light);
+              padding-top: 2.5rem;
+            "
+          >
             Tables & Chairs
           </p>
+
           <section class="inventory-card">
             <h2>Add New Furniture</h2>
             <form class="add-form" id="addFormFurniture">
               <input
                 type="text"
-                name="itemId"
-                placeholder="Item ID (e.g., FUR-001)"
+                name="itemIdPrefix"
+                placeholder="Item ID Prefix (e.g., TBL)"
                 required
               />
-              <input type="text" name="name" placeholder="Item Name" required />
-              <input type="hidden" name="category" value="Tables & Chairs" />
+              <input
+                type="text"
+                name="name"
+                placeholder="Furniture Name"
+                required
+              />
+              <input
+                type="hidden"
+                name="category"
+                value="Tables &amp; Chairs"
+              />
               <input
                 type="number"
                 name="quantity"
-                placeholder="Quantity"
-                min="0"
+                placeholder="Quantity to create"
+                min="1"
                 required
               />
               <input
                 type="text"
                 name="location"
-                placeholder="Location (e.g., Room 101)"
+                placeholder="Location"
                 required
               />
               <button type="submit">Add Item</button>
             </form>
           </section>
+
           <section class="inventory-card">
+            <h2 id="furnitureTableTitle">Tables &amp; Chairs Inventory</h2>
             <div class="filter-row">
               <div class="search-bar">
                 <input
                   type="text"
                   id="searchFurniture"
-                  placeholder="Search furniture..."
+                  placeholder="Search tables &amp; chairs..."
                 />
               </div>
               <div class="filter-select">
@@ -1606,10 +1640,17 @@
             <table id="tableFurniture">
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>
+                    <input
+                      type="checkbox"
+                      id="checkAllUnits"
+                      onclick="toggleAllUnits(this)"
+                    />
+                    ID
+                  </th>
                   <th>Name</th>
                   <th>Category</th>
-                  <th>Qty</th>
+                  <th>Total Qty</th>
                   <th>Borrowed</th>
                   <th>Available</th>
                   <th>Location</th>
@@ -1629,15 +1670,16 @@
               padding-top: 2.5rem;
             "
           >
-            Computer Lab Equipment
+            Computer Equipment
           </p>
+
           <section class="inventory-card">
             <h2>Add New Computer Equipment</h2>
             <form class="add-form" id="addFormComputer">
               <input
                 type="text"
-                name="itemId"
-                placeholder="Item ID (e.g., CPU-001)"
+                name="itemIdPrefix"
+                placeholder="Item ID Prefix (e.g., CPU)"
                 required
               />
               <input
@@ -1650,20 +1692,22 @@
               <input
                 type="number"
                 name="quantity"
-                placeholder="Quantity"
-                min="0"
+                placeholder="Quantity to create"
+                min="1"
                 required
               />
               <input
                 type="text"
                 name="location"
-                placeholder="Location (e.g., Lab 1)"
+                placeholder="Location"
                 required
               />
               <button type="submit">Add Item</button>
             </form>
           </section>
+
           <section class="inventory-card">
+            <h2 id="computerTableTitle">Computer Lab Inventory</h2>
             <div class="filter-row">
               <div class="search-bar">
                 <input
@@ -1690,7 +1734,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Category</th>
-                  <th>Qty</th>
+                  <th>Total Qty</th>
                   <th>Borrowed</th>
                   <th>Available</th>
                   <th>Location</th>
@@ -1712,13 +1756,14 @@
           >
             Food Lab Equipment
           </p>
+
           <section class="inventory-card">
             <h2>Add New Food Lab Equipment</h2>
             <form class="add-form" id="addFormFood">
               <input
                 type="text"
-                name="itemId"
-                placeholder="Item ID (e.g., FDL-001)"
+                name="itemIdPrefix"
+                placeholder="Item ID Prefix (e.g., FDL)"
                 required
               />
               <input
@@ -1731,20 +1776,22 @@
               <input
                 type="number"
                 name="quantity"
-                placeholder="Quantity"
-                min="0"
+                placeholder="Quantity to create"
+                min="1"
                 required
               />
               <input
                 type="text"
                 name="location"
-                placeholder="Location (e.g., Kitchen 1)"
+                placeholder="Location"
                 required
               />
               <button type="submit">Add Item</button>
             </form>
           </section>
+
           <section class="inventory-card">
+            <h2 id="foodTableTitle">Food Lab Inventory</h2>
             <div class="filter-row">
               <div class="search-bar">
                 <input
@@ -1771,7 +1818,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Category</th>
-                  <th>Qty</th>
+                  <th>Total Qty</th>
                   <th>Borrowed</th>
                   <th>Available</th>
                   <th>Location</th>
@@ -1791,41 +1838,44 @@
               padding-top: 2.5rem;
             "
           >
-            Music Lab Equipment
+            Music Equipment
           </p>
+
           <section class="inventory-card">
             <h2>Add New Music Equipment</h2>
             <form class="add-form" id="addFormMusic">
               <input
                 type="text"
-                name="itemId"
-                placeholder="Item ID (e.g., MUS-001)"
+                name="itemIdPrefix"
+                placeholder="Item ID Prefix (e.g., MSC)"
                 required
               />
               <input
                 type="text"
                 name="name"
-                placeholder="Equipment Name"
+                placeholder="Instrument Name"
                 required
               />
               <input type="hidden" name="category" value="Music Instruments" />
               <input
                 type="number"
                 name="quantity"
-                placeholder="Quantity"
-                min="0"
+                placeholder="Quantity to create"
+                min="1"
                 required
               />
               <input
                 type="text"
                 name="location"
-                placeholder="Location (e.g., Band Room)"
+                placeholder="Location"
                 required
               />
               <button type="submit">Add Item</button>
             </form>
           </section>
+
           <section class="inventory-card">
+            <h2 id="musicTableTitle">Music Instruments Inventory</h2>
             <div class="filter-row">
               <div class="search-bar">
                 <input
@@ -1852,7 +1902,7 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Category</th>
-                  <th>Qty</th>
+                  <th>Total Qty</th>
                   <th>Borrowed</th>
                   <th>Available</th>
                   <th>Location</th>
@@ -1866,27 +1916,24 @@
         </div>
 
         <div id="inventory-archive-container" style="display: none">
-          <p class="page-subtitle" style="margin-top: 2.5rem">
-            Archived Inventory
-          </p>
           <section class="inventory-card">
-            <h2>Archived Inventory (All Facility Types)</h2>
+            <h2>Archived Facility Equipment</h2>
             <div class="filter-row">
               <div class="search-bar">
                 <input
                   type="text"
                   id="searchInventoryArchive"
-                  placeholder="Search archived items..."
+                  placeholder="Search archived equipment..."
                 />
               </div>
             </div>
-            <table id="tableInventoryArchive">
+            <table id="inventoryArchiveTable">
               <thead>
                 <tr>
                   <th>ID</th>
                   <th>Name</th>
                   <th>Category</th>
-                  <th>Original Qty</th>
+                  <th>Total Qty</th>
                   <th>Location</th>
                   <th>Actions</th>
                 </tr>
@@ -1895,6 +1942,34 @@
             </table>
           </section>
         </div>
+      </div>
+
+      <div
+        id="bulkActionBar"
+        style="
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: var(--primary-dark);
+          padding: 10px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+          display: none;
+          z-index: 999;
+        "
+      >
+        <span
+          id="selectedCount"
+          style="
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-right: 20px;
+          "
+          >0 Items Selected</span
+        >
+        <button class="btn btn-restore">Bulk Restore</button>
+        <button class="btn btn-delete-permanent">Cancel Selection</button>
       </div>
       <div id="requests-content" class="page-content">
         <h1 id="requests-title">Manage Student Requests</h1>
@@ -2144,6 +2219,37 @@
         let isViewingInventoryArchive = false;
         let combinedArchivedInventory = [];
         let isViewingTrash = false;
+        const tableTitleMap = {
+          Furniture: document.getElementById('furnitureTableTitle'),
+          Computer: document.getElementById('computerTableTitle'),
+          Food: document.getElementById('foodTableTitle'),
+          Music: document.getElementById('musicTableTitle'),
+        };
+        const tableTitleText = {
+          Furniture: {
+            active: 'Tables & Chairs Inventory',
+            archive: 'Archived Tables & Chairs',
+          },
+          Computer: {
+            active: 'Computer Lab Inventory',
+            archive: 'Archived Computer Lab',
+          },
+          Food: {
+            active: 'Food Lab Inventory',
+            archive: 'Archived Food Lab',
+          },
+          Music: {
+            active: 'Music Instruments Inventory',
+            archive: 'Archived Music Instruments',
+          },
+        };
+        const categoryFilters = {
+          Furniture: 'Tables & Chairs',
+          Computer: 'Computer Lab',
+          Food: 'Food Lab',
+          Music: 'Music Instruments',
+        };
+        let selectedArchivedItems = [];
 
         const body = document.body;
         const logoutLink = document.querySelector('.logout-link');
@@ -2339,7 +2445,13 @@
             'click',
             toggleInventoryArchiveView
           );
-          searchInventoryArchive.addEventListener('input', renderArchiveTable);
+          searchInventoryArchive.addEventListener('input', () => {
+            if (isViewingInventoryArchive) {
+              for (const type in inventoryTypes) {
+                renderTable(type);
+              }
+            }
+          });
 
           // --- Reports Event Listeners ---
           reportTypeSelect.addEventListener(
@@ -2998,171 +3110,799 @@
             const response = await fetch(config.api);
             if (!response.ok)
               throw new Error(`Failed to fetch ${type} inventory`);
-            config.store = await response.json();
-            renderTable(type);
+            const payload = await response.json();
+            config.store = Array.isArray(payload) ? payload : [];
+            if (
+              !isViewingInventoryArchive &&
+              document
+                .getElementById('inventory-content')
+                .classList.contains('active')
+            ) {
+              renderTable(type);
+            }
           } catch (error) {
             showToast(error.message);
             renderTable(type);
           }
         }
 
-        // UPDATED: renderTable to include Calibration
         function renderTable(type) {
           const config = inventoryTypes[type];
+          const tableBody = config.tableBody;
+          const table = tableBody.closest('table');
+          const thead = table.querySelector('thead');
+          const isArchiveView = isViewingInventoryArchive;
+
+          toggleInventoryArchiveBtn.textContent = isArchiveView
+            ? 'View Active Inventory'
+            : 'View Archives';
+
+          if (tableTitleMap[type]) {
+            tableTitleMap[type].textContent = isArchiveView
+              ? tableTitleText[type].archive
+              : tableTitleText[type].active;
+          }
+
+          if (config.addForm) {
+            const elements = Array.from(config.addForm.elements);
+            elements.forEach((el) => {
+              if (el.tagName === 'BUTTON') {
+                el.disabled = isArchiveView;
+              } else {
+                el.disabled = isArchiveView;
+              }
+            });
+            config.addForm.style.opacity = isArchiveView ? '0.6' : '1';
+            config.addForm.style.pointerEvents = isArchiveView
+              ? 'none'
+              : 'auto';
+          }
+
+          selectedArchivedItems = [];
+          renderBulkActionBar();
 
           const searchTerm = config.searchInput.value.toLowerCase();
+          const archiveSearchTerm = searchInventoryArchive.value
+            ? searchInventoryArchive.value.toLowerCase()
+            : '';
           const statusFilterValue = config.statusFilter.value;
 
           const filteredData = config.store.filter((item) => {
             const originalQty = item.originalQuantity || item.quantity || 0;
             const borrowedQty = originalQty - (item.quantity || 0);
-            const currentStatus =
-              borrowedQty > 0 ? 'In-Use' : item.status || 'Available';
+            const displayStatus =
+              borrowedQty > 0 &&
+              !['Maintenance', 'Damaged', 'Calibration'].includes(
+                item.status || ''
+              )
+                ? 'In-Use'
+                : item.status || 'Available';
             const matchesSearch = Object.values(item).some((val) =>
-              String(val).toLowerCase().includes(searchTerm)
+              String(val ?? '')
+                .toLowerCase()
+                .includes(searchTerm)
             );
-            // Updated status match logic
+            const matchesArchiveSearch =
+              !isArchiveView ||
+              archiveSearchTerm === '' ||
+              [item.itemId, item.name, item.location, item.category]
+                .map((val) => String(val ?? '').toLowerCase())
+                .some((val) => val.includes(archiveSearchTerm));
             const matchesStatus =
               statusFilterValue === 'All' ||
-              currentStatus === statusFilterValue ||
+              displayStatus === statusFilterValue ||
               (statusFilterValue === 'Maintenance' &&
-                (item.status === 'Damaged' || item.status === 'Maintenance')); // Group Damaged under Maintenance
-            return matchesSearch && matchesStatus;
+                ['Damaged', 'Maintenance'].includes(item.status));
+            return matchesSearch && matchesStatus && matchesArchiveSearch;
           });
 
-          config.tableBody.innerHTML = '';
+          if (thead) {
+            thead.innerHTML = '';
+          }
+          tableBody.innerHTML = '';
+
           if (filteredData.length === 0) {
-            config.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">No equipment found.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">No ${
+              isArchiveView ? 'archived ' : ''
+            }equipment found.</td></tr>`;
             return;
           }
 
-          filteredData.forEach((item) => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const borrowedQty = originalQty - (item.quantity || 0);
-            const availableQty = item.quantity || 0;
-            const status =
-              borrowedQty > 0 ? 'In-Use' : item.status || 'Available';
+          const groupedData = filteredData.reduce((groups, item) => {
+            const key = item.name;
+            if (!groups[key]) {
+              const prefixMatch = item.itemId.match(/^([A-Z]+)-\d+$/i);
+              groups[key] = {
+                items: [],
+                prefix: prefixMatch ? prefixMatch[1].toUpperCase() : 'N/A',
+                category: item.category,
+                totalQuantity: 0,
+                totalBorrowed: 0,
+                location: item.location,
+                modelItemId: item.itemId,
+              };
+            }
+            groups[key].items.push(item);
+            groups[key].totalQuantity += item.originalQuantity || 0;
+            groups[key].totalBorrowed +=
+              (item.originalQuantity || 0) - (item.quantity || 0);
+            return groups;
+          }, {});
 
-            const row = config.tableBody.insertRow();
+          if (thead) {
+            const headerRow = thead.insertRow(0);
+            headerRow.innerHTML = `
+              <th><input type="checkbox" id="checkAllUnits" onclick="toggleAllUnits(this)"> ID</th>
+              <th>NAME</th>
+              <th>CATEGORY</th>
+              <th>TOTAL QTY</th>
+              <th>BORROWED</th>
+              <th>AVAILABLE</th>
+              <th>LOCATION</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            `;
+          }
 
-            const actionsHtml = `
-                    <button class="btn btn-edit" onclick="openEditModal('${type}', '${item.itemId}')">Edit</button>
-                    <button class="btn btn-delete" onclick="archiveInventoryItem('${type}', '${item.itemId}')">Archive</button>
-                `;
+          Object.keys(groupedData)
+            .sort()
+            .forEach((groupName, index) => {
+              const group = groupedData[groupName];
+              const groupId = `group-${type}-${index + 1}`;
+              const totalAvailable =
+                group.totalQuantity - group.totalBorrowed || 0;
 
-            // UPDATED: Added Calibration to select
-            row.innerHTML = `
-                    <td>${item.itemId}</td><td>${item.name}</td><td>${
-              item.category
-            }</td>
-                    <td>${originalQty}</td><td>${borrowedQty}</td><td>${availableQty}</td><td>${
-              item.location
-            }</td>
-                    <td>
-                        <select class="status-select status-${status.replace(
-                          /[^a-zA-Z0-9]/g,
-                          ''
-                        )}" onchange="updateStatus('${type}', this, '${
-              item.itemId
-            }')">
-                            <option value="Available" ${
-                              status === 'Available' ? 'selected' : ''
-                            }>Available</option>
-                            <option value="In-Use" ${
-                              status === 'In-Use' ? 'selected' : ''
-                            } disabled>In-Use</option>
-                            <option value="Maintenance" ${
-                              status === 'Maintenance' ? 'selected' : ''
-                            }>Maintenance</option>
-                            <option value="Damaged" ${
-                              status === 'Damaged' ? 'selected' : ''
-                            }>Damaged</option>
-                            <option value="Calibration" ${
-                              status === 'Calibration' ? 'selected' : ''
-                            }>Calibration</option>
-                        </select>
+              let headerStatus = 'Available';
+              if (group.totalBorrowed > 0) {
+                headerStatus = 'In-Use';
+              } else if (
+                group.items.some((item) =>
+                  [
+                    'Maintenance',
+                    'Damaged',
+                    'Calibration',
+                    'Decommissioned',
+                  ].includes(item.status)
+                )
+              ) {
+                headerStatus =
+                  group.items[0].status === 'Decommissioned'
+                    ? 'Decommissioned'
+                    : group.items[0].status || 'Available';
+              } else if (isArchiveView) {
+                headerStatus = 'Decommissioned';
+              }
+
+              const headerStatusClass = headerStatus.replace(
+                /[^a-zA-Z0-9]/g,
+                ''
+              );
+              const isGroupChecked = group.items.every((item) =>
+                selectedArchivedItems.includes(item.itemId)
+              );
+
+              const groupHeaderRow = tableBody.insertRow();
+              groupHeaderRow.id = `${groupId}-header`;
+              groupHeaderRow.classList.add('inventory-group-header');
+
+              const headerActionsHtml = isArchiveView
+                ? `
+                    <button
+                      class="btn btn-restore"
+                      onclick="handleModelArchiveClick(event, '${group.modelItemId}', '${groupName}', '${type}')"
+                    >
+                      Restore Model
+                    </button>
+                    <button
+                      class="btn btn-delete-permanent"
+                      onclick="handleModelDeleteClick(event, '${group.modelItemId}', '${groupName}', '${type}')"
+                    >
+                      Delete Permanently
+                    </button>
+                  `
+                : `
+                    <button
+                      class="btn btn-edit"
+                      data-item-ids="${group.items
+                        .map((i) => i.itemId)
+                        .join('|')}"
+                      onclick="handleModelEditClick(event, '${type}', '${
+                    group.modelItemId
+                  }')"
+                    >
+                      Edit Model
+                    </button>
+                    <button
+                      class="btn btn-delete"
+                      onclick="handleModelArchiveClick(event, '${
+                        group.modelItemId
+                      }', '${groupName}', '${type}')"
+                    >
+                      Archive Model
+                    </button>
+                  `;
+
+              groupHeaderRow.innerHTML = `
+                <td colspan="2" style="cursor:pointer; font-weight:700;">
+                  <input
+                    type="checkbox"
+                    id="checkGroup-${groupId}"
+                    onclick="event.stopPropagation(); toggleGroupUnits(this, '${groupId}', '${type}')"
+                    style="margin-right:5px;"
+                    ${isGroupChecked ? 'checked' : ''}
+                  >
+                  <span onclick="toggleGroup('${groupId}')">▶ <strong>${
+                group.prefix
+              } (${groupName})</strong></span>
+                </td>
+                <td>${group.category}</td>
+                <td>${group.totalQuantity}</td>
+                <td>${group.totalBorrowed}</td>
+                <td>${totalAvailable}</td>
+                <td>${group.location}</td>
+                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td class="actions-cell">${headerActionsHtml}</td>
+              `;
+
+              group.items
+                .sort((a, b) => a.itemId.localeCompare(b.itemId))
+                .forEach((item) => {
+                  const borrowedQty =
+                    (item.originalQuantity || 0) - (item.quantity || 0);
+                  const availableQty = item.quantity || 0;
+                  const displayStatus =
+                    borrowedQty > 0 &&
+                    !['Maintenance', 'Damaged', 'Calibration'].includes(
+                      item.status || ''
+                    )
+                      ? 'In-Use'
+                      : item.status || 'Available';
+                  const statusClass = displayStatus.replace(
+                    /[^a-zA-Z0-9]/g,
+                    ''
+                  );
+
+                  const actionsHtml = isArchiveView
+                    ? `
+                        <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
+                        <button class="btn btn-delete-permanent" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete Permanently</button>
+                      `
+                    : `
+                        <button class="btn btn-edit" onclick="openEditModal('${type}', '${item.itemId}')">Edit</button>
+                        <button class="btn btn-delete" onclick="archiveInventoryItem('${type}', '${item.itemId}')">Archive</button>
+                      `;
+
+                  const itemRow = tableBody.insertRow();
+                  itemRow.classList.add('inventory-item-detail', groupId);
+                  itemRow.style.display = 'none';
+                  itemRow.innerHTML = `
+                    <td style="padding-left:15px; width:120px;">
+                      <input
+                        type="checkbox"
+                        data-item-id="${item.itemId}"
+                        data-group-id="${groupId}"
+                        onclick="event.stopPropagation(); toggleItemSelection('${
+                          item.itemId
+                        }')"
+                        ${
+                          selectedArchivedItems.includes(item.itemId)
+                            ? 'checked'
+                            : ''
+                        }
+                      >
+                      <span style="padding-left:5px;">${item.itemId}</span>
                     </td>
-                    <td class="actions-cell">
-                        ${actionsHtml}
-                    </td>`;
+                    <td>${item.name}</td>
+                    <td colspan="4" style="color:#6c757d; font-style:italic; text-align:left;">— Unit Detail —</td>
+                    <td>${item.location}</td>
+                    <td>
+                      <select
+                        class="status-select status-${statusClass}"
+                        onchange="updateStatus('${type}', this, '${
+                    item.itemId
+                  }')"
+                        ${isArchiveView ? 'disabled' : ''}
+                      >
+                        <option value="Available" ${
+                          displayStatus === 'Available' ? 'selected' : ''
+                        }>Available</option>
+                        <option value="In-Use" ${
+                          displayStatus === 'In-Use' ? 'selected' : ''
+                        } disabled>In-Use</option>
+                        <option value="Maintenance" ${
+                          displayStatus === 'Maintenance' ? 'selected' : ''
+                        }>Maintenance</option>
+                        <option value="Damaged" ${
+                          displayStatus === 'Damaged' ? 'selected' : ''
+                        }>Damaged</option>
+                        <option value="Calibration" ${
+                          displayStatus === 'Calibration' ? 'selected' : ''
+                        }>Calibration</option>
+                        <option value="Decommissioned" ${
+                          displayStatus === 'Decommissioned' ? 'selected' : ''
+                        } disabled>Decommissioned</option>
+                      </select>
+                    </td>
+                    <td class="actions-cell">${actionsHtml}</td>
+                  `;
+                });
+            });
+        }
+
+        function renderBulkActionBar() {
+          const actionBar = document.getElementById('bulkActionBar');
+          const countSpan = document.getElementById('selectedCount');
+          const restoreBtn = actionBar.querySelector('.btn-restore');
+          const deleteBtn = actionBar.querySelector('.btn-delete-permanent');
+          const count = selectedArchivedItems.length;
+
+          countSpan.textContent = `${count} Item${
+            count === 1 ? '' : 's'
+          } Selected`;
+          actionBar.style.display = count > 0 ? 'flex' : 'none';
+
+          if (count === 0) {
+            restoreBtn.onclick = null;
+            deleteBtn.onclick = null;
+            return;
+          }
+
+          if (isViewingInventoryArchive) {
+            restoreBtn.textContent = 'Bulk Restore';
+            restoreBtn.style.backgroundColor = 'var(--info)';
+            restoreBtn.onclick = window.bulkRestoreSelected;
+
+            deleteBtn.textContent = 'Delete Permanently';
+            deleteBtn.style.display = 'inline-block';
+            deleteBtn.onclick = window.bulkDeleteSelected;
+          } else {
+            restoreBtn.textContent = 'Bulk Archive';
+            restoreBtn.style.backgroundColor = 'var(--danger)';
+            restoreBtn.onclick = window.bulkArchiveSelected;
+
+            deleteBtn.textContent = 'Cancel Selection';
+            deleteBtn.style.display = 'inline-block';
+            deleteBtn.onclick = () => {
+              selectedArchivedItems = [];
+              document
+                .querySelectorAll(
+                  '.inventory-item-detail input[type="checkbox"]'
+                )
+                .forEach((cb) => {
+                  cb.checked = false;
+                });
+              const masterCheckbox = document.getElementById('checkAllUnits');
+              if (masterCheckbox) masterCheckbox.checked = false;
+              updateMasterAndBulkActionUI();
+              showToast('Selection cancelled.', 'warning');
+            };
+          }
+        }
+
+        function updateMasterAndBulkActionUI() {
+          renderBulkActionBar();
+          const allUnits = document.querySelectorAll(
+            '.inventory-item-detail input[type="checkbox"]'
+          );
+          const masterCheckbox = document.getElementById('checkAllUnits');
+          if (masterCheckbox) {
+            masterCheckbox.checked =
+              allUnits.length > 0 &&
+              selectedArchivedItems.length === allUnits.length;
+          }
+        }
+
+        window.toggleGroup = (groupId) => {
+          const detailRows = document.querySelectorAll(`.${groupId}`);
+          const headerRow = document.getElementById(`${groupId}-header`);
+          if (!headerRow) return;
+
+          const isVisible =
+            detailRows.length > 0 && detailRows[0].style.display !== 'none';
+          detailRows.forEach((row) => {
+            row.style.display = isVisible ? 'none' : '';
           });
+
+          const span = headerRow.querySelector('span');
+          if (span) {
+            span.innerHTML = span.innerHTML.replace(
+              /[▶▼]/,
+              isVisible ? '▶' : '▼'
+            );
+          }
+        };
+
+        window.toggleGroupUnits = (masterCheckbox, groupId, type) => {
+          const individualCheckboxes = document.querySelectorAll(
+            `.inventory-item-detail input[type="checkbox"][data-group-id="${groupId}"]`
+          );
+          const isChecking = masterCheckbox.checked;
+
+          individualCheckboxes.forEach((cb) => {
+            cb.checked = isChecking;
+            const itemId = cb.getAttribute('data-item-id');
+            const index = selectedArchivedItems.indexOf(itemId);
+            if (isChecking && index === -1) {
+              selectedArchivedItems.push(itemId);
+            } else if (!isChecking && index > -1) {
+              selectedArchivedItems.splice(index, 1);
+            }
+          });
+
+          updateMasterAndBulkActionUI();
+        };
+
+        window.toggleItemSelection = (itemId) => {
+          const index = selectedArchivedItems.indexOf(itemId);
+          if (index > -1) {
+            selectedArchivedItems.splice(index, 1);
+          } else {
+            selectedArchivedItems.push(itemId);
+          }
+          updateMasterAndBulkActionUI();
+        };
+
+        window.toggleAllUnits = (checkbox) => {
+          const allUnitCheckboxes = document.querySelectorAll(
+            '.inventory-item-detail input[type="checkbox"]'
+          );
+          selectedArchivedItems = [];
+          allUnitCheckboxes.forEach((cb) => {
+            cb.checked = checkbox.checked;
+            if (checkbox.checked) {
+              selectedArchivedItems.push(cb.getAttribute('data-item-id'));
+            }
+          });
+          updateMasterAndBulkActionUI();
+        };
+
+        function resolveItemTypeById(itemId) {
+          return Object.keys(inventoryTypes).find((inventoryType) =>
+            inventoryTypes[inventoryType].store.some(
+              (item) => item.itemId === itemId
+            )
+          );
+        }
+
+        window.bulkArchiveSelected = async () => {
+          if (selectedArchivedItems.length === 0)
+            return showToast('No items selected.', 'warning');
+          if (
+            !confirm(
+              `Archive ${selectedArchivedItems.length} selected item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }?`
+            )
+          )
+            return;
+          try {
+            let archivedCount = 0;
+            for (const itemId of selectedArchivedItems) {
+              const type = resolveItemTypeById(itemId);
+              if (!type) continue;
+              const response = await fetch(
+                `${inventoryTypes[type].api}/${itemId}`,
+                { method: 'DELETE' }
+              );
+              if (response.ok) {
+                archivedCount += 1;
+              }
+            }
+            showToast(`Archived ${archivedCount} item(s).`, 'success');
+            selectedArchivedItems = [];
+            for (const inventoryType in inventoryTypes) {
+              fetchInventory(inventoryType);
+            }
+            if (isViewingInventoryArchive) {
+              fetchArchivedInventory();
+            } else {
+              renderBulkActionBar();
+            }
+          } catch (error) {
+            showToast(`Error during bulk archive: ${error.message}`, 'error');
+          }
+        };
+
+        window.bulkRestoreSelected = async () => {
+          if (selectedArchivedItems.length === 0)
+            return showToast('No items selected.', 'warning');
+          if (
+            !confirm(
+              `Restore ${selectedArchivedItems.length} archived item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }?`
+            )
+          )
+            return;
+          try {
+            let restored = 0;
+            for (const itemId of selectedArchivedItems) {
+              const response = await fetch(
+                `/api/inventory/restore/${encodeURIComponent(itemId)}`,
+                { method: 'PUT' }
+              );
+              if (response.ok) {
+                restored += 1;
+              }
+            }
+            showToast(`Restored ${restored} item(s).`, 'success');
+            selectedArchivedItems = [];
+            fetchArchivedInventory();
+            for (const inventoryType in inventoryTypes) {
+              fetchInventory(inventoryType);
+            }
+          } catch (error) {
+            showToast(`Error during bulk restore: ${error.message}`, 'error');
+          }
+        };
+
+        window.bulkDeleteSelected = async () => {
+          if (selectedArchivedItems.length === 0)
+            return showToast('No items selected.', 'warning');
+          if (
+            !confirm(
+              `WARNING: Permanently delete ${
+                selectedArchivedItems.length
+              } item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }? This cannot be undone.`
+            )
+          )
+            return;
+          try {
+            let deleted = 0;
+            for (const itemId of selectedArchivedItems) {
+              const response = await fetch(
+                `/api/inventory/permanent/${encodeURIComponent(itemId)}`,
+                { method: 'DELETE' }
+              );
+              if (response.ok) deleted += 1;
+            }
+            showToast(`Deleted ${deleted} item(s).`, 'success');
+            selectedArchivedItems = [];
+            fetchArchivedInventory();
+          } catch (error) {
+            showToast(`Error during bulk delete: ${error.message}`, 'error');
+          }
+        };
+
+        window.handleModelArchiveClick = async (
+          event,
+          itemId,
+          groupName,
+          type
+        ) => {
+          event.stopPropagation();
+          if (isViewingInventoryArchive) {
+            if (!confirm(`Restore all archived units of ${groupName}?`)) return;
+            try {
+              const itemsToRestore = inventoryTypes[type].store.filter(
+                (item) => item.name === groupName
+              );
+              let restored = 0;
+              for (const item of itemsToRestore) {
+                const response = await fetch(
+                  `/api/inventory/restore/${encodeURIComponent(item.itemId)}`,
+                  { method: 'PUT' }
+                );
+                if (response.ok) restored += 1;
+              }
+              showToast(`Restored ${restored} item(s).`, 'success');
+              fetchArchivedInventory();
+              for (const inventoryType in inventoryTypes) {
+                fetchInventory(inventoryType);
+              }
+            } catch (error) {
+              showToast(`Error restoring model: ${error.message}`, 'error');
+            }
+            return;
+          }
+          if (
+            !confirm(
+              `Archive all units for ${groupName}? You can restore them from Archives.`
+            )
+          )
+            return;
+          try {
+            const itemsToArchive = inventoryTypes[type].store.filter(
+              (item) => item.name === groupName
+            );
+            let archived = 0;
+            for (const item of itemsToArchive) {
+              const response = await fetch(
+                `${inventoryTypes[type].api}/${item.itemId}`,
+                { method: 'DELETE' }
+              );
+              if (response.ok) archived += 1;
+            }
+            showToast(
+              `Archived ${archived} item(s) for ${groupName}.`,
+              'success'
+            );
+            fetchInventory(type);
+            if (isViewingInventoryArchive) {
+              fetchArchivedInventory();
+            } else {
+              renderBulkActionBar();
+            }
+          } catch (error) {
+            showToast(`Error archiving model: ${error.message}`, 'error');
+          }
+        };
+
+        window.handleModelDeleteClick = async (
+          event,
+          itemId,
+          groupName,
+          type
+        ) => {
+          event.stopPropagation();
+          if (
+            !confirm(
+              `WARNING: Permanently delete all archived units for ${groupName}? This cannot be undone.`
+            )
+          )
+            return;
+          try {
+            const itemsToDelete = inventoryTypes[type].store.filter(
+              (item) => item.name === groupName
+            );
+            let deleted = 0;
+            for (const item of itemsToDelete) {
+              const response = await fetch(
+                `/api/inventory/permanent/${encodeURIComponent(item.itemId)}`,
+                { method: 'DELETE' }
+              );
+              if (response.ok) deleted += 1;
+            }
+            showToast(`Deleted ${deleted} item(s).`, 'success');
+            fetchArchivedInventory();
+          } catch (error) {
+            showToast(`Error deleting model: ${error.message}`, 'error');
+          }
+        };
+
+        window.handleModelEditClick = (event, type, itemId) => {
+          event.stopPropagation();
+          const button = event.currentTarget;
+          const itemIdsAttr = button.getAttribute('data-item-ids');
+          const itemIds = itemIdsAttr ? itemIdsAttr.split('|') : [itemId];
+          openEditModal(type, itemId, itemIds);
+        };
+
+        function findNextSequenceId(prefix, items) {
+          let maxNum = 0;
+          const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+          items.forEach((item) => {
+            const match = item.itemId?.match(prefixPattern);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (!Number.isNaN(num) && num > maxNum) {
+                maxNum = num;
+              }
+            }
+          });
+          return maxNum + 1;
         }
 
         async function handleAddItem(e, type) {
           e.preventDefault();
           const config = inventoryTypes[type];
           const form = e.target;
-          const newItem = {
-            itemId: form.querySelector('[name="itemId"]').value,
-            name: form.querySelector('[name="name"]').value,
-            category: form.querySelector('[name="category"]').value,
-            quantity: parseInt(form.querySelector('[name="quantity"]').value),
-            originalQuantity: parseInt(
-              form.querySelector('[name="quantity"]').value
-            ),
-            location: form.querySelector('[name="location"]').value,
-            status: 'Available',
-          };
+          const prefix = form
+            .querySelector('[name="itemIdPrefix"]')
+            .value.toUpperCase()
+            .trim();
+          const name = form.querySelector('[name="name"]').value.trim();
+          const category = form.querySelector('[name="category"]').value;
+          const quantity = parseInt(
+            form.querySelector('[name="quantity"]').value,
+            10
+          );
+          const location = form.querySelector('[name="location"]').value.trim();
+
+          if (!prefix) {
+            showToast('Item ID Prefix cannot be empty.', 'error');
+            return;
+          }
+          if (!name) {
+            showToast('Name is required.', 'error');
+            return;
+          }
+          if (!Number.isInteger(quantity) || quantity <= 0) {
+            showToast('Quantity must be 1 or more.', 'error');
+            return;
+          }
+
+          const nextSequenceNumber = findNextSequenceId(prefix, config.store);
+          const itemsToCreate = [];
+          const maxDigits = Math.max(
+            2,
+            String(nextSequenceNumber + quantity - 1).length
+          );
+
+          for (let i = 0; i < quantity; i += 1) {
+            const sequence = String(nextSequenceNumber + i).padStart(
+              maxDigits,
+              '0'
+            );
+            itemsToCreate.push({
+              itemId: `${prefix}-${sequence}`,
+              name,
+              category,
+              quantity: 1,
+              originalQuantity: 1,
+              location,
+              status: 'Available',
+            });
+          }
+
           try {
             const response = await fetch(config.api, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newItem),
+              body: JSON.stringify(itemsToCreate),
             });
-            if (!response.ok)
+            if (!response.ok) {
+              const errorBody = await response.json().catch(() => ({}));
               throw new Error(
-                (await response.json()).message || 'Failed to add item'
+                errorBody.message || `Failed to add ${quantity} items.`
               );
-            showToast(`${type} item added!`);
+            }
+            showToast(
+              `Successfully added ${quantity} items (IDs: ${
+                itemsToCreate[0].itemId
+              } - ${itemsToCreate[itemsToCreate.length - 1].itemId}).`,
+              'success'
+            );
             form.reset();
             fetchInventory(type);
           } catch (error) {
-            showToast(`Error: ${error.message}`);
+            showToast(`Error: ${error.message}`, 'error');
           }
         }
         async function handleUpdateItem(e) {
           e.preventDefault();
-          const formType = document.getElementById('editForm').dataset.type;
+          const editFormElement = document.getElementById('editForm');
+          const formType = editFormElement.dataset.type;
           if (formType === 'inventory') {
             const itemId = document.getElementById('editItemId').value;
             const type = document.getElementById('editItemType').value;
             const config = inventoryTypes[type];
-
-            // Find original item to see if quantity changed
-            const originalItem = config.store.find((i) => i.itemId === itemId);
-            const newTotalQuantity = parseInt(
-              document.getElementById('editQuantity').value
-            );
+            const itemIdsAttr = editFormElement.dataset.itemIds || itemId;
+            const itemIds = itemIdsAttr.split(',').filter(Boolean);
 
             const updatedData = {
-              name: document.getElementById('editItemName').value,
+              name: document.getElementById('editItemName').value.trim(),
               category: document.getElementById('editCategory').value,
-              originalQuantity: newTotalQuantity, // Always update originalQuantity
-              location: document.getElementById('editLocation').value,
+              location: document.getElementById('editLocation').value.trim(),
             };
 
-            // Recalculate 'available' quantity if total quantity was changed
-            if (
-              originalItem &&
-              newTotalQuantity !== originalItem.originalQuantity
-            ) {
-              const borrowedQty =
-                originalItem.originalQuantity - originalItem.quantity;
-              updatedData.quantity = newTotalQuantity - borrowedQty; // This is the new 'available'
-            }
-
             try {
-              const response = await fetch(`${config.api}/${itemId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData),
-              });
-              if (!response.ok) throw new Error('Failed to update item');
-              showToast('Item updated successfully!');
+              await Promise.all(
+                itemIds.map(async (id) => {
+                  const response = await fetch(`${config.api}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData),
+                  });
+                  if (!response.ok) {
+                    const errorBody = await response.json().catch(() => ({}));
+                    throw new Error(
+                      errorBody.message || `Failed to update item ${id}`
+                    );
+                  }
+                })
+              );
+              showToast('Item updated successfully!', 'success');
               editModal.style.display = 'none';
-              fetchInventory(type);
+              if (isViewingInventoryArchive) {
+                fetchArchivedInventory();
+              } else {
+                fetchInventory(type);
+              }
             } catch (error) {
-              showToast(`Error: ${error.message}`);
+              showToast(`Error: ${error.message}`, 'error');
             }
           } else if (formType === 'request') {
             const requestId = document.getElementById('editRequestId').value;
@@ -3434,34 +4174,34 @@
         };
 
         // --- 8. WINDOW-SCOPED FUNCTIONS for inline on-click ---
-        window.openEditModal = (type, itemId) => {
-          const item = inventoryTypes[type].store.find(
-            (i) => i.itemId === itemId
+        window.openEditModal = (type, itemId, itemIds = [itemId]) => {
+          const config = inventoryTypes[type];
+          const itemsToEdit = config.store.filter((i) =>
+            itemIds.includes(i.itemId)
           );
-          if (item) {
-            document.getElementById(
-              'editModalTitle'
-            ).innerText = `Edit ${type} Item`;
-            editForm.innerHTML = `
-                    <input type="hidden" id="editItemId" value="${item.itemId}">
-                    <input type="hidden" id="editItemType" value="${type}">
-                    <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${
-                      item.name
-                    }" required />
-                    <label for="editCategory">Category</label><input type="text" id="editCategory" value="${
-                      item.category
-                    }" readonly />
-                    <input type="hidden" id="editQuantity" value="${
-                      item.originalQuantity || item.quantity
-                    }" />
-                    <label for="editLocation">Location</label><input type="text" id="editLocation" value="${
-                      item.location
-                    }" required />
-                    <button type="submit">Save Changes</button>`;
-            editForm.dataset.type = 'inventory';
-            editForm.onsubmit = handleUpdateItem;
-            editModal.style.display = 'flex';
-          }
+          const item = itemsToEdit[0];
+          if (!item) return;
+
+          const totalQuantityToShow = itemsToEdit.length;
+          document.getElementById(
+            'editModalTitle'
+          ).innerText = `Edit ${type} Model: ${item.name}`;
+          editForm.innerHTML = `
+            <input type="hidden" id="editItemId" value="${item.itemId}">
+            <input type="hidden" id="editItemType" value="${type}">
+            <label for="editItemName">Equipment Name</label>
+            <input type="text" id="editItemName" value="${item.name}" required />
+            <label for="editCategory">Category</label>
+            <input type="text" id="editCategory" value="${item.category}" readonly />
+            <input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
+            <label for="editLocation">Location</label>
+            <input type="text" id="editLocation" value="${item.location}" required />
+            <button type="submit">Save Changes</button>
+          `;
+          editForm.dataset.type = 'inventory';
+          editForm.dataset.itemIds = itemIds.join(',');
+          editForm.onsubmit = handleUpdateItem;
+          editModal.style.display = 'flex';
         };
         window.openEditRequestModal = (requestId) => {
           const request = allRequestsData.find((r) => r._id === requestId);
@@ -3589,7 +4329,9 @@
             if (!response.ok) throw new Error('Failed to archive item');
             showToast('Item archived successfully.');
             fetchInventory(type);
-            fetchArchivedInventory();
+            if (isViewingInventoryArchive) {
+              fetchArchivedInventory();
+            }
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
@@ -3661,63 +4403,42 @@
             if (!response.ok)
               throw new Error('Failed to fetch archived inventory');
             const payload = await response.json();
-            combinedArchivedInventory = Array.isArray(payload) ? payload : [];
+            const archiveData = Array.isArray(payload) ? payload : [];
+            combinedArchivedInventory = archiveData;
+            Object.entries(inventoryTypes).forEach(
+              ([inventoryType, config]) => {
+                const categoryLabel = categoryFilters[inventoryType];
+                config.store = archiveData.filter(
+                  (item) =>
+                    (item.category || '').toLowerCase() ===
+                    (categoryLabel || '').toLowerCase()
+                );
+              }
+            );
+            isViewingInventoryArchive = true;
             if (
               document
                 .getElementById('inventory-content')
                 .classList.contains('active')
             ) {
-              isViewingInventoryArchive = true;
-              renderArchiveTable();
+              for (const type in inventoryTypes) {
+                renderTable(type);
+              }
             }
           } catch (error) {
             showToast(error.message);
-            combinedArchivedInventory = [];
-            renderArchiveTable();
           }
-        }
-        function renderArchiveTable() {
-          const searchTerm = searchInventoryArchive.value.toLowerCase();
-          const filteredData = combinedArchivedInventory.filter((item) => {
-            return Object.values(item).some((val) =>
-              String(val).toLowerCase().includes(searchTerm)
-            );
-          });
-          inventoryArchiveTableBody.innerHTML = '';
-          if (filteredData.length === 0) {
-            inventoryArchiveTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No archived equipment found.</td></tr>`;
-            return;
-          }
-          filteredData.forEach((item) => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const resolvedItemId = item.itemId || '';
-            const safeItemIdAttr = escapeAttribute(resolvedItemId);
-            const row = inventoryArchiveTableBody.insertRow();
-            const actionsHtml = `
-                    <button class="btn btn-restore" onclick="restoreInventoryItem('${safeItemIdAttr}')">Restore</button>
-                    <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${safeItemIdAttr}')">Delete Permanently</button>
-                `;
-            row.innerHTML = `
-                    <td>${resolvedItemId}</td>
-                    <td>${item.name}</td>
-                    <td>${item.category}</td>
-                    <td>${originalQty}</td>
-                    <td>${item.location}</td>
-                    <td class="actions-cell">${actionsHtml}</td>`;
-          });
         }
         const toggleInventoryArchiveView = () => {
-          isViewingInventoryArchive = !isViewingInventoryArchive;
+          inventoryArchiveContainer.style.display = 'none';
+          inventoryActiveContainer.style.display = 'block';
           if (isViewingInventoryArchive) {
-            inventoryActiveContainer.style.display = 'none';
-            inventoryArchiveContainer.style.display = 'block';
-            toggleInventoryArchiveBtn.textContent = 'View Active Inventory';
-            fetchArchivedInventory();
+            isViewingInventoryArchive = false;
+            for (const type in inventoryTypes) {
+              fetchInventory(type);
+            }
           } else {
-            inventoryActiveContainer.style.display = 'block';
-            inventoryArchiveContainer.style.display = 'none';
-            toggleInventoryArchiveBtn.textContent = 'View Archives';
-            for (const type in inventoryTypes) fetchInventory(type);
+            fetchArchivedInventory();
           }
         };
 

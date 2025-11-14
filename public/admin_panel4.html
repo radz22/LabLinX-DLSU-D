@@ -552,20 +552,28 @@
         background-color: var(--card-bg-dark);
       }
       .status-Available {
-        color: var(--success);
+        background-color: rgba(46, 204, 113, 0.18);
+        color: #0f5132;
       }
       .status-In-Use {
-        color: var(--warning);
+        background-color: rgba(255, 193, 7, 0.22);
+        color: #664d03;
       }
-      .status-Maintenance {
-        color: var(--danger);
+      .status-Maintenance,
+      .status-Damaged {
+        background-color: rgba(220, 53, 69, 0.22);
+        color: #842029;
+      }
+      .status-Calibration {
+        background-color: rgba(147, 112, 219, 0.22);
+        color: #45307d;
       }
       .status-badge {
         padding: 4px 10px;
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: 600;
-        color: white;
+        color: #343a40;
         text-align: center;
       }
       .status-Pending {
@@ -580,9 +588,6 @@
       .status-Returned {
         background-color: #6c757d;
       }
-      .status-Calibration {
-        background-color: var(--calibration);
-      } /* NEW STATUS STYLE */
       .actions-cell {
         display: flex;
         gap: 10px;
@@ -1510,114 +1515,64 @@
       <div id="inventory-content" class="page-content">
         <h1>Manage Facility Inventories</h1>
 
-        <section class="inventory-card" style="padding: 1rem 2rem">
-          <div
-            class="filter-row"
-            style="justify-content: flex-end; margin-bottom: 0"
-          >
-            <button id="toggleInventoryArchiveBtn">View Archives</button>
-          </div>
+        <section class="inventory-card">
+          <h2>Update Robotics Equipment</h2>
+          <form class="add-form" id="addFormRobotics">
+            <input
+              type="text"
+              name="itemIdPrefix"
+              placeholder="Item ID Prefix (e.g., RBT)"
+              required
+            />
+            <input type="text" name="name" placeholder="Item Name" required />
+            <input type="hidden" name="category" value="Robotics" />
+            <input
+              type="number"
+              name="quantity"
+              placeholder="Quantity"
+              min="0"
+              required
+            />
+            <input
+              type="text"
+              name="location"
+              placeholder="Location (e.g., Robotics Lab)"
+              required
+            />
+            <button type="submit">Save Item</button>
+          </form>
         </section>
 
-        <div id="inventory-active-container">
-          <p class="page-subtitle" style="margin-top: 2.5rem">
-            Robotics Equipment
-          </p>
-          <section class="inventory-card">
-            <h2>Add New Robotics Equipment</h2>
-            <form class="add-form" id="addFormRobotics">
+        <section class="inventory-card">
+          <h2 id="roboticsTableTitle">Robotics Equipment</h2>
+          <div class="filter-row">
+            <div class="search-bar">
               <input
                 type="text"
-                name="itemId"
-                placeholder="Item ID (e.g., RBT-001)"
-                required
+                id="searchRobotics"
+                placeholder="Search robotics equipment..."
               />
-              <input type="text" name="name" placeholder="Item Name" required />
-              <input type="hidden" name="category" value="Robotics" />
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                min="0"
-                required
-              />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location (e.g., Robotics Lab)"
-                required
-              />
-              <button type="submit">Add Item</button>
-            </form>
-          </section>
-          <section class="inventory-card">
-            <div class="filter-row">
-              <div class="search-bar">
-                <input
-                  type="text"
-                  id="searchRobotics"
-                  placeholder="Search robotics..."
-                />
-              </div>
-              <div class="filter-select">
-                <label for="inventoryStatusFilter">Filter by Status</label>
-                <select id="inventoryStatusFilter">
-                  <option value="All">All Statuses</option>
-                  <option value="Available">Available</option>
-                  <option value="In-Use">In-Use</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Calibration">Calibration</option>
-                </select>
-              </div>
             </div>
+            <div class="filter-select">
+              <label for="inventoryStatusFilterRobotics">Status</label>
+              <select id="inventoryStatusFilterRobotics">
+                <option value="All">All Statuses</option>
+                <option value="Available">Available</option>
+                <option value="In-Use">In-Use</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Damaged">Damaged</option>
+                <option value="Calibration">Calibration</option>
+              </select>
+            </div>
+            <button id="toggleInventoryArchiveBtn">View Archives</button>
+          </div>
+          <div id="roboticsInventoryContainer">
             <table id="tableRobotics">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Qty</th>
-                  <th>Borrowed</th>
-                  <th>Available</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="inventoryTableBody"></tbody>
+              <thead></thead>
+              <tbody></tbody>
             </table>
-          </section>
-        </div>
-        <div id="inventory-archive-container" style="display: none">
-          <p class="page-subtitle" style="margin-top: 2.5rem">
-            Archived Inventory
-          </p>
-          <section class="inventory-card">
-            <h2>Archived Robotics Equipment</h2>
-            <div class="filter-row">
-              <div class="search-bar">
-                <input
-                  type="text"
-                  id="searchInventoryArchive"
-                  placeholder="Search archived items..."
-                />
-              </div>
-            </div>
-            <table id="tableInventoryArchive">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Original Qty</th>
-                  <th>Location</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="inventoryArchiveTableBody"></tbody>
-            </table>
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
       <div id="requests-content" class="page-content">
         <h1 id="requests-title">Manage Student Requests</h1>
@@ -1741,6 +1696,33 @@
       </div>
     </main>
 
+    <div
+      id="bulkActionBar"
+      style="
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-dark);
+        padding: 10px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        z-index: 999;
+        align-items: center;
+        gap: 12px;
+      "
+    >
+      <span
+        id="selectedCount"
+        style="color: var(--accent-gold); font-weight: 600"
+      >
+        0 Items Selected
+      </span>
+      <button class="btn btn-restore">Bulk Restore</button>
+      <button class="btn btn-delete-permanent">Delete Permanently</button>
+    </div>
+
     <div id="editModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -1791,15 +1773,32 @@
             tableBody: document.querySelector('#tableRobotics tbody'),
             searchInput: document.getElementById('searchRobotics'),
             addForm: document.getElementById('addFormRobotics'),
-            statusFilter: document.getElementById('inventoryStatusFilter'),
+            statusFilter: document.getElementById(
+              'inventoryStatusFilterRobotics'
+            ),
           },
         };
 
         let allRequestsData = [],
-          notifications = []; // <-- REMOVED seenRequestIds
-        let isViewingInventoryArchive = false; // <-- ADDED
-        let combinedArchivedInventory = []; // <-- ADDED
-        let isViewingTrash = false; // <-- ADDED
+          notifications = [];
+        let isViewingInventoryArchive = false;
+        let isViewingTrash = false;
+        let selectedArchivedItems = [];
+
+        function findNextSequenceId(prefix, items) {
+          let maxNum = 0;
+          const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+          items.forEach((item) => {
+            const match = item.itemId.match(prefixPattern);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (!Number.isNaN(num) && num > maxNum) {
+                maxNum = num;
+              }
+            }
+          });
+          return maxNum + 1;
+        }
 
         const body = document.body;
         const logoutLink = document.querySelector('.logout-link');
@@ -1856,18 +1855,8 @@
         const toggleInventoryArchiveBtn = document.getElementById(
           'toggleInventoryArchiveBtn'
         );
-        const inventoryActiveContainer = document.getElementById(
-          'inventory-active-container'
-        );
-        const inventoryArchiveContainer = document.getElementById(
-          'inventory-archive-container'
-        );
-        const inventoryArchiveTableBody = document.getElementById(
-          'inventoryArchiveTableBody'
-        );
-        const searchInventoryArchive = document.getElementById(
-          'searchInventoryArchive'
-        );
+        const roboticsTableTitle =
+          document.getElementById('roboticsTableTitle');
 
         // --- 2. INITIALIZATION ---
         function initializeApp() {
@@ -1996,7 +1985,6 @@
             'click',
             toggleInventoryArchiveView
           );
-          searchInventoryArchive.addEventListener('input', renderArchiveTable);
 
           // ... (live scan listeners from your file) ...
           scanMode.addEventListener('change', resetScannerUI);
@@ -2025,13 +2013,11 @@
           if (pageId === 'dashboard') {
             updateDashboard();
           } else if (pageId === 'inventory') {
-            // --- ADDED: Reset inventory view ---
             isViewingInventoryArchive = false;
-            inventoryActiveContainer.style.display = 'block';
-            inventoryArchiveContainer.style.display = 'none';
+            selectedArchivedItems = [];
             toggleInventoryArchiveBtn.textContent = 'View Archives';
-            for (const type in inventoryTypes) fetchInventory(type);
-            // --- END ---
+            roboticsTableTitle.textContent = 'Robotics Equipment';
+            fetchInventory('Robotics');
           } else if (pageId === 'requests') {
             // --- ADDED: Reset request view ---
             isViewingTrash = false;
@@ -2457,116 +2443,552 @@
             const response = await fetch(config.api);
             if (!response.ok)
               throw new Error(`Failed to fetch ${type} inventory`);
-            config.store = await response.json();
-            renderTable(type);
+            const data = await response.json();
+            config.store = Array.isArray(data)
+              ? data.filter((item) => item.category === 'Robotics')
+              : [];
+            if (
+              document
+                .getElementById('inventory-content')
+                .classList.contains('active') &&
+              !isViewingInventoryArchive
+            ) {
+              renderTable(type);
+            }
           } catch (error) {
             showToast(error.message);
+            config.store = [];
             renderTable(type);
           }
         }
 
-        // MODIFIED: renderTable (for active items)
         function renderTable(type) {
           const config = inventoryTypes[type];
+          const tableBody = config.tableBody;
+          const table = tableBody.closest('table');
+          const thead = table.querySelector('thead');
+          const isArchiveView = isViewingInventoryArchive;
+
+          selectedArchivedItems = [];
+          renderBulkActionBar();
+
+          roboticsTableTitle.textContent = isArchiveView
+            ? 'Archived Robotics Equipment'
+            : 'Robotics Equipment';
+          toggleInventoryArchiveBtn.textContent = isArchiveView
+            ? 'View Active Inventory'
+            : 'View Archives';
+
           const searchTerm = config.searchInput.value.toLowerCase();
           const statusFilterValue = config.statusFilter.value;
 
           const filteredData = config.store.filter((item) => {
             const originalQty = item.originalQuantity || item.quantity || 0;
             const borrowedQty = originalQty - (item.quantity || 0);
-            const currentStatus =
-              borrowedQty > 0 ? 'In-Use' : item.status || 'Available';
+            const statusBase = item.status || 'Available';
+            const displayStatus =
+              borrowedQty > 0 &&
+              !['Maintenance', 'Damaged', 'Calibration'].includes(statusBase)
+                ? 'In-Use'
+                : statusBase;
             const matchesSearch = Object.values(item).some((val) =>
-              String(val).toLowerCase().includes(searchTerm)
+              String(val || '')
+                .toLowerCase()
+                .includes(searchTerm)
             );
             const matchesStatus =
               statusFilterValue === 'All' ||
-              currentStatus === statusFilterValue;
+              displayStatus === statusFilterValue;
             return matchesSearch && matchesStatus;
           });
 
-          config.tableBody.innerHTML = '';
+          thead.innerHTML = '';
+          tableBody.innerHTML = '';
+
+          const headerRow = thead.insertRow();
+          headerRow.innerHTML = `
+            <th>
+              <input type="checkbox" id="checkAllUnits" onclick="toggleAllUnits(this)">
+              ID
+            </th>
+            <th>NAME</th>
+            <th>CATEGORY</th>
+            <th>TOTAL QTY</th>
+            <th>BORROWED</th>
+            <th>AVAILABLE</th>
+            <th>LOCATION</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          `;
+
           if (filteredData.length === 0) {
-            config.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">No equipment found.</td></tr>`;
+            const emptyRow = tableBody.insertRow();
+            emptyRow.innerHTML = `<td colspan="9" style="text-align:center; padding: 20px;">No robotics equipment found.</td>`;
             return;
           }
 
-          filteredData.forEach((item) => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const borrowedQty = originalQty - (item.quantity || 0);
-            const availableQty = item.quantity || 0;
-            const status =
-              borrowedQty > 0 ? 'In-Use' : item.status || 'Available';
-            const row = config.tableBody.insertRow();
+          const groupedData = filteredData.reduce((groups, item) => {
+            const key = item.name;
+            if (!groups[key]) {
+              const prefixMatch = item.itemId
+                ? item.itemId.match(/^([A-Z]+)-\d+/i)
+                : null;
+              const prefix = prefixMatch ? prefixMatch[1].toUpperCase() : 'RBT';
+              groups[key] = {
+                items: [],
+                prefix,
+                category: item.category,
+                totalQuantity: 0,
+                totalBorrowed: 0,
+                location: item.location,
+                modelItemId: item.itemId,
+                displayStatus: item.status || 'Available',
+              };
+            }
+            groups[key].items.push(item);
+            groups[key].totalQuantity += item.originalQuantity || 0;
+            const borrowedQty =
+              (item.originalQuantity || 0) - (item.quantity || 0);
+            groups[key].totalBorrowed += borrowedQty;
+            const statusBase = item.status || 'Available';
+            const displayStatus =
+              borrowedQty > 0 &&
+              !['Maintenance', 'Damaged', 'Calibration'].includes(statusBase)
+                ? 'In-Use'
+                : statusBase;
+            if (
+              ['Maintenance', 'Damaged', 'Calibration', 'In-Use'].includes(
+                displayStatus
+              )
+            ) {
+              groups[key].displayStatus = displayStatus;
+            }
+            return groups;
+          }, {});
 
-            // --- MODIFIED: Changed confirmDelete to archiveInventoryItem ---
-            const actionsHtml = `
-                        <button class="btn btn-edit" onclick="openEditModal('${type}', '${item.itemId}')">Edit</button>
-                        <button class="btn btn-delete" onclick="archiveInventoryItem('${type}', '${item.itemId}')">Archive</button>
-                    `;
+          let groupIndex = 0;
+          Object.keys(groupedData)
+            .sort()
+            .forEach((groupName) => {
+              const group = groupedData[groupName];
+              groupIndex += 1;
+              const groupId = `group-${type}-${groupIndex}`;
+              const totalAvailable = group.totalQuantity - group.totalBorrowed;
+              const headerStatus = group.displayStatus || 'Available';
+              const headerStatusClass = headerStatus.replace(
+                /[^a-zA-Z0-9]/g,
+                ''
+              );
+              const modelId = group.modelItemId;
+              const groupLabel = `${group.prefix} (${groupName})`;
 
-            row.innerHTML = `
-                        <td>${item.itemId}</td><td>${item.name}</td><td>${
-              item.category
-            }</td>
-                        <td>${originalQty}</td><td>${borrowedQty}</td><td>${availableQty}</td><td>${
-              item.location
-            }</td>
-                        <td>
-                            <select class="status-select status-${status.replace(
-                              /[^a-zA-Z0-9]/g,
-                              ''
-                            )}" onchange="updateStatus('${type}', this, '${
-              item.itemId
-            }')">
-                                <option value="Available" ${
-                                  status === 'Available' ? 'selected' : ''
-                                }>Available</option>
-                                <option value="In-Use" ${
-                                  status === 'In-Use' ? 'selected' : ''
-                                } disabled>In-Use</option>
-                                <option value="Maintenance" ${
-                                  status === 'Maintenance' ? 'selected' : ''
-                                }>Maintenance</option>
-                                <option value="Calibration" ${
-                                  status === 'Calibration' ? 'selected' : ''
-                                }>Calibration</option>
-                            </select>
-                        </td>
-                        <td class="actions-cell">
-                            ${actionsHtml}
-                        </td>`;
-          });
+              const groupHeaderRow = tableBody.insertRow();
+              groupHeaderRow.id = `${groupId}-header`;
+              groupHeaderRow.classList.add('inventory-group-header');
+
+              const headerActions = isArchiveView
+                ? `<button class="btn btn-restore" onclick="handleModelArchiveClick(event, '${modelId}')">Restore</button><button class="btn btn-delete" onclick="handleModelDeleteClick(event, '${modelId}')">Delete</button>`
+                : `<button class="btn btn-edit" onclick="handleModelEditClick(event, '${type}', '${modelId}')">Edit Model</button><button class="btn btn-delete" onclick="handleModelArchiveClick(event, '${modelId}')">Archive</button>`;
+
+              groupHeaderRow.innerHTML = `
+                <td colspan="2" style="cursor:pointer;font-weight:700;">
+                  <input
+                    type="checkbox"
+                    id="checkGroup-${groupId}"
+                    onclick="event.stopPropagation(); toggleGroupUnits(this, '${groupId}')"
+                  >
+                  <span data-label="${groupLabel}" onclick="toggleGroup('${groupId}', this)">▼ ${groupLabel}</span>
+                </td>
+                <td>${group.category}</td>
+                <td>${group.totalQuantity}</td>
+                <td>${group.totalBorrowed}</td>
+                <td>${totalAvailable}</td>
+                <td>${group.location}</td>
+                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td class="actions-cell">${headerActions}</td>
+              `;
+
+              group.items
+                .sort((a, b) => a.itemId.localeCompare(b.itemId))
+                .forEach((item) => {
+                  const originalQty =
+                    item.originalQuantity || item.quantity || 0;
+                  const borrowedQty = originalQty - (item.quantity || 0);
+                  const availableQty = item.quantity || 0;
+                  const statusBase = item.status || 'Available';
+                  const displayStatus =
+                    borrowedQty > 0 &&
+                    !['Maintenance', 'Damaged', 'Calibration'].includes(
+                      statusBase
+                    )
+                      ? 'In-Use'
+                      : statusBase;
+                  const statusClass = displayStatus.replace(
+                    /[^a-zA-Z0-9]/g,
+                    ''
+                  );
+                  const detailRow = tableBody.insertRow();
+                  detailRow.className = `inventory-item-detail ${groupId}`;
+                  detailRow.innerHTML = `
+                    <td>
+                      <input
+                        type="checkbox"
+                        data-item-id="${item.itemId}"
+                        data-group-id="${groupId}"
+                        onclick="toggleItemSelection('${item.itemId}')"
+                      >
+                      ${item.itemId}
+                    </td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${originalQty}</td>
+                    <td>${borrowedQty}</td>
+                    <td>${availableQty}</td>
+                    <td>${item.location}</td>
+                    <td><span class="status-badge status-${statusClass}">${displayStatus}</span></td>
+                    <td class="actions-cell">
+                      ${
+                        isArchiveView
+                          ? `<button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button><button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete</button>`
+                          : `<button class="btn btn-edit" onclick="openEditModal('${type}', '${item.itemId}')">Edit</button><button class="btn btn-delete" onclick="archiveInventoryItem('${type}', '${item.itemId}')">Archive</button>`
+                      }
+                    </td>
+                  `;
+                });
+            });
         }
+
+        function renderBulkActionBar() {
+          const actionBar = document.getElementById('bulkActionBar');
+          if (!actionBar) return;
+          const countSpan = document.getElementById('selectedCount');
+          const primaryBtn = actionBar.querySelector('.btn-restore');
+          const secondaryBtn = actionBar.querySelector('.btn-delete-permanent');
+          const count = selectedArchivedItems.length;
+
+          countSpan.textContent = `${count} Item${
+            count === 1 ? '' : 's'
+          } Selected`;
+          actionBar.style.display = count > 0 ? 'flex' : 'none';
+
+          if (isViewingInventoryArchive) {
+            primaryBtn.textContent = 'Bulk Restore';
+            primaryBtn.onclick = window.bulkRestoreSelected;
+            secondaryBtn.textContent = 'Delete Permanently';
+            secondaryBtn.onclick = window.bulkDeleteSelected;
+          } else {
+            primaryBtn.textContent = 'Bulk Archive';
+            primaryBtn.onclick = window.bulkArchiveSelected;
+            secondaryBtn.textContent = 'Cancel Selection';
+            secondaryBtn.onclick = () => {
+              selectedArchivedItems = [];
+              document
+                .querySelectorAll(
+                  '.inventory-item-detail input[type="checkbox"]'
+                )
+                .forEach((cb) => {
+                  cb.checked = false;
+                });
+              const masterCheckbox = document.getElementById('checkAllUnits');
+              if (masterCheckbox) masterCheckbox.checked = false;
+              renderBulkActionBar();
+            };
+          }
+        }
+
+        function updateSelectionUI() {
+          renderBulkActionBar();
+          const allCheckboxes = document.querySelectorAll(
+            '.inventory-item-detail input[type="checkbox"]'
+          );
+          const masterCheckbox = document.getElementById('checkAllUnits');
+          if (masterCheckbox) {
+            masterCheckbox.checked =
+              allCheckboxes.length > 0 &&
+              selectedArchivedItems.length === allCheckboxes.length;
+          }
+        }
+
+        window.toggleGroup = (groupId, element) => {
+          const detailRows = document.querySelectorAll(`.${groupId}`);
+          const isVisible =
+            detailRows.length > 0 &&
+            Array.from(detailRows).every((row) => row.style.display !== 'none');
+          detailRows.forEach((row) => {
+            row.style.display = isVisible ? 'none' : '';
+          });
+          const label = element.getAttribute('data-label');
+          element.textContent = `${isVisible ? '▶' : '▼'} ${label}`;
+        };
+
+        window.toggleGroupUnits = (checkbox, groupId) => {
+          const groupCheckboxes = document.querySelectorAll(
+            `.inventory-item-detail input[type="checkbox"][data-group-id="${groupId}"]`
+          );
+          const isChecking = checkbox.checked;
+          groupCheckboxes.forEach((cb) => {
+            cb.checked = isChecking;
+            const itemId = cb.getAttribute('data-item-id');
+            const index = selectedArchivedItems.indexOf(itemId);
+            if (isChecking && index === -1) selectedArchivedItems.push(itemId);
+            if (!isChecking && index > -1)
+              selectedArchivedItems.splice(index, 1);
+          });
+          updateSelectionUI();
+        };
+
+        window.toggleAllUnits = (checkbox) => {
+          const allCheckboxes = document.querySelectorAll(
+            '.inventory-item-detail input[type="checkbox"]'
+          );
+          selectedArchivedItems = [];
+          allCheckboxes.forEach((cb) => {
+            cb.checked = checkbox.checked;
+            if (checkbox.checked) {
+              const itemId = cb.getAttribute('data-item-id');
+              selectedArchivedItems.push(itemId);
+            }
+          });
+          document
+            .querySelectorAll('[id^="checkGroup-"]')
+            .forEach((groupCheckbox) => {
+              groupCheckbox.checked = checkbox.checked;
+            });
+          updateSelectionUI();
+        };
+
+        window.toggleItemSelection = (itemId) => {
+          const checkbox = document.querySelector(
+            `.inventory-item-detail input[type="checkbox"][data-item-id="${itemId}"]`
+          );
+          if (!checkbox) return;
+          const index = selectedArchivedItems.indexOf(itemId);
+          if (checkbox.checked && index === -1) {
+            selectedArchivedItems.push(itemId);
+          } else if (!checkbox.checked && index > -1) {
+            selectedArchivedItems.splice(index, 1);
+          }
+          const groupId = checkbox.getAttribute('data-group-id');
+          const groupCheckbox = document.getElementById(
+            `checkGroup-${groupId}`
+          );
+          if (groupCheckbox) {
+            const groupCheckboxes = document.querySelectorAll(
+              `.inventory-item-detail input[type="checkbox"][data-group-id="${groupId}"]`
+            );
+            groupCheckbox.checked = Array.from(groupCheckboxes).every(
+              (cb) => cb.checked
+            );
+          }
+          updateSelectionUI();
+        };
+
+        window.bulkArchiveSelected = async () => {
+          if (selectedArchivedItems.length === 0) {
+            showToast('No items selected.');
+            return;
+          }
+          if (
+            !confirm(
+              `Archive ${selectedArchivedItems.length} selected item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }?`
+            )
+          )
+            return;
+          try {
+            let processed = 0;
+            for (const itemId of selectedArchivedItems) {
+              const response = await fetch(
+                `${inventoryTypes.Robotics.api}/${itemId}`,
+                { method: 'DELETE' }
+              );
+              if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(result.message || 'Failed to archive item.');
+              }
+              processed += 1;
+            }
+            showToast(
+              `Archived ${processed} item${processed === 1 ? '' : 's'}.`
+            );
+          } catch (error) {
+            showToast(`Error: ${error.message}`);
+          } finally {
+            selectedArchivedItems = [];
+            fetchInventory('Robotics');
+          }
+        };
+
+        window.bulkRestoreSelected = async () => {
+          if (selectedArchivedItems.length === 0) {
+            showToast('No items selected.');
+            return;
+          }
+          if (
+            !confirm(
+              `Restore ${selectedArchivedItems.length} selected item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }?`
+            )
+          )
+            return;
+          try {
+            let processed = 0;
+            for (const itemId of selectedArchivedItems) {
+              const response = await fetch(`/api/inventory/restore/${itemId}`, {
+                method: 'PUT',
+              });
+              if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(result.message || 'Failed to restore item.');
+              }
+              processed += 1;
+            }
+            showToast(
+              `Restored ${processed} item${processed === 1 ? '' : 's'}.`
+            );
+          } catch (error) {
+            showToast(`Error: ${error.message}`);
+          } finally {
+            selectedArchivedItems = [];
+            fetchArchivedInventory();
+          }
+        };
+
+        window.bulkDeleteSelected = async () => {
+          if (selectedArchivedItems.length === 0) {
+            showToast('No items selected.');
+            return;
+          }
+          if (
+            !confirm(
+              `Permanently delete ${
+                selectedArchivedItems.length
+              } selected item${
+                selectedArchivedItems.length === 1 ? '' : 's'
+              }? This action cannot be undone.`
+            )
+          )
+            return;
+          try {
+            let processed = 0;
+            for (const itemId of selectedArchivedItems) {
+              const response = await fetch(
+                `/api/inventory/permanent/${itemId}`,
+                { method: 'DELETE' }
+              );
+              if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(
+                  result.message || 'Failed to delete item permanently.'
+                );
+              }
+              processed += 1;
+            }
+            showToast(
+              `Deleted ${processed} item${
+                processed === 1 ? '' : 's'
+              } permanently.`
+            );
+          } catch (error) {
+            showToast(`Error: ${error.message}`);
+          } finally {
+            selectedArchivedItems = [];
+            fetchArchivedInventory();
+          }
+        };
+
+        window.handleModelEditClick = (event, type, itemId) => {
+          event.stopPropagation();
+          openEditModal(type, itemId);
+        };
+
+        window.handleModelArchiveClick = (event, itemId) => {
+          event.stopPropagation();
+          if (isViewingInventoryArchive) {
+            restoreInventoryItem(itemId);
+          } else {
+            archiveInventoryItem('Robotics', itemId);
+          }
+        };
+
+        window.handleModelDeleteClick = (event, itemId) => {
+          event.stopPropagation();
+          deleteInventoryItemPermanently(itemId);
+        };
 
         // ... (handleAddItem is unchanged from your file) ...
         async function handleAddItem(e, type) {
           e.preventDefault();
           const config = inventoryTypes[type];
           const form = e.target;
-          const newItem = {
-            itemId: form.querySelector('[name="itemId"]').value,
-            name: form.querySelector('[name="name"]').value,
-            category: form.querySelector('[name="category"]').value,
-            quantity: parseInt(form.querySelector('[name="quantity"]').value),
-            originalQuantity: parseInt(
-              form.querySelector('[name="quantity"]').value
-            ),
-            borrowedQuantity: 0,
-            location: form.querySelector('[name="location"]').value,
-            status: 'Available',
-          };
+          const prefixInput = form
+            .querySelector('[name="itemIdPrefix"]')
+            .value.toUpperCase()
+            .trim();
+          const itemName = form.querySelector('[name="name"]').value;
+          const category = form.querySelector('[name="category"]').value;
+          const quantityInput = parseInt(
+            form.querySelector('[name="quantity"]').value,
+            10
+          );
+          const location = form.querySelector('[name="location"]').value;
+
+          if (!prefixInput) {
+            showToast('Item ID Prefix cannot be empty.');
+            return;
+          }
+          if (!Number.isFinite(quantityInput) || quantityInput <= 0) {
+            showToast('Quantity must be 1 or more.');
+            return;
+          }
+
+          const nextSequenceNumber = findNextSequenceId(
+            prefixInput,
+            config.store
+          );
+          const itemsToCreate = [];
+          const maxDigits = Math.max(
+            2,
+            String(nextSequenceNumber + quantityInput - 1).length
+          );
+
+          for (let i = 0; i < quantityInput; i += 1) {
+            const currentNumber = nextSequenceNumber + i;
+            const sequence = String(currentNumber).padStart(maxDigits, '0');
+            const uniqueItemId = `${prefixInput}-${sequence}`;
+            itemsToCreate.push({
+              itemId: uniqueItemId,
+              name: itemName,
+              category,
+              quantity: 1,
+              originalQuantity: 1,
+              location,
+              status: 'Available',
+            });
+          }
+
           try {
             const response = await fetch(config.api, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newItem),
+              body: JSON.stringify(itemsToCreate),
             });
-            if (!response.ok)
+            if (!response.ok) {
+              const errorBody = await response.json().catch(() => ({}));
               throw new Error(
-                (await response.json()).message || 'Failed to add item'
+                errorBody.message ||
+                  `Failed to add ${quantityInput} robotics item(s).`
               );
-            showToast(`${type} item added!`);
+            }
+            const firstId = itemsToCreate[0].itemId;
+            const lastId = itemsToCreate[itemsToCreate.length - 1].itemId;
+            showToast(
+              `Successfully added ${quantityInput} item${
+                quantityInput === 1 ? '' : 's'
+              } (IDs: ${firstId}${quantityInput > 1 ? ` – ${lastId}` : ''}).`
+            );
             form.reset();
             fetchInventory(type);
           } catch (error) {
@@ -2961,9 +3383,19 @@
               `${inventoryTypes[type].api}/${itemId}`,
               { method: 'DELETE' }
             );
-            if (!response.ok) throw new Error('Failed to archive item');
+            if (!response.ok) {
+              const result = await response.json().catch(() => ({}));
+              throw new Error(result.message || 'Failed to archive item.');
+            }
             showToast('Item archived successfully.');
-            fetchInventory(type); // Re-fetch active list
+            selectedArchivedItems = selectedArchivedItems.filter(
+              (id) => id !== itemId
+            );
+            if (isViewingInventoryArchive) {
+              fetchArchivedInventory();
+            } else {
+              fetchInventory(type);
+            }
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
@@ -2974,10 +3406,14 @@
             const res = await fetch(`/api/inventory/restore/${itemId}`, {
               method: 'PUT',
             });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message);
-            showToast(result.message);
-            fetchArchivedInventory(); // Re-fetch archive list
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok)
+              throw new Error(result.message || 'Failed to restore item.');
+            showToast(result.message || 'Item restored successfully.');
+            selectedArchivedItems = selectedArchivedItems.filter(
+              (id) => id !== itemId
+            );
+            fetchArchivedInventory();
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
@@ -2993,10 +3429,16 @@
             const res = await fetch(`/api/inventory/permanent/${itemId}`, {
               method: 'DELETE',
             });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message);
-            showToast(result.message);
-            fetchArchivedInventory(); // Re-fetch archive list
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok)
+              throw new Error(
+                result.message || 'Failed to delete item permanently.'
+              );
+            showToast(result.message || 'Item deleted permanently.');
+            selectedArchivedItems = selectedArchivedItems.filter(
+              (id) => id !== itemId
+            );
+            fetchArchivedInventory();
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
@@ -3056,61 +3498,37 @@
             const response = await fetch('/api/archived-inventory');
             if (!response.ok)
               throw new Error('Failed to fetch archived inventory');
-            combinedArchivedInventory = await response.json();
+            const data = await response.json();
+            inventoryTypes.Robotics.store = Array.isArray(data)
+              ? data.filter((item) => item.category === 'Robotics')
+              : [];
             if (
               document
                 .getElementById('inventory-content')
-                .classList.contains('active')
+                .classList.contains('active') &&
+              isViewingInventoryArchive
             ) {
-              isViewingInventoryArchive = true;
-              renderArchiveTable();
+              renderTable('Robotics');
             }
           } catch (error) {
             showToast(error.message);
-            combinedArchivedInventory = [];
-            renderArchiveTable();
+            inventoryTypes.Robotics.store = [];
+            renderTable('Robotics');
           }
         }
-        function renderArchiveTable() {
-          const searchTerm = searchInventoryArchive.value.toLowerCase();
-          const filteredData = combinedArchivedInventory.filter((item) => {
-            return Object.values(item).some((val) =>
-              String(val).toLowerCase().includes(searchTerm)
-            );
-          });
-          inventoryArchiveTableBody.innerHTML = '';
-          if (filteredData.length === 0) {
-            inventoryArchiveTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No archived equipment found.</td></tr>`;
-            return;
-          }
-          filteredData.forEach((item) => {
-            const originalQty = item.originalQuantity || item.quantity || 0;
-            const row = inventoryArchiveTableBody.insertRow();
-            const actionsHtml = `
-                        <button class="btn btn-restore" onclick="restoreInventoryItem('${item.itemId}')">Restore</button>
-                        <button class="btn btn-delete" onclick="deleteInventoryItemPermanently('${item.itemId}')">Delete Permanently</button>
-                    `;
-            row.innerHTML = `
-                        <td>${item.itemId}</td>
-                        <td>${item.name}</td>
-                        <td>${item.category}</td>
-                        <td>${originalQty}</td>
-                        <td>${item.location}</td>
-                        <td class="actions-cell">${actionsHtml}</td>`;
-          });
-        }
+
         const toggleInventoryArchiveView = () => {
           isViewingInventoryArchive = !isViewingInventoryArchive;
+          selectedArchivedItems = [];
+          renderBulkActionBar();
           if (isViewingInventoryArchive) {
-            inventoryActiveContainer.style.display = 'none';
-            inventoryArchiveContainer.style.display = 'block';
+            roboticsTableTitle.textContent = 'Archived Robotics Equipment';
             toggleInventoryArchiveBtn.textContent = 'View Active Inventory';
             fetchArchivedInventory();
           } else {
-            inventoryActiveContainer.style.display = 'block';
-            inventoryArchiveContainer.style.display = 'none';
+            roboticsTableTitle.textContent = 'Robotics Equipment';
             toggleInventoryArchiveBtn.textContent = 'View Archives';
-            for (const type in inventoryTypes) fetchInventory(type);
+            fetchInventory('Robotics');
           }
         };
         // --- END ---
