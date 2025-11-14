@@ -372,6 +372,54 @@
         background-color: #283347;
       }
 
+      .equipment-summary-row td {
+        vertical-align: middle;
+      }
+      .equipment-group-toggle,
+      .equipment-toggle-placeholder {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        margin-right: 10px;
+      }
+      .equipment-group-toggle {
+        border: 1px solid var(--border-light);
+        background-color: transparent;
+        color: var(--primary-dark);
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+      body.dark .equipment-group-toggle {
+        border-color: var(--border-dark);
+        color: var(--primary-dark-mode);
+      }
+      .equipment-group-toggle[aria-expanded='true'] {
+        background-color: rgba(0, 80, 59, 0.08);
+      }
+      body.dark .equipment-group-toggle[aria-expanded='true'] {
+        background-color: rgba(255, 205, 0, 0.15);
+      }
+      .equipment-toggle-placeholder {
+        border: 1px solid transparent;
+      }
+      .equipment-group-count {
+        margin-left: 8px;
+        font-size: 0.75rem;
+        color: var(--text-subtle);
+      }
+      body.dark .equipment-group-count {
+        color: var(--text-subtle-dark-mode);
+      }
+      .equipment-detail-row {
+        background-color: #f8fafc;
+      }
+      body.dark .equipment-detail-row {
+        background-color: #1d2538;
+      }
+
       .btn {
         padding: 10px 18px;
         border: none;
@@ -1340,6 +1388,58 @@
         const passwordUpdateForm =
           document.getElementById('passwordUpdateForm');
 
+        function sanitizeHtml(value = '') {
+          return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        function getBaseItemId(item) {
+          const rawId = item?.itemId || '';
+          const match = rawId.match(/^(.+?)(-\d+)?$/);
+          if (match && match[2]) return match[1];
+          return rawId || item?.name || 'UNASSIGNED';
+        }
+
+        function toggleEquipmentGroup(groupId, shouldExpand, triggerEl) {
+          if (!equipmentTableBody) return;
+          const detailRows = Array.from(
+            equipmentTableBody.querySelectorAll('.equipment-detail-row')
+          ).filter((row) => row.dataset.group === groupId);
+          if (detailRows.length === 0) return;
+
+          detailRows.forEach((row) => {
+            row.style.display = shouldExpand ? 'table-row' : 'none';
+          });
+
+          if (triggerEl) {
+            triggerEl.setAttribute('aria-expanded', shouldExpand);
+            const arrowIcon = triggerEl.querySelector('.arrow-icon');
+            if (arrowIcon) {
+              arrowIcon.textContent = shouldExpand ? '▲' : '▼';
+            }
+          }
+        }
+
+        function handleEquipmentTableClick(event) {
+          const toggleButton = event.target.closest('.equipment-group-toggle');
+          if (!toggleButton || !toggleButton.dataset.group) return;
+          const groupId = toggleButton.dataset.group;
+          const isExpanded =
+            toggleButton.getAttribute('aria-expanded') === 'true';
+          toggleEquipmentGroup(groupId, !isExpanded, toggleButton);
+        }
+
+        if (equipmentTableBody) {
+          equipmentTableBody.addEventListener(
+            'click',
+            handleEquipmentTableClick
+          );
+        }
+
         // --- 2. Initialization & Event Handling ---
         const initializeApp = async () => {
           setupDarkMode();
@@ -1555,7 +1655,7 @@
           const currentLocation = locationFilter.value;
           const currentAction = actionFilter.value;
 
-          let filtered = allEquipment.filter((item) => {
+          const filtered = allEquipment.filter((item) => {
             const matchesCategory =
               activeCategory === 'All' || item.category === activeCategory;
             const matchesSearch = Object.values(item).some((val) =>
@@ -1590,33 +1690,126 @@
             equipmentTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 2rem;">No equipment matches your filters.</td></tr>`;
             return;
           }
-          filtered.forEach((item) => {
-            const row = equipmentTableBody.insertRow();
-            const isAvailable =
-              item.status === 'Available' && item.quantity > 0;
-            row.innerHTML = `
-                        <td><strong>${item.itemId}</strong></td>
-                        <td>${item.name}</td>
-                        <td>${item.category}</td>
-                        <td>${item.location}</td>
-                        <td><span class="status-${item.status.replace(
-                          /\s+/g,
-                          ''
-                        )}">${item.status}${
-              item.status === 'Available' ? ` (${item.quantity})` : ''
-            }</span></td>
+
+          const groupedMap = new Map();
+          filtered.forEach((item, index) => {
+            const baseId = getBaseItemId(item);
+            const key =
+              `${baseId}__${item.name || ''}` || `UNASSIGNED-${index}`;
+            if (!groupedMap.has(key)) {
+              groupedMap.set(key, {
+                baseId,
+                name: item.name || baseId,
+                items: [],
+              });
+            }
+            groupedMap.get(key).items.push(item);
+          });
+
+          groupedMap.forEach((group, key) => {
+            const groupItems = group.items;
+            const [primaryItem, ...restItems] = groupItems;
+            const aggregatedQuantity = groupItems.reduce(
+              (sum, current) => sum + (Number(current.quantity) || 0),
+              0
+            );
+
+            renderEquipmentRow(primaryItem, {
+              groupId: key,
+              hasToggle: restItems.length > 0,
+              extraCount: restItems.length,
+              labelOverride: group.name || group.baseId,
+              aggregatedQuantity,
+            });
+            restItems.forEach((detailItem) => {
+              renderEquipmentRow(detailItem, {
+                groupId: key,
+                isDetail: true,
+              });
+            });
+          });
+        };
+
+        function renderEquipmentRow(
+          item,
+          {
+            groupId,
+            hasToggle = false,
+            isDetail = false,
+            extraCount = 0,
+            labelOverride,
+            aggregatedQuantity,
+          } = {}
+        ) {
+          if (!equipmentTableBody) return;
+
+          const row = equipmentTableBody.insertRow();
+          row.dataset.group = groupId;
+
+          if (isDetail) {
+            row.classList.add('equipment-detail-row');
+            row.style.display = 'none';
+          } else {
+            row.classList.add('equipment-summary-row');
+          }
+
+          const rawItemId = item.itemId || '';
+          const safeItemId = sanitizeHtml(rawItemId);
+          const safeName = sanitizeHtml(item.name || '');
+          const safeCategory = sanitizeHtml(item.category || '');
+          const safeLocation = sanitizeHtml(item.location || '');
+          const rawStatus = item.status || 'Available';
+          const statusClass = rawStatus.replace(/\s+/g, '');
+          const safeStatus = sanitizeHtml(rawStatus);
+          const quantity = Number(item.quantity) || 0;
+          const displayLabel = labelOverride || safeItemId;
+          const quantityToShow =
+            !isDetail && typeof aggregatedQuantity === 'number'
+              ? aggregatedQuantity
+              : quantity;
+          const statusLabel =
+            rawStatus === 'Available'
+              ? `${safeStatus} (${quantityToShow})`
+              : safeStatus;
+          const isAvailable = rawStatus === 'Available' && quantityToShow > 0;
+
+          const safeGroupAttr = sanitizeHtml(groupId);
+
+          const leadingControl =
+            !isDetail && hasToggle
+              ? `<button class="equipment-group-toggle" data-group="${safeGroupAttr}" aria-expanded="false" title="Show all ${safeItemId} entries">
+                    <span class="arrow-icon">▼</span>
+                 </button>`
+              : '<span class="equipment-toggle-placeholder"></span>';
+
+          const countBadge =
+            !isDetail && extraCount > 0
+              ? `<span class="equipment-group-count">+${extraCount}</span>`
+              : '';
+
+          row.innerHTML = `
+                        <td>
+                            ${
+                              isDetail
+                                ? '<span class="equipment-toggle-placeholder"></span>'
+                                : leadingControl
+                            }
+                            <strong>${displayLabel}</strong>
+                            ${countBadge}
+                        </td>
+                        <td>${safeName}</td>
+                        <td>${safeCategory}</td>
+                        <td>${safeLocation}</td>
+                        <td><span class="status-${statusClass}">${statusLabel}</span></td>
                         <td>
                             <button class="btn btn-request" ${
                               isAvailable ? '' : 'disabled'
-                            } onclick="showRequestModal('${item.itemId}', '${
-              item.name
-            }', ${item.quantity})">
+                            } onclick="showRequestModal('${safeItemId}', '${safeName}', ${quantity})">
                                 ${isAvailable ? 'Request' : 'Unavailable'}
                             </button>
                         </td>
                     `;
-          });
-        };
+        }
 
         const renderRequestsTable = () => {
           const searchTerm = requestSearch.value.toLowerCase();
