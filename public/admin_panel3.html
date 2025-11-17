@@ -3395,34 +3395,7 @@
                     <td>${item.name}</td>
                     <td colspan="4" style="color:#6c757d; font-style:italic; text-align:left;">— Unit Detail —</td>
                     <td>${item.location}</td>
-                    <td>
-                      <select
-                        class="status-select status-${statusClass}"
-                        onchange="updateStatus('${type}', this, '${
-                    item.itemId
-                  }')"
-                        ${isArchiveView ? 'disabled' : ''}
-                      >
-                        <option value="Available" ${
-                          displayStatus === 'Available' ? 'selected' : ''
-                        }>Available</option>
-                        <option value="In-Use" ${
-                          displayStatus === 'In-Use' ? 'selected' : ''
-                        } disabled>In-Use</option>
-                        <option value="Maintenance" ${
-                          displayStatus === 'Maintenance' ? 'selected' : ''
-                        }>Maintenance</option>
-                        <option value="Damaged" ${
-                          displayStatus === 'Damaged' ? 'selected' : ''
-                        }>Damaged</option>
-                        <option value="Calibration" ${
-                          displayStatus === 'Calibration' ? 'selected' : ''
-                        }>Calibration</option>
-                        <option value="Decommissioned" ${
-                          displayStatus === 'Decommissioned' ? 'selected' : ''
-                        } disabled>Decommissioned</option>
-                      </select>
-                    </td>
+                    <td><span class="status-badge status-${statusClass}">${displayStatus}</span></td>
                     <td class="actions-cell">${actionsHtml}</td>
                   `;
                 });
