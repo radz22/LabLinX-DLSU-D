@@ -29,7 +29,9 @@ function ensureEnv(variableName) {
 // ================== EMAIL SETUP (using Nodemailer) ==================
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
 const SENDGRID_FROM = ensureEnv('SENDGRID_FROM');
-const ALLOWED_EMAIL_DOMAINS = (process.env.ALLOWED_DOMAIN || '@dlsud.edu.ph')
+const ALLOWED_EMAIL_DOMAINS = (
+  process.env.ALLOWED_DOMAIN || '@dlsud.edu.ph,@hs.dlsud.edu.ph'
+)
   .split(',')
   .map((domain) => domain.trim().toLowerCase())
   .filter(Boolean);
