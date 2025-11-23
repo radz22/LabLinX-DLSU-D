@@ -30,7 +30,8 @@ function ensureEnv(variableName) {
 // 🚨 ACTION REQUIRED: REPLACE THESE WITH YOUR OUTLOOK ACCOUNT DETAILS 🚨
 const SENDGRID_FROM = ensureEnv('SENDGRID_FROM');
 const ALLOWED_EMAIL_DOMAINS = (
-  process.env.ALLOWED_EMAIL_DOMAINS || '@dlsud.edu.ph,@gmail.com'
+  process.env.ALLOWED_EMAIL_DOMAINS ||
+  '@dlsud.edu.ph,@gmail.com,@hs.dlsud.edu.ph'
 )
   .split(',')
   .map((domain) => domain.trim().toLowerCase())
