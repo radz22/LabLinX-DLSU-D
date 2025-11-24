@@ -1039,8 +1039,14 @@
           }
 
           const emailInput = document.getElementById('email');
-          if (!emailInput.value.toLowerCase().endsWith('@dlsud.edu.ph')) {
-            showToast('Invalid email. Please use your @dlsud.edu.ph address.');
+          const emailValue = emailInput.value.toLowerCase();
+          if (
+            !emailValue.endsWith('@dlsud.edu.ph') &&
+            !emailValue.endsWith('@hs.dlsud.edu.ph')
+          ) {
+            showToast(
+              'Invalid email. Please use your @dlsud.edu.ph or @hs.dlsud.edu.ph address.'
+            );
             return;
           }
 
@@ -1073,8 +1079,14 @@
           e.preventDefault();
 
           const emailInput = document.getElementById('facultyEmail');
-          if (!emailInput.value.toLowerCase().endsWith('@dlsud.edu.ph')) {
-            showToast('Invalid email. Please use your @dlsud.edu.ph address.');
+          const emailValue = emailInput.value.toLowerCase();
+          if (
+            !emailValue.endsWith('@dlsud.edu.ph') &&
+            !emailValue.endsWith('@hs.dlsud.edu.ph')
+          ) {
+            showToast(
+              'Invalid email. Please use your @dlsud.edu.ph or @hs.dlsud.edu.ph address.'
+            );
             return;
           }
 
