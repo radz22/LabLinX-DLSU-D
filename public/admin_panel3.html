@@ -2165,7 +2165,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = 'http://localhost:3000';
+        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -2494,7 +2494,7 @@
             e.preventDefault();
             processScan(document.activeElement);
           });
-          
+
           // --- MODIFIED: Use the auto-submit handlers (already defined above) ---
           enableAutoSubmit();
 
@@ -3099,7 +3099,7 @@
             } else if (mode === 'Equipment') {
               renderEquipmentStatusChange(itemDetailsResult.itemData);
             }
-            
+
             enableAutoSubmit();
             if (mode !== 'Returning') itemIdPrefixInput.focus();
           }
