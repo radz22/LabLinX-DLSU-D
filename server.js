@@ -133,6 +133,10 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: false },
   role: { type: String, default: 'student' },
   status: { type: String, enum: ['Pending', 'Approved'], default: 'Pending' },
+  // --- NEW: Suspension fields for incident report system ---
+  isSuspended: { type: Boolean, default: false },
+  suspensionReason: { type: String },
+  suspensionDate: { type: Date },
 });
 
 const inventorySchema = new mongoose.Schema({
@@ -224,6 +228,106 @@ const incidentSchema = new mongoose.Schema({
   dateResolved: { type: Date },
   resolutionNotes: { type: String }, // Admin notes on how it was resolved (e.g., "User provided new item")
   replacementItemId: { type: String }, // The ID of the NEW item added to inventory
+  // --- NEW: Fields for student incident report integration ---
+  studentReportId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'StudentIncidentReport',
+  },
+  deadlineAt: { type: Date }, // 48 hours from dateReported
+  notificationSent: { type: Boolean, default: false },
+});
+
+// --- NEW: Schema for Student Incident Reports ---
+const studentIncidentReportSchema = new mongoose.Schema({
+  incidentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Incident',
+    required: true,
+  },
+  studentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  equipmentId: { type: String, required: true },
+  dateOfIncident: { type: Date, required: true },
+  incidentType: {
+    type: String,
+    enum: [
+      'Damage to Equipment/Facility',
+      'Lost or Missing Item',
+      'Security Breach or Facility Compromise',
+      'Personal Injury (Contact Supervisor Immediately)',
+      'Other',
+    ],
+    required: true,
+  },
+  detailedDescription: {
+    type: String,
+    default: 'Pending student submission',
+    validate: {
+      validator: function (v) {
+        // Allow empty/undefined if status is Pending Submission (will be set by pre-validate hook)
+        if (this.status === 'Pending Submission' || !this.status) {
+          return true;
+        }
+        // Require non-empty for other statuses
+        return v && v.trim() !== '';
+      },
+      message:
+        'detailedDescription is required when status is not Pending Submission',
+    },
+  },
+  otherDescription: { type: String }, // Required if incidentType is 'Other'
+  submittedAt: { type: Date },
+  deadlineAt: { type: Date, required: true }, // 48 hours from incident creation
+  status: {
+    type: String,
+    enum: [
+      'Pending Submission',
+      'Submitted',
+      'Pending Review',
+      'Resolved',
+      'Rejected',
+      'Overdue',
+    ],
+    default: 'Pending Submission',
+  },
+  admin2ReviewNotes: { type: String },
+  resolvedAt: { type: Date },
+  replacementItemId: { type: String },
+});
+
+// Pre-validate hook: Set default for detailedDescription before validation runs
+studentIncidentReportSchema.pre('validate', function (next) {
+  // Set default if not provided, empty, or just whitespace and status is Pending Submission
+  // This runs BEFORE Mongoose validation, so we can set defaults for required fields
+  if (this.status === 'Pending Submission' || !this.status) {
+    if (
+      !this.detailedDescription ||
+      this.detailedDescription.trim() === '' ||
+      this.detailedDescription === undefined
+    ) {
+      this.detailedDescription = 'Pending student submission';
+    }
+  }
+  next();
+});
+
+// Pre-save validation: detailedDescription is required when status is 'Submitted' or later
+studentIncidentReportSchema.pre('save', function (next) {
+  // Require detailedDescription for submitted reports
+  if (
+    this.status !== 'Pending Submission' &&
+    (!this.detailedDescription || this.detailedDescription.trim() === '')
+  ) {
+    return next(
+      new Error(
+        'detailedDescription is required when status is not Pending Submission'
+      )
+    );
+  }
+  next();
 });
 
 const reportHistorySchema = new mongoose.Schema({
@@ -319,6 +423,10 @@ const MusicInventory = mongoose.model(
   'music_inventories'
 );
 const Incident = mongoose.model('Incident', incidentSchema); // --- KEPT: Incident Model (for Accountability Report) ---
+const StudentIncidentReport = mongoose.model(
+  'StudentIncidentReport',
+  studentIncidentReportSchema
+); // --- NEW: Student Incident Report Model ---
 
 const allInventoryModels = [
   Inventory,
@@ -1208,6 +1316,17 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
     const user = await User.findById(studentId);
     if (!user) return res.status(404).send('Student not found.');
 
+    // --- NEW: Block requests if user is suspended ---
+    if (user.isSuspended) {
+      return res.status(403).json({
+        message: `Request blocked: You are suspended from borrowing equipment. Reason: ${
+          user.suspensionReason ||
+          'Failed to submit incident report within 48 hours'
+        }.`,
+      });
+    }
+    // --- END NEW ---
+
     // --- NEW: Block requests if user has a pending incident ---
     const pendingIncident = await Incident.findOne({
       'responsibleUser._id': user._id,
@@ -1334,6 +1453,224 @@ app.delete('/api/cancel-request/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// ================== STUDENT INCIDENT REPORT API ROUTES ==================
+app.get('/api/student-incident-reports', isAuthenticated, async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const reports = await StudentIncidentReport.find({
+      studentId,
+    })
+      .populate('incidentId')
+      .sort({ deadlineAt: 1 });
+    res.json(reports);
+  } catch (error) {
+    console.error('Error fetching student incident reports:', error);
+    res.status(500).json({ message: 'Error fetching incident reports.' });
+  }
+});
+
+app.get(
+  '/api/student-incident-reports/:id',
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const studentId = req.session.user.id;
+      const report = await StudentIncidentReport.findOne({
+        _id: req.params.id,
+        studentId,
+      }).populate('incidentId');
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found.' });
+      }
+      res.json(report);
+    } catch (error) {
+      console.error('Error fetching incident report:', error);
+      res.status(500).json({ message: 'Error fetching incident report.' });
+    }
+  }
+);
+
+app.post('/api/student-incident-reports', isAuthenticated, async (req, res) => {
+  try {
+    const studentId = req.session.user.id;
+    const {
+      incidentId,
+      equipmentId,
+      dateOfIncident,
+      incidentType,
+      detailedDescription,
+      otherDescription,
+    } = req.body;
+
+    if (
+      !incidentId ||
+      !equipmentId ||
+      !dateOfIncident ||
+      !incidentType ||
+      !detailedDescription
+    ) {
+      return res.status(400).json({
+        message: 'All required fields must be provided.',
+      });
+    }
+
+    if (incidentType === 'Other' && !otherDescription) {
+      return res.status(400).json({
+        message: 'Other description is required when incident type is "Other".',
+      });
+    }
+
+    const incident = await Incident.findById(incidentId);
+    if (!incident) {
+      return res.status(404).json({ message: 'Incident not found.' });
+    }
+
+    if (incident.responsibleUser._id.toString() !== studentId) {
+      return res.status(403).json({
+        message: 'You are not authorized to submit a report for this incident.',
+      });
+    }
+
+    const existingReport = await StudentIncidentReport.findOne({
+      incidentId,
+      studentId,
+    });
+
+    if (existingReport) {
+      if (
+        existingReport.status === 'Submitted' ||
+        existingReport.status === 'Pending Review'
+      ) {
+        return res.status(409).json({
+          message: 'A report for this incident has already been submitted.',
+        });
+      }
+      if (existingReport.status === 'Overdue') {
+        return res.status(403).json({
+          message: 'This report is overdue and cannot be submitted.',
+        });
+      }
+      existingReport.equipmentId = equipmentId;
+      existingReport.dateOfIncident = new Date(dateOfIncident);
+      existingReport.incidentType = incidentType;
+      existingReport.detailedDescription = detailedDescription;
+      existingReport.otherDescription = otherDescription || undefined;
+      existingReport.submittedAt = new Date();
+      existingReport.status = 'Submitted';
+      await existingReport.save();
+
+      incident.studentReportId = existingReport._id;
+      await incident.save();
+
+      const notification = new Notification({
+        userId: studentId,
+        title: 'Incident Report Submitted',
+        message: `Your incident report has been submitted and is pending Admin 2 review.`,
+      });
+      await notification.save();
+
+      const admin2 = await User.findOne({ username: 'admin2' });
+      if (admin2) {
+        const adminNotification = new Notification({
+          userId: admin2._id,
+          title: 'New Student Incident Report',
+          message: `A student has submitted an incident report (LF-05). Please review.`,
+        });
+        await adminNotification.save();
+      }
+
+      broadcastRefresh();
+      res.status(200).json({
+        message: 'Incident report submitted successfully.',
+        report: existingReport,
+      });
+    } else {
+      const newReport = new StudentIncidentReport({
+        incidentId,
+        studentId,
+        equipmentId,
+        dateOfIncident: new Date(dateOfIncident),
+        incidentType,
+        detailedDescription,
+        otherDescription:
+          incidentType === 'Other' ? otherDescription : undefined,
+        submittedAt: new Date(),
+        deadlineAt:
+          incident.deadlineAt || new Date(Date.now() + 48 * 60 * 60 * 1000),
+        status: 'Submitted',
+      });
+      await newReport.save();
+
+      incident.studentReportId = newReport._id;
+      await incident.save();
+
+      const notification = new Notification({
+        userId: studentId,
+        title: 'Incident Report Submitted',
+        message: `Your incident report has been submitted and is pending Admin 2 review.`,
+      });
+      await notification.save();
+
+      const admin2 = await User.findOne({ username: 'admin2' });
+      if (admin2) {
+        const adminNotification = new Notification({
+          userId: admin2._id,
+          title: 'New Student Incident Report',
+          message: `A student has submitted an incident report (LF-05). Please review.`,
+        });
+        await adminNotification.save();
+      }
+
+      broadcastRefresh();
+      res.status(201).json({
+        message: 'Incident report submitted successfully.',
+        report: newReport,
+      });
+    }
+  } catch (error) {
+    console.error('Error submitting incident report:', error);
+    res.status(500).json({ message: 'Error submitting incident report.' });
+  }
+});
+
+app.get('/api/student-suspension-status', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select(
+      'isSuspended suspensionReason suspensionDate'
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    res.json({
+      isSuspended: user.isSuspended || false,
+      suspensionReason: user.suspensionReason || null,
+      suspensionDate: user.suspensionDate || null,
+    });
+  } catch (error) {
+    console.error('Error checking suspension status:', error);
+    res.status(500).json({ message: 'Error checking suspension status.' });
+  }
+});
+
+app.get('/api/check-suspension', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id).select(
+      'isSuspended suspensionReason suspensionDate'
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    res.json({
+      isSuspended: user.isSuspended || false,
+      suspensionReason: user.suspensionReason || null,
+      suspensionDate: user.suspensionDate || null,
+    });
+  } catch (error) {
+    console.error('Error checking suspension status:', error);
+    res.status(500).json({ message: 'Error checking suspension status.' });
+  }
+});
+
 // ================== LIVE SCAN API ROUTES ==================
 app.post('/api/borrow-by-barcode', isAdmin, async (req, res) => {
   try {
@@ -1345,6 +1682,17 @@ app.post('/api/borrow-by-barcode', isAdmin, async (req, res) => {
       return res
         .status(404)
         .json({ message: `User with ID ${studentID} not found.` }); // MODIFIED
+
+    // --- NEW: Block borrow if user is suspended ---
+    if (user.isSuspended) {
+      return res.status(403).json({
+        message: `BORROW BLOCKED: User is suspended from borrowing equipment. Reason: ${
+          user.suspensionReason ||
+          'Failed to submit incident report within 48 hours'
+        }.`,
+      });
+    }
+    // --- END NEW ---
 
     // --- NEW: Block borrow if user has a pending incident ---
     const pendingIncident = await Incident.findOne({
@@ -1468,6 +1816,7 @@ app.post('/api/return-by-barcode', isAdmin, async (req, res) => {
 
       // 2. Create an Incident record
       const responsibleUser = await User.findById(request.studentId);
+      const deadlineAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours from now
       const newIncident = new Incident({
         damagedItemInfo: {
           _id: item._id,
@@ -1484,7 +1833,64 @@ app.post('/api/return-by-barcode', isAdmin, async (req, res) => {
         originalTransaction: request._id,
         status: 'Pending Replacement',
         damageNotes: damageNotes,
+        deadlineAt: deadlineAt,
+        notificationSent: false,
       });
+      await newIncident.save();
+
+      // 3. Create StudentIncidentReport with status 'Pending Submission'
+      const studentReport = new StudentIncidentReport({
+        incidentId: newIncident._id,
+        studentId: responsibleUser._id,
+        equipmentId: item.itemId,
+        dateOfIncident: new Date(),
+        incidentType:
+          condition === 'Lost'
+            ? 'Lost or Missing Item'
+            : 'Damage to Equipment/Facility',
+        detailedDescription: 'Pending student submission', // Explicitly set to avoid validation errors
+        deadlineAt: deadlineAt,
+        status: 'Pending Submission',
+      });
+
+      // Ensure detailedDescription is set (double-check before saving)
+      if (
+        !studentReport.detailedDescription ||
+        studentReport.detailedDescription.trim() === ''
+      ) {
+        studentReport.detailedDescription = 'Pending student submission';
+      }
+
+      await studentReport.save();
+
+      newIncident.studentReportId = studentReport._id;
+      await newIncident.save();
+
+      // 4. Send notification to student
+      const studentNotification = new Notification({
+        userId: responsibleUser._id,
+        title: 'Incident Report Required',
+        message: `You must submit an incident report within 48 hours for the damaged item: ${item.name}. Click here to submit your report.`,
+      });
+      await studentNotification.save();
+
+      // 5. Send email notification to student
+      if (responsibleUser.email) {
+        const emailSubject = '⚠️ Incident Report Required - Action Required';
+        const emailBody = `
+          <p>Hello ${responsibleUser.firstName},</p>
+          <p>An item you borrowed (<strong>${item.name}</strong>, ID: ${
+          item.itemId
+        }) has been marked as <strong>${condition}</strong> upon return.</p>
+          <p><strong>⚠️ IMPORTANT:</strong> You must submit an incident report within <strong>48 hours</strong> of this notification. Failure to do so will result in suspension from borrowing equipment.</p>
+          <p>Please log in to LabLinx and navigate to the <strong>Report Dashboard</strong> to submit your report.</p>
+          <p><strong>Deadline:</strong> ${deadlineAt.toLocaleString()}</p>
+          <p><em>LabLinx DLSU-D Team.</em></p>
+        `;
+        await sendEmail(responsibleUser.email, emailSubject, emailBody);
+      }
+
+      newIncident.notificationSent = true;
       await newIncident.save();
 
       // 3. Log history
@@ -1569,6 +1975,270 @@ app.get('/api/item-details/:itemId', isAdmin, async (req, res) => {
 });
 
 // --- REMOVED: INCIDENT MANAGEMENT API ROUTES ---
+
+// ================== ADMIN 2 INCIDENT REPORT REVIEW API ROUTES ==================
+app.get('/api/admin2/incident-reports', isAdmin, async (req, res) => {
+  console.log('Admin2 incident reports route hit');
+  try {
+    const adminUsername = req.session.user.username.toLowerCase();
+    if (adminUsername !== 'admin2') {
+      return res.status(403).json({
+        message: 'Only Admin 2 can access this endpoint.',
+      });
+    }
+
+    const reports = await StudentIncidentReport.find({
+      status: { $in: ['Submitted', 'Pending Review'] },
+    })
+      .populate('incidentId')
+      .populate('studentId', 'firstName lastName studentID')
+      .sort({ submittedAt: -1 });
+
+    const formattedReports = reports.map((report) => {
+      const studentName = report.studentId
+        ? `${report.studentId.firstName || ''} ${
+            report.studentId.lastName || ''
+          }`.trim()
+        : 'Unknown Student';
+      const studentID = report.studentId?.studentID || 'N/A';
+      const itemName =
+        report.incidentId?.damagedItemInfo?.name || report.equipmentId || 'N/A';
+
+      return {
+        _id: report._id,
+        studentName,
+        studentID,
+        itemId: report.equipmentId,
+        incidentType: report.incidentType,
+        dateOfIncident: report.dateOfIncident,
+        dateSubmitted: report.submittedAt,
+        status: report.status,
+        incidentId: report.incidentId?._id || null,
+        itemName,
+      };
+    });
+
+    res.json(formattedReports);
+  } catch (error) {
+    console.error('Error fetching incident reports:', error);
+    res.status(500).json({ message: 'Error fetching incident reports.' });
+  }
+});
+
+app.get('/api/admin2/incident-reports/:id', isAdmin, async (req, res) => {
+  try {
+    const adminUsername = req.session.user.username.toLowerCase();
+    if (adminUsername !== 'admin2') {
+      return res.status(403).json({
+        message: 'Only Admin 2 can access this endpoint.',
+      });
+    }
+
+    const report = await StudentIncidentReport.findById(req.params.id)
+      .populate('incidentId')
+      .populate('studentId', 'firstName lastName studentID email');
+
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found.' });
+    }
+
+    const studentName = report.studentId
+      ? `${report.studentId.firstName || ''} ${
+          report.studentId.lastName || ''
+        }`.trim()
+      : 'Unknown Student';
+    const studentID = report.studentId?.studentID || 'N/A';
+    const studentEmail = report.studentId?.email || 'N/A';
+
+    const itemName =
+      report.incidentId?.damagedItemInfo?.name || report.equipmentId || 'N/A';
+    const itemId =
+      report.incidentId?.damagedItemInfo?.itemId || report.equipmentId || 'N/A';
+
+    res.json({
+      _id: report._id,
+      student: {
+        name: studentName,
+        studentID: studentID,
+        email: studentEmail,
+      },
+      item: {
+        name: itemName,
+        itemId: itemId,
+      },
+      equipmentId: report.equipmentId,
+      dateOfIncident: report.dateOfIncident,
+      incidentType: report.incidentType,
+      detailedDescription: report.detailedDescription,
+      otherDescription: report.otherDescription,
+      submittedAt: report.submittedAt,
+      status: report.status,
+      incidentId: report.incidentId?._id || null,
+    });
+  } catch (error) {
+    console.error('Error fetching incident report:', error);
+    res.status(500).json({ message: 'Error fetching incident report.' });
+  }
+});
+
+app.put(
+  '/api/admin2/incident-reports/:id/resolve',
+  isAdmin,
+  async (req, res) => {
+    try {
+      const adminUsername = req.session.user.username.toLowerCase();
+      if (adminUsername !== 'admin2') {
+        return res.status(403).json({
+          message: 'Only Admin 2 can access this endpoint.',
+        });
+      }
+
+      const { replacementItemId, resolutionNote } = req.body;
+      if (!replacementItemId || !resolutionNote) {
+        return res.status(400).json({
+          message: 'Replacement item ID and resolution note are required.',
+        });
+      }
+
+      const report = await StudentIncidentReport.findById(req.params.id)
+        .populate('incidentId')
+        .populate('studentId');
+
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found.' });
+      }
+
+      if (report.status === 'Resolved' || report.status === 'Rejected') {
+        return res.status(409).json({
+          message: 'This report has already been processed.',
+        });
+      }
+
+      report.status = 'Resolved';
+      report.resolvedAt = new Date();
+      report.replacementItemId = replacementItemId;
+      report.admin2ReviewNotes = resolutionNote;
+      await report.save();
+
+      const incident = report.incidentId;
+      incident.status = 'Resolved';
+      incident.dateResolved = new Date();
+      incident.resolutionNotes = resolutionNote;
+      incident.replacementItemId = replacementItemId;
+      await incident.save();
+
+      const studentNotification = new Notification({
+        userId: report.studentId._id,
+        title: 'Incident Report Resolved',
+        message: `Your incident report has been resolved by Admin 2. Replacement item: ${replacementItemId}`,
+      });
+      await studentNotification.save();
+
+      const student = await User.findById(report.studentId._id);
+      if (student && student.email) {
+        const emailSubject = '✅ Incident Report Resolved';
+        const emailBody = `
+          <p>Hello ${student.firstName},</p>
+          <p>Your incident report has been **RESOLVED** by Admin 2.</p>
+          <p><strong>Replacement Item ID:</strong> ${replacementItemId}</p>
+          <p><strong>Resolution Note:</strong> ${resolutionNote}</p>
+          <p>Thank you for your cooperation.</p>
+          <p><em>LabLinx DLSU-D Team.</em></p>
+        `;
+        await sendEmail(student.email, emailSubject, emailBody);
+      }
+
+      await logAdminAction(
+        req,
+        'Resolve Incident Report',
+        `Resolved incident report ${report._id} with replacement item ${replacementItemId}.`
+      );
+
+      broadcastRefresh();
+      res.json({
+        message: 'Incident report resolved successfully.',
+        report,
+      });
+    } catch (error) {
+      console.error('Error resolving incident report:', error);
+      res.status(500).json({ message: 'Error resolving incident report.' });
+    }
+  }
+);
+
+app.put(
+  '/api/admin2/incident-reports/:id/reject',
+  isAdmin,
+  async (req, res) => {
+    try {
+      const adminUsername = req.session.user.username.toLowerCase();
+      if (adminUsername !== 'admin2') {
+        return res.status(403).json({
+          message: 'Only Admin 2 can access this endpoint.',
+        });
+      }
+
+      const { rejectionNote } = req.body;
+
+      const report = await StudentIncidentReport.findById(req.params.id)
+        .populate('incidentId')
+        .populate('studentId');
+
+      if (!report) {
+        return res.status(404).json({ message: 'Report not found.' });
+      }
+
+      if (report.status === 'Resolved' || report.status === 'Rejected') {
+        return res.status(409).json({
+          message: 'This report has already been processed.',
+        });
+      }
+
+      report.status = 'Rejected';
+      report.admin2ReviewNotes = rejectionNote || 'Report rejected by Admin 2.';
+      await report.save();
+
+      const studentNotification = new Notification({
+        userId: report.studentId._id,
+        title: 'Incident Report Rejected',
+        message: `Your incident report has been rejected by Admin 2. Please contact the lab administrator for more information.`,
+      });
+      await studentNotification.save();
+
+      const student = await User.findById(report.studentId._id);
+      if (student && student.email) {
+        const emailSubject = '❌ Incident Report Rejected';
+        const emailBody = `
+          <p>Hello ${student.firstName},</p>
+          <p>Your incident report has been **REJECTED** by Admin 2.</p>
+          ${
+            rejectionNote
+              ? `<p><strong>Reason:</strong> ${rejectionNote}</p>`
+              : ''
+          }
+          <p>Please contact the lab administrator for more information.</p>
+          <p><em>LabLinx DLSU-D Team.</em></p>
+        `;
+        await sendEmail(student.email, emailSubject, emailBody);
+      }
+
+      await logAdminAction(
+        req,
+        'Reject Incident Report',
+        `Rejected incident report ${report._id}.`
+      );
+
+      broadcastRefresh();
+      res.json({
+        message: 'Incident report rejected successfully.',
+        report,
+      });
+    } catch (error) {
+      console.error('Error rejecting incident report:', error);
+      res.status(500).json({ message: 'Error rejecting incident report.' });
+    }
+  }
+);
 
 // ================== SUPER ADMIN API ROUTES ==================
 app.get('/api/all-users', isAuthenticated, isSuperAdmin, async (req, res) => {
@@ -2496,6 +3166,68 @@ cron.schedule('0 0 8 * * *', async () => {
     }
   } catch (error) {
     console.error('❌ Due Date Reminder Scheduler Error:', error);
+  }
+});
+
+// ================== INCIDENT REPORT 48-HOUR DEADLINE CRON JOB ==================
+// This runs every hour to check for overdue incident reports and suspend students
+cron.schedule('0 * * * *', async () => {
+  try {
+    const now = new Date();
+    const overdueReports = await StudentIncidentReport.find({
+      status: 'Pending Submission',
+      deadlineAt: { $lt: now },
+    }).populate('studentId');
+
+    for (const report of overdueReports) {
+      const student = report.studentId;
+      if (!student) continue;
+
+      // Suspend the student
+      student.isSuspended = true;
+      student.suspensionReason =
+        'Failed to submit incident report within 48 hours';
+      student.suspensionDate = new Date();
+      await student.save();
+
+      // Update report status
+      report.status = 'Overdue';
+      await report.save();
+
+      // Send notification to student
+      const notification = new Notification({
+        userId: student._id,
+        title: 'Account Suspended - Incident Report Overdue',
+        message: `You have been suspended from borrowing equipment due to failure to submit an incident report within 48 hours. Please contact the lab administrator.`,
+      });
+      await notification.save();
+
+      // Send email notification
+      if (student.email) {
+        const emailSubject = '🚫 Account Suspended - Incident Report Overdue';
+        const emailBody = `
+          <p>Hello ${student.firstName},</p>
+          <p>Your account has been <strong>SUSPENDED</strong> from borrowing equipment.</p>
+          <p><strong>Reason:</strong> You failed to submit an incident report within 48 hours of the incident notification.</p>
+          <p>Please contact the lab administrator to resolve this issue.</p>
+          <p><em>LabLinx DLSU-D Team.</em></p>
+        `;
+        await sendEmail(student.email, emailSubject, emailBody);
+      }
+
+      console.log(
+        `✅ Suspended student ${student.studentID} for overdue incident report ${report._id}`
+      );
+    }
+
+    if (overdueReports.length > 0) {
+      console.log(
+        `✅ Incident Report Deadline Check: Suspended ${overdueReports.length} student(s) for overdue reports.`
+      );
+      broadcastRefresh();
+    }
+  } catch (error) {
+    console.error('❌ Incident Report Deadline Scheduler Error:', error);
   }
 });
 
