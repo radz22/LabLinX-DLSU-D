@@ -1550,6 +1550,9 @@ app.post('/api/student-incident-reports', isAuthenticated, async (req, res) => {
           message: 'This report is overdue and cannot be submitted.',
         });
       }
+      // Allow resubmission of rejected reports
+      const isResubmission = existingReport.status === 'Rejected';
+
       existingReport.equipmentId = equipmentId;
       existingReport.dateOfIncident = new Date(dateOfIncident);
       existingReport.incidentType = incidentType;
@@ -1557,6 +1560,8 @@ app.post('/api/student-incident-reports', isAuthenticated, async (req, res) => {
       existingReport.otherDescription = otherDescription || undefined;
       existingReport.submittedAt = new Date();
       existingReport.status = 'Submitted';
+      // Clear rejection notes on resubmission (optional - you can keep it for history)
+      // existingReport.admin2ReviewNotes = undefined;
       await existingReport.save();
 
       incident.studentReportId = existingReport._id;
@@ -1564,8 +1569,12 @@ app.post('/api/student-incident-reports', isAuthenticated, async (req, res) => {
 
       const notification = new Notification({
         userId: studentId,
-        title: 'Incident Report Submitted',
-        message: `Your incident report has been submitted and is pending Admin 2 review.`,
+        title: isResubmission
+          ? 'Incident Report Resubmitted'
+          : 'Incident Report Submitted',
+        message: isResubmission
+          ? `Your incident report has been resubmitted and is pending Admin 2 review.`
+          : `Your incident report has been submitted and is pending Admin 2 review.`,
       });
       await notification.save();
 
@@ -1573,15 +1582,21 @@ app.post('/api/student-incident-reports', isAuthenticated, async (req, res) => {
       if (admin2) {
         const adminNotification = new Notification({
           userId: admin2._id,
-          title: 'New Student Incident Report',
-          message: `A student has submitted an incident report (LF-05). Please review.`,
+          title: isResubmission
+            ? 'Student Incident Report Resubmitted'
+            : 'New Student Incident Report',
+          message: isResubmission
+            ? `A student has resubmitted an incident report (LF-05) that was previously rejected. Please review.`
+            : `A student has submitted an incident report (LF-05). Please review.`,
         });
         await adminNotification.save();
       }
 
       broadcastRefresh();
       res.status(200).json({
-        message: 'Incident report submitted successfully.',
+        message: isResubmission
+          ? 'Incident report resubmitted successfully.'
+          : 'Incident report submitted successfully.',
         report: existingReport,
       });
     } else {
@@ -1987,9 +2002,8 @@ app.get('/api/admin2/incident-reports', isAdmin, async (req, res) => {
       });
     }
 
-    const reports = await StudentIncidentReport.find({
-      status: { $in: ['Submitted', 'Pending Review'] },
-    })
+    // Fetch all incident reports regardless of status (Submitted, Pending Review, Resolved, Rejected)
+    const reports = await StudentIncidentReport.find({})
       .populate('incidentId')
       .populate('studentId', 'firstName lastName studentID')
       .sort({ submittedAt: -1 });
@@ -2074,6 +2088,9 @@ app.get('/api/admin2/incident-reports/:id', isAdmin, async (req, res) => {
       submittedAt: report.submittedAt,
       status: report.status,
       incidentId: report.incidentId?._id || null,
+      replacementItemId: report.replacementItemId || null,
+      admin2ReviewNotes: report.admin2ReviewNotes || null,
+      resolvedAt: report.resolvedAt || null,
     });
   } catch (error) {
     console.error('Error fetching incident report:', error);
@@ -2198,10 +2215,14 @@ app.put(
       report.admin2ReviewNotes = rejectionNote || 'Report rejected by Admin 2.';
       await report.save();
 
+      const notificationMessage = rejectionNote
+        ? `Your incident report has been rejected by Admin 2.\n\nReason: ${rejectionNote}\n\nPlease contact the lab administrator for more information.`
+        : `Your incident report has been rejected by Admin 2. Please contact the lab administrator for more information.`;
+
       const studentNotification = new Notification({
         userId: report.studentId._id,
         title: 'Incident Report Rejected',
-        message: `Your incident report has been rejected by Admin 2. Please contact the lab administrator for more information.`,
+        message: notificationMessage,
       });
       await studentNotification.save();
 

@@ -2395,7 +2395,8 @@
               (r) =>
                 r.status === 'Pending Submission' ||
                 r.status === 'Submitted' ||
-                r.status === 'Pending Review'
+                r.status === 'Pending Review' ||
+                r.status === 'Rejected'
             );
 
             const pendingList = document.getElementById('pending-reports-list');
@@ -2409,10 +2410,14 @@
 
             const mostUrgent =
               pendingReports.find((r) => r.status === 'Pending Submission') ||
+              pendingReports.find((r) => r.status === 'Rejected') ||
               pendingReports[0];
             currentReport = mostUrgent;
 
-            if (mostUrgent.status === 'Pending Submission') {
+            if (
+              mostUrgent.status === 'Pending Submission' ||
+              mostUrgent.status === 'Rejected'
+            ) {
               document.getElementById('report-incident-id').value =
                 mostUrgent.incidentId._id || mostUrgent.incidentId;
               document.getElementById('report-id').value = mostUrgent._id;
@@ -2427,7 +2432,9 @@
               document.getElementById('incidentType').value =
                 mostUrgent.incidentType || '';
               document.getElementById('detailedDescription').value =
-                mostUrgent.detailedDescription || '';
+                mostUrgent.detailedDescription === 'Pending student submission'
+                  ? ''
+                  : mostUrgent.detailedDescription || '';
               document.getElementById('otherDescription').value =
                 mostUrgent.otherDescription || '';
 
@@ -2435,11 +2442,67 @@
                 document.getElementById(
                   'other-description-group'
                 ).style.display = 'block';
+              } else {
+                document.getElementById(
+                  'other-description-group'
+                ).style.display = 'none';
               }
 
               if (mostUrgent.deadlineAt) {
                 startCountdown(new Date(mostUrgent.deadlineAt));
               }
+
+              // Show a message for rejected reports
+              if (mostUrgent.status === 'Rejected') {
+                const formTitle = document.querySelector(
+                  '#report-dashboard-content h2:last-of-type'
+                );
+                if (formTitle && !formTitle.textContent.includes('Resubmit')) {
+                  formTitle.textContent = 'Resubmit Incident Report';
+                }
+                // Show rejection reason if available
+                if (mostUrgent.admin2ReviewNotes) {
+                  const warningDiv = document.querySelector(
+                    '#report-dashboard-content .content-container:last-of-type'
+                  );
+                  if (warningDiv) {
+                    let rejectionNotice =
+                      warningDiv.querySelector('.rejection-notice');
+                    if (!rejectionNotice) {
+                      rejectionNotice = document.createElement('div');
+                      rejectionNotice.className = 'rejection-notice';
+                      rejectionNotice.style.cssText =
+                        'padding: 1rem; background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 1.5rem;';
+                      warningDiv.insertBefore(
+                        rejectionNotice,
+                        warningDiv.firstChild
+                      );
+                    }
+                    rejectionNotice.innerHTML = `
+                      <strong style="color: #991b1b">❌ Previous Report Rejected</strong>
+                      <p style="margin-top: 0.5rem; color: #991b1b; margin-bottom: 0">
+                        <strong>Rejection Reason:</strong> ${mostUrgent.admin2ReviewNotes}
+                      </p>
+                      <p style="margin-top: 0.5rem; color: #991b1b; margin-bottom: 0">
+                        Please review and resubmit your incident report with the necessary corrections.
+                      </p>
+                    `;
+                  }
+                }
+              } else {
+                const formTitle = document.querySelector(
+                  '#report-dashboard-content h2:last-of-type'
+                );
+                if (formTitle) {
+                  formTitle.textContent = 'Submit Incident Report';
+                }
+                const rejectionNotice =
+                  document.querySelector('.rejection-notice');
+                if (rejectionNotice) {
+                  rejectionNotice.remove();
+                }
+              }
+
               document.getElementById('incident-report-form').style.display =
                 'block';
             } else {
@@ -2469,6 +2532,8 @@
                           ? 'status-Approved'
                           : report.status === 'Pending Review'
                           ? 'status-Pending'
+                          : report.status === 'Rejected'
+                          ? 'status-Rejected'
                           : 'status-Returned';
                       return `
                       <tr>
