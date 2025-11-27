@@ -547,10 +547,36 @@
         opacity: 0;
         transition: var(--transition-base);
         transform: translateY(10px);
+        max-width: 400px;
+        word-wrap: break-word;
+      }
+      .toast.error {
+        background-color: var(--status-rejected);
+        color: white;
+      }
+      .toast.success {
+        background-color: var(--status-approved);
+        color: white;
+      }
+      .toast.warning {
+        background-color: var(--status-pending);
+        color: #92400e;
       }
       body.dark .toast {
         background-color: var(--text-dark-mode);
         color: var(--text-dark);
+      }
+      body.dark .toast.error {
+        background-color: #991b1b;
+        color: white;
+      }
+      body.dark .toast.success {
+        background-color: #166534;
+        color: white;
+      }
+      body.dark .toast.warning {
+        background-color: #92400e;
+        color: white;
       }
 
       /* --- 7. Filter & Modal Styles --- */
@@ -820,7 +846,7 @@
           </svg>
           <span>Dashboard</span>
         </a>
-        <a data-page="lab-equipment">
+        <a data-page="lab-equipment" id="nav-equipment">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -842,7 +868,7 @@
           </svg>
           <span>Equipment</span>
         </a>
-        <a data-page="item-requested">
+        <a data-page="item-requested" id="nav-my-requests">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -858,6 +884,28 @@
             <polyline points="22 4 12 14.01 9 11.01"></polyline>
           </svg>
           <span>My Requests</span>
+        </a>
+        <a data-page="report-dashboard" id="nav-report-dashboard">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Report Dashboard</span>
         </a>
         <a data-page="notification">
           <svg
@@ -1165,6 +1213,124 @@
         </section>
       </div>
 
+      <div id="report-dashboard-content" class="page-content">
+        <h1>Report Dashboard</h1>
+        <p class="page-subtitle">
+          Submit incident reports for damaged or lost equipment.
+        </p>
+        <div
+          id="suspension-banner"
+          style="
+            display: none;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            border-radius: 8px;
+          "
+        >
+          <strong style="color: #991b1b">⚠️ Account Suspended</strong>
+          <p
+            id="suspension-message"
+            style="margin-top: 0.5rem; color: #991b1b"
+          ></p>
+        </div>
+        <section class="content-container" style="margin-bottom: 2rem">
+          <h2 style="margin-bottom: 1rem; color: var(--primary-dark)">
+            Pending Reports
+          </h2>
+          <div id="pending-reports-list">
+            <p style="color: var(--text-subtle)">Loading...</p>
+          </div>
+        </section>
+        <section class="content-container">
+          <h2 style="margin-bottom: 1rem; color: var(--primary-dark)">
+            Submit Incident Report
+          </h2>
+          <div
+            style="
+              padding: 1rem;
+              background-color: #fef3c7;
+              border-left: 4px solid #fbbf24;
+              border-radius: 8px;
+              margin-bottom: 1.5rem;
+            "
+          >
+            <strong style="color: #92400e">⚠️ Warning</strong>
+            <p style="margin-top: 0.5rem; color: #92400e; margin-bottom: 0">
+              Failure to submit this report within 48 hours of the incident may
+              result in suspension from borrowing equipment.
+            </p>
+          </div>
+          <div
+            id="countdown-timer"
+            style="
+              margin-bottom: 1.5rem;
+              padding: 1rem;
+              background-color: #dbeafe;
+              border-radius: 8px;
+              text-align: center;
+            "
+          >
+            <strong style="color: #1e40af"
+              >Time Remaining: <span id="countdown-display">--</span></strong
+            >
+          </div>
+          <form id="incident-report-form">
+            <input type="hidden" id="report-incident-id" />
+            <input type="hidden" id="report-id" />
+            <div class="form-group">
+              <label for="equipmentId">Equipment / Facility ID:</label>
+              <input type="text" id="equipmentId" required />
+            </div>
+            <div class="form-group">
+              <label for="dateOfIncident">Date of Incident:</label>
+              <input type="date" id="dateOfIncident" required />
+            </div>
+            <div class="form-group">
+              <label for="incidentType">Type of Incident:</label>
+              <select id="incidentType" required>
+                <option value="">Select incident type</option>
+                <option value="Damage to Equipment/Facility">
+                  Damage to Equipment/Facility
+                </option>
+                <option value="Lost or Missing Item">
+                  Lost or Missing Item
+                </option>
+                <option value="Security Breach or Facility Compromise">
+                  Security Breach or Facility Compromise
+                </option>
+                <option
+                  value="Personal Injury (Contact Supervisor Immediately)"
+                >
+                  Personal Injury (Contact Supervisor Immediately)
+                </option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div
+              class="form-group"
+              id="other-description-group"
+              style="display: none"
+            >
+              <label for="otherDescription"
+                >Additional Description (Required for "Other"):</label
+              >
+              <textarea id="otherDescription" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="detailedDescription">Detailed Description:</label>
+              <textarea id="detailedDescription" rows="6" required></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-request">
+                Submit Report
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
       <div id="notification-content" class="page-content">
         <h1>Notifications</h1>
         <p class="page-subtitle">Updates on your requests and returns.</p>
@@ -1319,6 +1485,9 @@
           dashboard: document.getElementById('dashboard-content'),
           'lab-equipment': document.getElementById('lab-equipment-content'),
           'item-requested': document.getElementById('item-requested-content'),
+          'report-dashboard': document.getElementById(
+            'report-dashboard-content'
+          ),
           notification: document.getElementById('notification-content'),
           account: document.getElementById('account-content'),
         };
@@ -1460,6 +1629,7 @@
           setupEventListeners();
           await fetchMyRequests();
           await fetchMyNotifications();
+          await checkSuspensionStatus();
           showPage('dashboard');
         };
 
@@ -1554,6 +1724,10 @@
               break;
             case 'dashboard':
               updateDashboardMetrics();
+              break;
+            case 'report-dashboard':
+              fetchPendingReports();
+              checkSuspensionStatus();
               break;
             case 'notification':
               renderNotifications();
@@ -2059,14 +2233,62 @@
                 category: itemCategory,
               }),
             });
-            if (!response.ok) throw new Error(await response.text());
-            showToast('Request sent successfully!');
+
+            if (!response.ok) {
+              // Try to parse JSON error message
+              let errorMessage = 'Failed to submit request.';
+              try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+              } catch {
+                // If JSON parsing fails, try text
+                const errorText = await response.text();
+                try {
+                  const errorData = JSON.parse(errorText);
+                  errorMessage = errorData.message || errorText || errorMessage;
+                } catch {
+                  errorMessage = errorText || errorMessage;
+                }
+              }
+
+              // Show error notification with the actual message
+              showToast(errorMessage, 'error');
+              console.error('Request submission error:', errorMessage);
+
+              // If it's a suspension or accountability issue, refresh suspension status
+              if (
+                errorMessage.includes('suspended') ||
+                errorMessage.includes('accountability') ||
+                errorMessage.includes('pending')
+              ) {
+                await checkSuspensionStatus();
+                // Redirect to report dashboard if there's a pending incident
+                if (
+                  errorMessage.includes('accountability') ||
+                  errorMessage.includes('pending')
+                ) {
+                  setTimeout(() => {
+                    showPage('report-dashboard');
+                    showToast(
+                      'Please check your Report Dashboard for pending incident reports.',
+                      'warning'
+                    );
+                  }, 2000);
+                }
+              }
+              return;
+            }
+
+            const result = await response.json().catch(() => ({}));
+            showToast('Request sent successfully!', 'success');
             closeModal();
             await fetchAllEquipment();
             await fetchMyRequests();
             updateDashboardMetrics();
           } catch (error) {
-            showToast(`Error: ${error.message}`);
+            showToast(
+              `❌ Error: ${error.message || 'Failed to submit request.'}`
+            );
             console.error('Error submitting request:', error);
           }
         };
@@ -2141,22 +2363,331 @@
         };
 
         // --- 6. Utility Functions ---
-        const showToast = (message) => {
+        const showToast = (message, type = 'info') => {
           const container = document.getElementById('toast-container');
           const toast = document.createElement('div');
-          toast.className = 'toast';
+          toast.className = `toast ${type}`;
           toast.textContent = message;
           container.appendChild(toast);
           setTimeout(() => {
             toast.style.opacity = '1';
             toast.style.transform = 'translateY(0)';
           }, 10);
+          // Show error/warning toasts longer
+          const duration = type === 'error' || type === 'warning' ? 5000 : 3000;
           setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(10px)';
             setTimeout(() => toast.remove(), 500);
-          }, 3000);
+          }, duration);
         };
+
+        // --- 7. Incident Report Functions ---
+        let countdownInterval = null;
+        let currentReport = null;
+
+        const fetchPendingReports = async () => {
+          try {
+            const response = await fetch('/api/student-incident-reports');
+            if (!response.ok) throw new Error('Failed to load reports.');
+            const reports = await response.json();
+            const pendingReports = reports.filter(
+              (r) =>
+                r.status === 'Pending Submission' ||
+                r.status === 'Submitted' ||
+                r.status === 'Pending Review' ||
+                r.status === 'Rejected'
+            );
+
+            const pendingList = document.getElementById('pending-reports-list');
+            if (pendingReports.length === 0) {
+              pendingList.innerHTML =
+                '<p style="color: var(--text-subtle);">No pending reports.</p>';
+              document.getElementById('incident-report-form').style.display =
+                'none';
+              return;
+            }
+
+            const mostUrgent =
+              pendingReports.find((r) => r.status === 'Pending Submission') ||
+              pendingReports.find((r) => r.status === 'Rejected') ||
+              pendingReports[0];
+            currentReport = mostUrgent;
+
+            if (
+              mostUrgent.status === 'Pending Submission' ||
+              mostUrgent.status === 'Rejected'
+            ) {
+              document.getElementById('report-incident-id').value =
+                mostUrgent.incidentId._id || mostUrgent.incidentId;
+              document.getElementById('report-id').value = mostUrgent._id;
+              document.getElementById('equipmentId').value =
+                mostUrgent.equipmentId || '';
+              document.getElementById('dateOfIncident').value =
+                mostUrgent.dateOfIncident
+                  ? new Date(mostUrgent.dateOfIncident)
+                      .toISOString()
+                      .split('T')[0]
+                  : '';
+              document.getElementById('incidentType').value =
+                mostUrgent.incidentType || '';
+              document.getElementById('detailedDescription').value =
+                mostUrgent.detailedDescription === 'Pending student submission'
+                  ? ''
+                  : mostUrgent.detailedDescription || '';
+              document.getElementById('otherDescription').value =
+                mostUrgent.otherDescription || '';
+
+              if (mostUrgent.incidentType === 'Other') {
+                document.getElementById(
+                  'other-description-group'
+                ).style.display = 'block';
+              } else {
+                document.getElementById(
+                  'other-description-group'
+                ).style.display = 'none';
+              }
+
+              if (mostUrgent.deadlineAt) {
+                startCountdown(new Date(mostUrgent.deadlineAt));
+              }
+
+              // Show a message for rejected reports
+              if (mostUrgent.status === 'Rejected') {
+                const formTitle = document.querySelector(
+                  '#report-dashboard-content h2:last-of-type'
+                );
+                if (formTitle && !formTitle.textContent.includes('Resubmit')) {
+                  formTitle.textContent = 'Resubmit Incident Report';
+                }
+                // Show rejection reason if available
+                if (mostUrgent.admin2ReviewNotes) {
+                  const warningDiv = document.querySelector(
+                    '#report-dashboard-content .content-container:last-of-type'
+                  );
+                  if (warningDiv) {
+                    let rejectionNotice =
+                      warningDiv.querySelector('.rejection-notice');
+                    if (!rejectionNotice) {
+                      rejectionNotice = document.createElement('div');
+                      rejectionNotice.className = 'rejection-notice';
+                      rejectionNotice.style.cssText =
+                        'padding: 1rem; background-color: #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px; margin-bottom: 1.5rem;';
+                      warningDiv.insertBefore(
+                        rejectionNotice,
+                        warningDiv.firstChild
+                      );
+                    }
+                    rejectionNotice.innerHTML = `
+                      <strong style="color: #991b1b">❌ Previous Report Rejected</strong>
+                      <p style="margin-top: 0.5rem; color: #991b1b; margin-bottom: 0">
+                        <strong>Rejection Reason:</strong> ${mostUrgent.admin2ReviewNotes}
+                      </p>
+                      <p style="margin-top: 0.5rem; color: #991b1b; margin-bottom: 0">
+                        Please review and resubmit your incident report with the necessary corrections.
+                      </p>
+                    `;
+                  }
+                }
+              } else {
+                const formTitle = document.querySelector(
+                  '#report-dashboard-content h2:last-of-type'
+                );
+                if (formTitle) {
+                  formTitle.textContent = 'Submit Incident Report';
+                }
+                const rejectionNotice =
+                  document.querySelector('.rejection-notice');
+                if (rejectionNotice) {
+                  rejectionNotice.remove();
+                }
+              }
+
+              document.getElementById('incident-report-form').style.display =
+                'block';
+            } else {
+              document.getElementById('incident-report-form').style.display =
+                'none';
+            }
+
+            pendingList.innerHTML = `
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${pendingReports
+                    .map((report) => {
+                      const deadline = report.deadlineAt
+                        ? new Date(report.deadlineAt).toLocaleString()
+                        : 'N/A';
+                      const statusClass =
+                        report.status === 'Pending Submission'
+                          ? 'status-Pending'
+                          : report.status === 'Submitted'
+                          ? 'status-Approved'
+                          : report.status === 'Pending Review'
+                          ? 'status-Pending'
+                          : report.status === 'Rejected'
+                          ? 'status-Rejected'
+                          : 'status-Returned';
+                      return `
+                      <tr>
+                        <td>${report.equipmentId || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${
+                        report.status
+                      }</span></td>
+                        <td>${deadline}</td>
+                      </tr>
+                    `;
+                    })
+                    .join('')}
+                </tbody>
+              </table>
+            `;
+          } catch (error) {
+            console.error('Error fetching pending reports:', error);
+            showToast('Failed to load pending reports.');
+          }
+        };
+
+        const startCountdown = (deadline) => {
+          if (countdownInterval) clearInterval(countdownInterval);
+
+          const updateCountdown = () => {
+            const now = new Date();
+            const diff = deadline - now;
+
+            if (diff <= 0) {
+              document.getElementById('countdown-display').textContent =
+                'OVERDUE';
+              document.getElementById('countdown-timer').style.backgroundColor =
+                '#fee2e2';
+              document.getElementById('countdown-timer').style.color =
+                '#991b1b';
+              clearInterval(countdownInterval);
+              return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById(
+              'countdown-display'
+            ).textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
+          };
+
+          updateCountdown();
+          countdownInterval = setInterval(updateCountdown, 1000);
+        };
+
+        const checkSuspensionStatus = async () => {
+          try {
+            const response = await fetch('/api/check-suspension');
+            if (!response.ok) return;
+            const status = await response.json();
+
+            if (status.isSuspended) {
+              document.getElementById('suspension-banner').style.display =
+                'block';
+              document.getElementById('suspension-message').textContent =
+                status.suspensionReason ||
+                'You are suspended from borrowing equipment.';
+
+              // Hide Equipment and My Requests links
+              const equipmentLink = document.getElementById('nav-equipment');
+              const requestsLink = document.getElementById('nav-my-requests');
+              if (equipmentLink) equipmentLink.style.display = 'none';
+              if (requestsLink) requestsLink.style.display = 'none';
+            } else {
+              document.getElementById('suspension-banner').style.display =
+                'none';
+              const equipmentLink = document.getElementById('nav-equipment');
+              const requestsLink = document.getElementById('nav-my-requests');
+              if (equipmentLink) equipmentLink.style.display = 'flex';
+              if (requestsLink) requestsLink.style.display = 'flex';
+            }
+          } catch (error) {
+            console.error('Error checking suspension status:', error);
+          }
+        };
+
+        // Handle incident type change to show/hide other description
+        document
+          .getElementById('incidentType')
+          ?.addEventListener('change', (e) => {
+            const otherGroup = document.getElementById(
+              'other-description-group'
+            );
+            if (e.target.value === 'Other') {
+              otherGroup.style.display = 'block';
+              document.getElementById('otherDescription').required = true;
+            } else {
+              otherGroup.style.display = 'none';
+              document.getElementById('otherDescription').required = false;
+            }
+          });
+
+        // Handle form submission
+        document
+          .getElementById('incident-report-form')
+          ?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const incidentId =
+              document.getElementById('report-incident-id').value;
+            const equipmentId = document.getElementById('equipmentId').value;
+            const dateOfIncident =
+              document.getElementById('dateOfIncident').value;
+            const incidentType = document.getElementById('incidentType').value;
+            const detailedDescription = document.getElementById(
+              'detailedDescription'
+            ).value;
+            const otherDescription =
+              document.getElementById('otherDescription').value;
+
+            if (incidentType === 'Other' && !otherDescription) {
+              showToast(
+                'Please provide additional description for "Other" incident type.'
+              );
+              return;
+            }
+
+            try {
+              const response = await fetch('/api/student-incident-reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  incidentId,
+                  equipmentId,
+                  dateOfIncident,
+                  incidentType,
+                  detailedDescription,
+                  otherDescription:
+                    incidentType === 'Other' ? otherDescription : undefined,
+                }),
+              });
+
+              const result = await response.json();
+              if (!response.ok)
+                throw new Error(result.message || 'Failed to submit report.');
+
+              showToast('Incident report submitted successfully!');
+              document.getElementById('incident-report-form').reset();
+              if (countdownInterval) clearInterval(countdownInterval);
+              await fetchPendingReports();
+              await fetchMyNotifications();
+              updateNotificationBadge();
+            } catch (error) {
+              showToast(`Error: ${error.message}`);
+              console.error('Error submitting incident report:', error);
+            }
+          });
 
         // --- Go! ---
         initializeApp();

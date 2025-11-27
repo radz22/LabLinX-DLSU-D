@@ -70,8 +70,8 @@ a { text-decoration: none; color: inherit; }
 #sidebar .logo img { width: 70px; height: 70px; margin-bottom: 0.5rem; border-radius: 50%; cursor: pointer; }
 #sidebar .logo-title { color: var(--accent-gold); font-weight: 700; font-size: 1rem; opacity: 1; transition: opacity 0.2s ease; }
 #sidebar nav { display: flex; flex-direction: column; width: 100%; margin-top: 1rem; flex-grow: 1; overflow-y: auto; }
-#sidebar nav a { color: #e0e0e0; padding: 14px 25px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background-color 0.2s, color 0.2s, border-left-color 0.2s; border-left: 4px solid transparent; cursor: pointer; }
-#sidebar nav a .link-content { display: flex; align-items: center; gap: 15px; }
+#sidebar nav a { color: #e0e0e0; padding: 14px 25px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background-color 0.2s, color 0.2s, border-left-color 0.2s; border-left: 4px solid transparent; cursor: pointer; pointer-events: auto; }
+#sidebar nav a .link-content { display: flex; align-items: center; gap: 15px; pointer-events: auto; cursor: pointer; }
 #sidebar nav a svg { width: 20px; height: 20px; flex-shrink: 0; }
 #sidebar nav a:hover { background-color: var(--primary-light); color: var(--accent-gold); }
 #sidebar nav a.active { background-color: var(--accent-gold); color: var(--primary-dark); font-weight: 600; border-left-color: #fff; }
@@ -104,6 +104,7 @@ body.dark main h1 { color: var(--accent-gold); }
 body.dark .page-subtitle { color: #adb5bd; }
 .page-content { display: none; }
 .page-content.active { display: block; }
+#sidebar nav a { user-select: none; -webkit-user-select: none; }
 
 /* --- 5. Dashboard Specific Styles --- */
 .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
@@ -501,6 +502,12 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <span>Requests</span>
                 </div>
             </a>
+            <a data-page="incident-reports">
+                <div class="link-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Student Reported Incidents (LF-05)</span>
+                </div>
+            </a>
             <a data-page="notifications">
                 <div class="link-content">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -867,6 +874,43 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
         </div>
 
+        <div id="incident-reports-content" class="page-content">
+            <h1>Student Reported Incidents (LF-05)</h1>
+            <p class="page-subtitle">Review and resolve student-submitted incident reports.</p>
+            <section class="inventory-card">
+                <div class="filter-row">
+                    <div class="search-bar">
+                        <input type="text" id="incidentSearch" placeholder="Search by student name, ID, or item..." />
+                    </div>
+                    <div class="filter-select">
+                        <label for="incidentStatusFilter">Filter by Status</label>
+                        <select id="incidentStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Pending Review">Pending Review</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                <table id="incidentReportsTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Student ID</th>
+                            <th>Item ID</th>
+                            <th>Incident Type</th>
+                            <th>Date of Incident</th>
+                            <th>Date Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidentReportsTableBody"></tbody>
+                </table>
+            </section>
+        </div>
+
         <div id="notifications-content" class="page-content">
             <h1>Notifications</h1>
             <p class="page-subtitle">Latest activities and alerts.</p>
@@ -956,6 +1000,68 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <option value="Returned">Returned</option>
                 </select>
                 <button type="submit">Update Status</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resolve Incident Modal -->
+    <div id="resolveIncidentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Resolve Incident</h2>
+                <span class="close-button" onclick="closeResolveModal()">&times;</span>
+            </div>
+            <form id="resolveIncidentForm">
+                <input type="hidden" id="resolve-report-id" />
+                <div class="form-group">
+                    <label>Student:</label>
+                    <input type="text" id="resolve-student-name" readonly style="background-color: #f3f4f6;" />
+                </div>
+                <div class="form-group">
+                    <label>Item:</label>
+                    <input type="text" id="resolve-item-name" readonly style="background-color: #f3f4f6;" />
+                </div>
+                <div class="form-group">
+                    <label for="resolve-replacement-item">New Replacement Item ID:</label>
+                    <input type="text" id="resolve-replacement-item" required />
+                </div>
+                <div class="form-group">
+                    <label for="resolve-notes">Resolution Note:</label>
+                    <textarea id="resolve-notes" rows="4" required></textarea>
+                </div>
+                <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-cancel" onclick="closeResolveModal()">Cancel</button>
+                    <button type="submit" class="btn btn-request">Resolve Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reject Incident Modal -->
+    <div id="rejectIncidentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reject Incident</h2>
+                <span class="close-button" onclick="closeRejectModal()">&times;</span>
+            </div>
+            <form id="rejectIncidentForm">
+                <input type="hidden" id="reject-report-id" />
+                <div class="form-group">
+                    <label>Student:</label>
+                    <input type="text" id="reject-student-name" readonly style="background-color: #f3f4f6;" />
+                </div>
+                <div class="form-group">
+                    <label>Item:</label>
+                    <input type="text" id="reject-item-name" readonly style="background-color: #f3f4f6;" />
+                </div>
+                <div class="form-group">
+                    <label for="reject-notes">Rejection Reason:</label>
+                    <textarea id="reject-notes" rows="4" placeholder="Enter reason for rejection (optional)"></textarea>
+                </div>
+                <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-cancel" onclick="closeRejectModal()">Cancel</button>
+                    <button type="submit" class="btn btn-delete">Reject Incident</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1272,7 +1378,12 @@ function updateMasterAndBulkActionUI() {
         // --- 2. INITIALIZATION ---
         function initializeApp() {
             setupEventListeners();
-            showPage('dashboard');
+            // Initialize dashboard page after a small delay to ensure showPage is defined
+            setTimeout(() => {
+                if (typeof window.showPage === 'function') {
+                    window.showPage('dashboard');
+                }
+            }, 10);
             fetchAdminNotifications();
         }
 
@@ -1318,11 +1429,32 @@ function updateMasterAndBulkActionUI() {
                 darkToggle.querySelector('.moon-icon').style.display = 'block';
             }
 
+            // Sidebar navigation - use event delegation
+            const sidebarNav = document.querySelector("#sidebar nav");
+            if (sidebarNav) {
+                sidebarNav.addEventListener('click', (e) => {
+                    const link = e.target.closest('a[data-page]');
+                    if (link) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const pageId = link.getAttribute('data-page');
+                        if (pageId && typeof window.showPage === 'function') {
+                            window.showPage(pageId);
+                        }
+                    }
+                }, true); // Use capture phase to ensure it fires
+            }
+            
+            // Also add direct event listeners as backup
             document.querySelectorAll("#sidebar nav a[data-page]").forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    showPage(link.dataset.page)
-                });
+                    e.stopPropagation();
+                    const pageId = link.getAttribute('data-page');
+                    if (pageId && typeof window.showPage === 'function') {
+                        window.showPage(pageId);
+                    }
+                }, true); // Use capture phase
             });
 
             // --- MODIFIED: Live scan click listener (from admin3) ---
@@ -1423,13 +1555,26 @@ function updateMasterAndBulkActionUI() {
         }
                     
         // --- 3. PAGE NAVIGATION & CONTENT LOADING (MODIFIED) ---
-        window.showPage = (pageId) => {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        window.showPage = function(pageId) {
+            if (!pageId) {
+                return;
+            }
+            
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            // Show the selected page
             const page = document.getElementById(`${pageId}-content`);
             if (page) {
                 page.classList.add('active');
             }
-            document.querySelectorAll("#sidebar nav a[data-page]").forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
+            
+            // Update active state in sidebar
+            document.querySelectorAll("#sidebar nav a[data-page]").forEach(l => {
+                l.classList.toggle('active', l.dataset.page === pageId);
+            });
 
             if (pageId === 'dashboard') {
                 updateSuperAdminDashboard();
@@ -1458,6 +1603,8 @@ function updateMasterAndBulkActionUI() {
                 fetchProfileUpdateRequests();
             } else if (pageId === 'registration-requests') {
                 fetchPendingRegistrations();
+            } else if (pageId === 'incident-reports') {
+                fetchIncidentReports();
             } else if (pageId === 'live-scan') { // --- REMOVED: 'incidents' else if ---
                 initializeLiveScan();
             }
@@ -3644,19 +3791,23 @@ window.handleModelEditClick = (event, type, itemId) => {
                                 fetchProfileUpdateRequests();
                             } else if (pageId === 'registration-requests') {
                                 fetchPendingRegistrations();
-                            } // --- REMOVED: 'incidents' else if ---
+                            } else if (pageId === 'incident-reports') {
+                                fetchIncidentReports();
                             } else {
                                 // If no page is active, default to dashboard
                                 updateSuperAdminDashboard();
                             }
-                             if (!activePage || activePage.id !== 'notifications-content') { // Avoid double-fetching
+                        } else {
+                            // If no active page, refresh notifications
+                            if (!activePage || activePage.id !== 'notifications-content') {
                                 fetchAdminNotifications();
                             }
                         }
-                    } catch (e) {
-                        console.error('Error processing WebSocket message:', e);
                     }
-                };
+                } catch (e) {
+                    console.error('Error processing WebSocket message:', e);
+                }
+            };
 
                 ws.onclose = () => {
                     console.log('WebSocket Disconnected. Reconnecting in 3s...');
@@ -3672,6 +3823,359 @@ window.handleModelEditClick = (event, type, itemId) => {
         window.fetchInventory = fetchInventory;
         window.fetchArchivedInventory = fetchArchivedInventory;
 
+        // --- INCIDENT REPORTS FUNCTIONS ---
+        let incidentReports = [];
+
+        const fetchIncidentReports = async () => {
+            try {
+                const response = await fetch('/api/admin2/incident-reports');
+                if (!response.ok) {
+                    // Check if it's a 403 (permission denied) - don't show error for this
+                    if (response.status === 403) {
+                        incidentReports = [];
+                        renderIncidentReports();
+                        return;
+                    }
+                    const errorData = await response.json().catch(() => ({ message: 'Failed to load incident reports.' }));
+                    throw new Error(errorData.message || 'Failed to load incident reports.');
+                }
+                const data = await response.json();
+                incidentReports = Array.isArray(data) ? data : [];
+                // Don't show notification if there are 0 reports - it's normal
+                renderIncidentReports();
+            } catch (error) {
+                console.error('Error fetching incident reports:', error);
+                // Only show error toast for actual server errors, not for empty results or permission issues
+                if (error.message && !error.message.includes('403') && !error.message.includes('permission')) {
+                    showToast(error.message || 'Failed to load incident reports.', 'error');
+                }
+                // Set empty array on error to prevent further issues
+                incidentReports = [];
+                renderIncidentReports();
+            }
+        };
+
+        const renderIncidentReports = () => {
+            const tbody = document.getElementById('incidentReportsTableBody');
+            if (!tbody) return;
+            
+            // Ensure incidentReports is an array
+            if (!Array.isArray(incidentReports)) {
+                incidentReports = [];
+            }
+            
+            const searchTerm = (document.getElementById('incidentSearch')?.value || '').toLowerCase();
+            const statusFilter = document.getElementById('incidentStatusFilter')?.value || 'All';
+
+            let filtered = incidentReports.filter((report) => {
+                if (!report) return false;
+                const matchesSearch = 
+                    (report.studentName || '').toLowerCase().includes(searchTerm) ||
+                    (report.studentID || '').toLowerCase().includes(searchTerm) ||
+                    (report.itemId || '').toLowerCase().includes(searchTerm) ||
+                    (report.itemName && report.itemName.toLowerCase().includes(searchTerm));
+                const matchesStatus = statusFilter === 'All' || report.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No incident reports found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach((report) => {
+                const row = tbody.insertRow();
+                const dateOfIncident = report.dateOfIncident ? new Date(report.dateOfIncident).toLocaleDateString() : 'N/A';
+                const dateSubmitted = report.dateSubmitted ? new Date(report.dateSubmitted).toLocaleDateString() + ' ' + new Date(report.dateSubmitted).toLocaleTimeString() : 'N/A';
+                const statusClass = report.status === 'Pending Review' || report.status === 'Submitted' ? 'status-Pending' :
+                                  report.status === 'Resolved' ? 'status-Approved' :
+                                  report.status === 'Rejected' ? 'status-Rejected' : 'status-Returned';
+
+                row.innerHTML = `
+                    <td>${report.studentName}</td>
+                    <td>${report.studentID}</td>
+                    <td>${report.itemId}</td>
+                    <td>${report.incidentType}</td>
+                    <td>${dateOfIncident}</td>
+                    <td>${dateSubmitted}</td>
+                    <td><span class="status-badge ${statusClass}">${report.status}</span></td>
+                    <td class="actions-cell">
+                        ${report.status === 'Pending Review' || report.status === 'Submitted' ? `
+                            <button class="btn btn-edit" onclick="openResolveModal('${report._id}')">View Details</button>
+                            <button class="btn btn-delete" onclick="openRejectModal('${report._id}')">Reject</button>
+                        ` : report.status === 'Resolved' || report.status === 'Rejected' ? `
+                            <button class="btn btn-edit" onclick="openResolveModal('${report._id}')">View Details</button>
+                        ` : '—'}
+                    </td>
+                `;
+            });
+        };
+
+        const openResolveModal = async (reportId) => {
+            try {
+                console.log('Opening resolve modal for report:', reportId);
+                const response = await fetch(`/api/admin2/incident-reports/${reportId}`);
+                
+                if (!response.ok) {
+                    let errorMessage = 'Failed to load report details.';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                    }
+                    console.error('API error:', response.status, errorMessage);
+                    throw new Error(errorMessage);
+                }
+                
+                const report = await response.json();
+                console.log('Report data received:', report);
+
+                // Check if required elements exist
+                const reportIdInput = document.getElementById('resolve-report-id');
+                const studentNameInput = document.getElementById('resolve-student-name');
+                const itemNameInput = document.getElementById('resolve-item-name');
+                const replacementItemInput = document.getElementById('resolve-replacement-item');
+                const notesInput = document.getElementById('resolve-notes');
+                const modal = document.getElementById('resolveIncidentModal');
+
+                if (!reportIdInput || !studentNameInput || !itemNameInput || !replacementItemInput || !notesInput || !modal) {
+                    console.error('Modal elements not found:', {
+                        reportIdInput: !!reportIdInput,
+                        studentNameInput: !!studentNameInput,
+                        itemNameInput: !!itemNameInput,
+                        replacementItemInput: !!replacementItemInput,
+                        notesInput: !!notesInput,
+                        modal: !!modal
+                    });
+                    throw new Error('Modal elements not found. Please refresh the page.');
+                }
+
+                // Safely access report data with fallbacks
+                reportIdInput.value = reportId;
+                studentNameInput.value = report.student?.name || 'Unknown Student';
+                itemNameInput.value = report.item?.name && report.item?.itemId 
+                    ? `${report.item.name} (${report.item.itemId})`
+                    : report.item?.name || report.item?.itemId || 'N/A';
+                
+                // Check if report is already resolved or rejected
+                const isResolved = report.status === 'Resolved';
+                const isRejected = report.status === 'Rejected';
+                const isReadOnly = isResolved || isRejected;
+                
+                if (isReadOnly) {
+                    // For resolved/rejected reports, show read-only information
+                    replacementItemInput.value = report.replacementItemId || 'N/A';
+                    replacementItemInput.readOnly = true;
+                    replacementItemInput.style.backgroundColor = '#f3f4f6';
+                    notesInput.value = report.admin2ReviewNotes || 'N/A';
+                    notesInput.readOnly = true;
+                    notesInput.style.backgroundColor = '#f3f4f6';
+                    
+                    // Hide submit button
+                    const submitBtn = modal.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.style.display = 'none';
+                    
+                    // Update modal title
+                    const modalTitle = modal.querySelector('.modal-header h2');
+                    if (modalTitle) {
+                        modalTitle.textContent = isResolved ? 'Resolved Incident Details' : 'Rejected Incident Details';
+                    }
+                } else {
+                    // For pending reports, allow editing
+                    replacementItemInput.value = '';
+                    replacementItemInput.readOnly = false;
+                    replacementItemInput.style.backgroundColor = '';
+                    notesInput.value = '';
+                    notesInput.readOnly = false;
+                    notesInput.style.backgroundColor = '';
+                    
+                    // Show submit button
+                    const submitBtn = modal.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.style.display = 'inline-block';
+                    
+                    // Update modal title
+                    const modalTitle = modal.querySelector('.modal-header h2');
+                    if (modalTitle) {
+                        modalTitle.textContent = 'Resolve Incident';
+                    }
+                }
+
+                modal.style.display = 'flex';
+                console.log('Modal opened successfully');
+            } catch (error) {
+                console.error('Error opening resolve modal:', error);
+                showToast(error.message || 'Failed to load report details.', 'error');
+            }
+        };
+
+        const closeResolveModal = () => {
+            const modal = document.getElementById('resolveIncidentModal');
+            const form = document.getElementById('resolveIncidentForm');
+            const replacementItemInput = document.getElementById('resolve-replacement-item');
+            const notesInput = document.getElementById('resolve-notes');
+            const submitBtn = form?.querySelector('button[type="submit"]');
+            const modalTitle = modal?.querySelector('.modal-header h2');
+            
+            // Reset form
+            form?.reset();
+            
+            // Reset read-only states
+            if (replacementItemInput) {
+                replacementItemInput.readOnly = false;
+                replacementItemInput.style.backgroundColor = '';
+            }
+            if (notesInput) {
+                notesInput.readOnly = false;
+                notesInput.style.backgroundColor = '';
+            }
+            
+            // Reset submit button visibility
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+            
+            // Reset modal title
+            if (modalTitle) modalTitle.textContent = 'Resolve Incident';
+            
+            modal.style.display = 'none';
+        };
+
+        window.openResolveModal = openResolveModal;
+        window.closeResolveModal = closeResolveModal;
+        window.fetchIncidentReports = fetchIncidentReports;
+        
+        const openRejectModal = async (reportId) => {
+            try {
+                console.log('Opening reject modal for report:', reportId);
+                const response = await fetch(`/api/admin2/incident-reports/${reportId}`);
+                
+                if (!response.ok) {
+                    let errorMessage = 'Failed to load report details.';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                    }
+                    console.error('API error:', response.status, errorMessage);
+                    throw new Error(errorMessage);
+                }
+                
+                const report = await response.json();
+                console.log('Report data received:', report);
+
+                // Check if required elements exist
+                const reportIdInput = document.getElementById('reject-report-id');
+                const studentNameInput = document.getElementById('reject-student-name');
+                const itemNameInput = document.getElementById('reject-item-name');
+                const notesInput = document.getElementById('reject-notes');
+                const modal = document.getElementById('rejectIncidentModal');
+
+                if (!reportIdInput || !studentNameInput || !itemNameInput || !notesInput || !modal) {
+                    console.error('Modal elements not found:', {
+                        reportIdInput: !!reportIdInput,
+                        studentNameInput: !!studentNameInput,
+                        itemNameInput: !!itemNameInput,
+                        notesInput: !!notesInput,
+                        modal: !!modal
+                    });
+                    throw new Error('Modal elements not found. Please refresh the page.');
+                }
+
+                // Safely access report data with fallbacks
+                reportIdInput.value = reportId;
+                studentNameInput.value = report.student?.name || 'Unknown Student';
+                itemNameInput.value = report.item?.name && report.item?.itemId 
+                    ? `${report.item.name} (${report.item.itemId})`
+                    : report.item?.name || report.item?.itemId || 'N/A';
+                notesInput.value = '';
+
+                modal.style.display = 'flex';
+                console.log('Reject modal opened successfully');
+            } catch (error) {
+                console.error('Error opening reject modal:', error);
+                showToast(error.message || 'Failed to load report details.', 'error');
+            }
+        };
+
+        const closeRejectModal = () => {
+            document.getElementById('rejectIncidentModal').style.display = 'none';
+            document.getElementById('rejectIncidentForm').reset();
+        };
+
+        window.openRejectModal = openRejectModal;
+        window.closeRejectModal = closeRejectModal;
+        window.rejectIncident = openRejectModal;
+
+        document.getElementById('resolveIncidentForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const reportId = document.getElementById('resolve-report-id').value;
+            const replacementItemId = document.getElementById('resolve-replacement-item').value;
+            const resolutionNote = document.getElementById('resolve-notes').value;
+
+            try {
+                const response = await fetch(`/api/admin2/incident-reports/${reportId}/resolve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ replacementItemId, resolutionNote }),
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to resolve incident.');
+
+                showToast('Incident resolved successfully!', 'success');
+                closeResolveModal();
+                await fetchIncidentReports();
+            } catch (error) {
+                console.error('Error resolving incident:', error);
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Add event listeners for filters
+        document.getElementById('incidentSearch')?.addEventListener('input', renderIncidentReports);
+        document.getElementById('incidentStatusFilter')?.addEventListener('change', renderIncidentReports);
+
+        // Close modal when clicking outside
+        document.getElementById('resolveIncidentModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'resolveIncidentModal') {
+                closeResolveModal();
+            }
+        });
+
+        document.getElementById('rejectIncidentModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'rejectIncidentModal') {
+                closeRejectModal();
+            }
+        });
+
+        // Reject incident form submission
+        document.getElementById('rejectIncidentForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const reportId = document.getElementById('reject-report-id').value;
+            const rejectionNote = document.getElementById('reject-notes').value.trim();
+
+            try {
+                const response = await fetch(`/api/admin2/incident-reports/${reportId}/reject`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        rejectionNote: rejectionNote || 'Report rejected by Admin 2.' 
+                    }),
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to reject incident.');
+
+                showToast('Incident rejected successfully!', 'success');
+                closeRejectModal();
+                await fetchIncidentReports();
+            } catch (error) {
+                console.error('Error rejecting incident:', error);
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        });
+
         // --- GO! ---
             initializeApp();
             connectWebSocket(); // --- ADDED ---
@@ -3679,3 +4183,4 @@ window.handleModelEditClick = (event, type, itemId) => {
 </script>
 </body>
 </html>  
+

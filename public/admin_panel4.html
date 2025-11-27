@@ -1753,6 +1753,47 @@
       </div>
     </div>
 
+    <div id="returnConditionModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Return Condition Report 🛠️</h2>
+          <span class="close-button" id="closeReturnConditionModal"
+            >&times;</span
+          >
+        </div>
+        <form id="returnConditionForm">
+          <input type="hidden" id="returnConditionItemId" />
+          <input type="hidden" id="returnConditionBorrowerName" />
+
+          <p style="margin-bottom: 1rem">
+            **Item:** <span id="modalItemName" style="font-weight: 600"></span>
+          </p>
+          <p style="margin-bottom: 1.5rem">
+            **Borrowed By:**
+            <span id="modalBorrowerName" style="font-weight: 600"></span>
+          </p>
+
+          <label for="conditionSelect">Select Return Condition</label>
+          <select id="conditionSelect" required style="margin-bottom: 1rem">
+            <option value="Good" selected>1 - Good Condition ✅</option>
+            <option value="Damaged">2 - Damaged ⚠️</option>
+            <option value="Lost">3 - Lost 🚨</option>
+          </select>
+
+          <label for="damageNotes" id="damageNotesLabel" style="display: none"
+            >Notes on Damage/Loss (Required)</label
+          >
+          <textarea
+            id="damageNotes"
+            placeholder="Enter details about the damage, or confirm the item is lost."
+            style="display: none; height: 80px"
+          ></textarea>
+
+          <button type="submit" id="submitConditionBtn">Submit Return</button>
+        </form>
+      </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <script>
@@ -1967,6 +2008,12 @@
             if (event.target == editModal) editModal.style.display = 'none';
             if (event.target == statusEditModal)
               statusEditModal.style.display = 'none';
+            const returnConditionModal = document.getElementById(
+              'returnConditionModal'
+            );
+            if (returnConditionModal && event.target == returnConditionModal) {
+              returnConditionModal.style.display = 'none';
+            }
           });
 
           document
@@ -1979,6 +2026,50 @@
               handleRequest(requestId, newStatus); // <-- MODIFIED: Simplified
               statusEditModal.style.display = 'none';
             });
+
+          // --- ADDED: Return Condition Modal Event Listeners ---
+          const returnConditionModal = document.getElementById(
+            'returnConditionModal'
+          );
+          const closeReturnConditionModal = document.getElementById(
+            'closeReturnConditionModal'
+          );
+          const returnConditionForm = document.getElementById(
+            'returnConditionForm'
+          );
+          const conditionSelect = document.getElementById('conditionSelect');
+          const damageNotes = document.getElementById('damageNotes');
+          const damageNotesLabel = document.getElementById('damageNotesLabel');
+
+          if (closeReturnConditionModal) {
+            closeReturnConditionModal.onclick = () => {
+              if (returnConditionModal)
+                returnConditionModal.style.display = 'none';
+            };
+          }
+
+          if (conditionSelect) {
+            conditionSelect.addEventListener('change', () => {
+              const isDamagedOrLost = ['Damaged', 'Lost'].includes(
+                conditionSelect.value
+              );
+              if (damageNotesLabel)
+                damageNotesLabel.style.display = isDamagedOrLost
+                  ? 'block'
+                  : 'none';
+              if (damageNotes) {
+                damageNotes.style.display = isDamagedOrLost ? 'block' : 'none';
+                damageNotes.required = isDamagedOrLost;
+              }
+            });
+          }
+
+          if (returnConditionForm) {
+            returnConditionForm.addEventListener(
+              'submit',
+              window.handleReturnConditionSubmission
+            );
+          }
 
           // --- ADDED: Archive listeners ---
           toggleInventoryArchiveBtn.addEventListener(
@@ -2331,12 +2422,19 @@
           const mode = scanMode.value;
           const isStudentInput = triggeredInput === studentIdInput;
           const isItemInput = triggeredInput === itemIdInput;
+
+          // Consolidate prefix/suffix logic
+          const finalItemId =
+            (itemIdPrefixInput.value || '') + (itemIdInput.value || '');
+          const finalStudentId =
+            (studentIdPrefixInput.value || '') + (studentIdInput.value || '');
+
           if (
             mode === 'Borrowing' &&
             isStudentInput &&
-            studentIdInput.value.trim() !== ''
+            finalStudentId.trim() !== ''
           ) {
-            currentBorrowingStudentId = studentIdInput.value.trim();
+            currentBorrowingStudentId = finalStudentId.trim();
             studentIdInput.readOnly = true;
             scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Now scan the item.`;
             scanStatus.className = 'status-box info';
@@ -2345,8 +2443,9 @@
             cancelScanBtn.style.display = 'inline-block';
             return;
           }
-          if (isItemInput && itemIdInput.value.trim() !== '') {
-            const finalItemId = itemIdInput.value.trim();
+
+          if (isItemInput && finalItemId.trim() !== '') {
+            const itemId = finalItemId.trim();
             disableAutoSubmit();
             itemIdInput.value = '';
             itemIdPrefixInput.value = '';
@@ -2365,76 +2464,154 @@
               const studentID = currentBorrowingStudentId;
               if (
                 itemDetailsResult.status === 'Maintenance' ||
-                itemDetailsResult.status === 'Calibration'
+                itemDetailsResult.status === 'Calibration' ||
+                itemDetailsResult.status === 'Damaged'
               ) {
-                scanStatus.textContent = `Error: Item **${finalItemId}** is under ${itemDetailsResult.status} and cannot be borrowed.`;
+                scanStatus.textContent = `Error: Item **${itemId}** is under ${itemDetailsResult.status} and cannot be borrowed.`;
                 scanStatus.className = 'status-box error';
                 showToast(
-                  `Error: Item ${finalItemId} under ${itemDetailsResult.status}.`,
+                  `Error: Item ${itemId} under ${itemDetailsResult.status}.`,
                   'error'
                 );
-                scanAnotherItemBtn.style.display = 'inline-block';
-                cancelScanBtn.style.display = 'inline-block';
-                enableAutoSubmit();
-                return;
-              }
-              try {
-                const response = await fetch('/api/borrow-by-barcode', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ itemId: finalItemId, studentID }),
-                });
-                const result = await response.json();
-                if (!response.ok)
-                  throw new Error(
-                    result.message || 'Failed to process borrowing.'
-                  );
-                scanStatus.textContent = result.message;
-                scanStatus.className = 'status-box success';
-                showToast(result.message, 'success');
-                fetchInventory('Robotics');
-              } catch (error) {
-                scanStatus.textContent = error.message;
-                scanStatus.className = 'status-box error';
-                showToast(error.message, 'error');
+              } else {
+                try {
+                  const response = await fetch('/api/borrow-by-barcode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId: itemId, studentID }),
+                  });
+                  const result = await response.json();
+                  if (!response.ok)
+                    throw new Error(
+                      result.message || 'Failed to process borrowing.'
+                    );
+                  scanStatus.textContent = result.message;
+                  scanStatus.className = 'status-box success';
+                  showToast(result.message, 'success');
+                  fetchInventory('Robotics');
+                } catch (error) {
+                  scanStatus.textContent = error.message;
+                  scanStatus.className = 'status-box error';
+                  showToast(error.message, 'error');
+                } finally {
+                  enableAutoSubmit();
+                }
               }
               scanAnotherItemBtn.style.display = 'inline-block';
               cancelScanBtn.style.display = 'inline-block';
             } else if (mode === 'Returning') {
-              try {
-                const response = await fetch('/api/return-by-barcode', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ itemId: finalItemId }),
-                });
-                const result = await response.json();
-                if (!response.ok)
-                  throw new Error(
-                    result.message || 'Failed to process return.'
-                  );
-                scanStatus.textContent = result.message;
-                scanStatus.className = 'status-box success';
-                showToast(result.message, 'success');
-                fetchInventory('Robotics');
-              } catch (error) {
-                scanStatus.textContent = error.message;
+              if (
+                itemDetailsResult.itemData &&
+                itemDetailsResult.itemData.currentLoan
+              ) {
+                const borrowerName =
+                  itemDetailsResult.itemData.currentLoan.studentName;
+                const modal = document.getElementById('returnConditionModal');
+                document.getElementById('returnConditionItemId').value =
+                  finalItemId;
+                document.getElementById('modalItemName').textContent =
+                  itemDetailsResult.itemData.name;
+                document.getElementById(
+                  'modalBorrowerName'
+                ).textContent = `${borrowerName} (${itemDetailsResult.itemData.currentLoan.studentID})`;
+
+                document.getElementById('conditionSelect').value = 'Good';
+                document.getElementById('damageNotes').value = '';
+                document.getElementById('damageNotesLabel').style.display =
+                  'none';
+                document.getElementById('damageNotes').style.display = 'none';
+                document.getElementById('damageNotes').required = false;
+
+                modal.style.display = 'flex';
+              } else {
+                scanStatus.textContent = `Error: No active loan found for item ID ${itemId}. Cannot return.`;
                 scanStatus.className = 'status-box error';
-                showToast(error.message, 'error');
+                showToast(
+                  `Error: No active loan found for ${itemId}.`,
+                  'error'
+                );
+                scanAnotherItemBtn.style.display = 'inline-block';
+                cancelScanBtn.style.display = 'inline-block';
               }
-              scanAnotherItemBtn.style.display = 'inline-block';
-              cancelScanBtn.style.display = 'inline-block';
             } else if (mode === 'Status Check') {
-              scanStatus.textContent = `Item **${finalItemId}** Status: **${itemDetailsResult.status}**`;
+              scanStatus.textContent = `Item **${itemId}** Status: **${itemDetailsResult.status}**`;
               scanStatus.className = `status-box info`;
               scanAnotherItemBtn.style.display = 'inline-block';
               cancelScanBtn.style.display = 'inline-block';
             } else if (mode === 'Equipment') {
               renderEquipmentStatusChange(itemDetailsResult.itemData);
             }
+
+            enableAutoSubmit();
+            if (mode !== 'Returning') itemIdPrefixInput.focus();
+          }
+        }
+
+        // --- ADDED: Global function to handle modal submission (from admin_panel2.html) ---
+        window.handleReturnConditionSubmission = async (e) => {
+          e.preventDefault();
+          const modal = document.getElementById('returnConditionModal');
+          if (!modal) {
+            showToast(
+              'Modal elements not found. Please refresh the page.',
+              'error'
+            );
+            return;
+          }
+          const finalItemId = document.getElementById(
+            'returnConditionItemId'
+          ).value;
+          const returnCondition =
+            document.getElementById('conditionSelect').value;
+          let damageNotes = document.getElementById('damageNotes').value.trim();
+
+          if (
+            ['Damaged', 'Lost'].includes(returnCondition) &&
+            damageNotes === ''
+          ) {
+            showToast(
+              'Notes on damage/loss are required for non-Good conditions.',
+              'error'
+            );
+            return;
+          }
+
+          modal.style.display = 'none';
+          disableAutoSubmit();
+
+          try {
+            const response = await fetch('/api/return-by-barcode', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                itemId: finalItemId,
+                condition: returnCondition,
+                damageNotes: damageNotes,
+              }),
+            });
+            const result = await response.json();
+            if (!response.ok)
+              throw new Error(result.message || 'Failed to process return.');
+
+            scanStatus.textContent = result.message;
+            scanStatus.className = 'status-box success';
+            showToast(result.message, 'success');
+            fetchAndDisplayItemDetails(finalItemId); // Re-fetch details after return
+
+            // Refetch all inventories
+            for (const type in inventoryTypes) fetchInventory(type);
+          } catch (error) {
+            scanStatus.textContent = error.message;
+            scanStatus.className = 'status-box error';
+            showToast(error.message, 'error');
+          } finally {
+            // Reset UI for next scan
+            scanAnotherItemBtn.style.display = 'inline-block';
+            cancelScanBtn.style.display = 'inline-block';
             enableAutoSubmit();
             itemIdPrefixInput.focus();
           }
-        }
+        };
 
         // --- 6. INVENTORY CRUD & RENDERING ---
         async function fetchInventory(type) {
