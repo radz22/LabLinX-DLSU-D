@@ -2296,6 +2296,27 @@
         let currentBorrowingStudentId = null;
         let scanDebounceTimer = null;
         let scannedEquipmentId = null; // <-- ADDED
+
+        // --- ADDED: Auto-submit handlers (moved from setupEventListeners to match admin_panel2.html) ---
+        const handleAutoSubmit = (event) => {
+          clearTimeout(scanDebounceTimer);
+          if (autoSubmitCheck.checked) {
+            scanDebounceTimer = setTimeout(() => {
+              if (event.target.value.trim() !== '') {
+                processScan(event.target);
+              }
+            }, 100);
+          }
+        };
+        const disableAutoSubmit = () => {
+          itemIdInput.removeEventListener('input', handleAutoSubmit);
+          studentIdInput.removeEventListener('input', handleAutoSubmit);
+        };
+        const enableAutoSubmit = () => {
+          itemIdInput.addEventListener('input', handleAutoSubmit);
+          studentIdInput.addEventListener('input', handleAutoSubmit);
+        };
+
         const scanAnotherItemBtn =
           document.getElementById('scanAnotherItemBtn'); // <-- ADDED
         const cancelScanBtn = document.getElementById('cancelScanBtn'); // <-- ADDED
@@ -2473,24 +2494,8 @@
             e.preventDefault();
             processScan(document.activeElement);
           });
-          const handleAutoSubmit = (event) => {
-            clearTimeout(scanDebounceTimer);
-            if (autoSubmitCheck.checked) {
-              scanDebounceTimer = setTimeout(() => {
-                if (event.target.value.trim() !== '') {
-                  processScan(event.target);
-                }
-              }, 100);
-            }
-          };
-          const disableAutoSubmit = () => {
-            itemIdInput.removeEventListener('input', handleAutoSubmit);
-            studentIdInput.removeEventListener('input', handleAutoSubmit);
-          };
-          const enableAutoSubmit = () => {
-            itemIdInput.addEventListener('input', handleAutoSubmit);
-            studentIdInput.addEventListener('input', handleAutoSubmit);
-          };
+          
+          // --- MODIFIED: Use the auto-submit handlers (already defined above) ---
           enableAutoSubmit();
 
           // ADDED: Event listeners for new buttons
@@ -2932,9 +2937,7 @@
           }
 
           modal.style.display = 'none';
-          // Disable auto-submit during processing
-          const autoSubmitWasChecked = autoSubmitCheck.checked;
-          autoSubmitCheck.checked = false;
+          disableAutoSubmit();
 
           try {
             const response = await fetch('/api/return-by-barcode', {
@@ -2965,7 +2968,7 @@
             // Reset UI for next scan
             scanAnotherItemBtn.style.display = 'inline-block';
             cancelScanBtn.style.display = 'inline-block';
-            autoSubmitCheck.checked = autoSubmitWasChecked; // Restore auto-submit
+            enableAutoSubmit();
             itemIdPrefixInput.focus();
           }
         };
@@ -2999,11 +3002,7 @@
 
           if (isItemInput && finalItemId.trim() !== '') {
             const itemId = finalItemId.trim();
-
-            // Disable auto-submit logic during processing
-            const autoSubmitWasChecked = autoSubmitCheck.checked;
-            autoSubmitCheck.checked = false;
-
+            disableAutoSubmit();
             itemIdInput.value = '';
             itemIdPrefixInput.value = '';
 
@@ -3013,7 +3012,7 @@
               scanStatus.className = 'status-box error';
               scanAnotherItemBtn.style.display = 'inline-block';
               cancelScanBtn.style.display = 'inline-block';
-              autoSubmitCheck.checked = autoSubmitWasChecked; // Re-enable
+              enableAutoSubmit();
               itemIdPrefixInput.focus();
               return;
             }
@@ -3051,6 +3050,8 @@
                   scanStatus.textContent = error.message;
                   scanStatus.className = 'status-box error';
                   showToast(error.message, 'error');
+                } finally {
+                  enableAutoSubmit();
                 }
               }
               scanAnotherItemBtn.style.display = 'inline-block';
@@ -3088,6 +3089,7 @@
                 );
                 scanAnotherItemBtn.style.display = 'inline-block';
                 cancelScanBtn.style.display = 'inline-block';
+                enableAutoSubmit();
               }
             } else if (mode === 'Status Check') {
               scanStatus.textContent = `Item **${itemId}** Status: **${itemDetailsResult.status}**`;
@@ -3097,8 +3099,8 @@
             } else if (mode === 'Equipment') {
               renderEquipmentStatusChange(itemDetailsResult.itemData);
             }
-
-            autoSubmitCheck.checked = autoSubmitWasChecked; // Re-enable
+            
+            enableAutoSubmit();
             if (mode !== 'Returning') itemIdPrefixInput.focus();
           }
         }

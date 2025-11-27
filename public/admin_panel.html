@@ -524,8 +524,8 @@
                     <select id="scanMode">
                         <option value="Borrowing" selected>Borrowing</option>
                         <option value="Returning">Returning</option>
-                        <option value="Equipment Mode">Equipment Mode</option>
-                        <option value="Check Status">Check Status</option>
+                        <option value="Status Check">Status Check</option>
+                        <option value="Equipment">Equipment Mode</option>
                     </select>
                     <div class="auto-submit-toggle">
                         <input type="checkbox" id="autoSubmitCheck" checked>
@@ -556,8 +556,9 @@
                     Awaiting scan...
                 </div>
                 <div class="scan-action-buttons">
-                    <button id="scanAnotherItemBtn">Scan Another Item</button>
-                    <button id="cancelScanBtn">Cancel Transaction</button>
+                    <button id="scanAnotherItemBtn" onclick="scanAnotherItem()">Scan Another Item</button>
+                    <button id="cancelScanBtn" onclick="cancelTransaction()">Cancel Transaction</button>
+                    <button id="updateStatusBtn" style="display: none;" onclick="updateEquipmentStatus()">Update Status</button>
                 </div>
             </section>
             <section class="inventory-card">
@@ -847,6 +848,7 @@
       const itemIdGroup = document.getElementById('itemIdGroup');
       const scanAnotherItemBtn = document.getElementById('scanAnotherItemBtn'); // Added
       const cancelScanBtn = document.getElementById('cancelScanBtn'); // Added
+      const updateStatusBtn = document.getElementById('updateStatusBtn'); // Added
       const statusEditModal = document.getElementById('statusEditModal'); // Added
       
       // Added inventory archive state
@@ -881,8 +883,28 @@
       let selectedArchivedItems = [];
       
       let currentBorrowingStudentId = null;
-      let equipmentModeCapturedItemId = null; // Added
+      let scannedEquipmentId = null;
       let scanDebounceTimer = null;
+
+      // --- ADDED: Auto-submit handlers (moved from setupEventListeners to match admin_panel2.html) ---
+      const handleAutoSubmit = (event) => {
+          clearTimeout(scanDebounceTimer);
+          if (autoSubmitCheck.checked) {
+              scanDebounceTimer = setTimeout(() => {
+                  if (event.target.value.trim() !== '') {
+                      processScan(event.target);
+                  }
+              }, 100);
+          }
+      };
+      const disableAutoSubmit = () => {
+          itemIdInput.removeEventListener('input', handleAutoSubmit);
+          studentIdInput.removeEventListener('input', handleAutoSubmit);
+      };
+      const enableAutoSubmit = () => {
+          itemIdInput.addEventListener('input', handleAutoSubmit);
+          studentIdInput.addEventListener('input', handleAutoSubmit);
+      };
 
       // --- 2. INITIALIZATION & SOCKET ---
       const initializeApp = () => {
@@ -918,9 +940,11 @@
                                 if (isViewingTrash) fetchDeletedRequests();
                                 else fetchAllRequests();
                                 break;
+                            case 'notifications': fetchAdminNotifications(); break;
                             case 'history': fetchHistoryLogs(); break;
                         }
                     }
+                    // Always update notification badge even if notifications page is not active
                     if (!document.getElementById('notifications-content').classList.contains('active')) {
                         fetchAdminNotifications(); // Always update badge
                     }
@@ -1005,7 +1029,7 @@
 
         // FIXED: Added listeners for archive
         toggleInventoryArchiveBtn.addEventListener('click', toggleInventoryArchiveView);
-        searchInventoryArchive.addEventListener('input', renderArchiveTable);
+        // Note: searchInventoryArchive is not used in this admin panel
         
         // FIXED: Added listeners for History/Reports
         historyActionFilter.addEventListener('change', renderHistoryLogs);
@@ -1026,22 +1050,18 @@
         };
 
         scanMode.addEventListener('change', resetScannerUI);
+
         scanForm.addEventListener('submit', (e) => {
             e.preventDefault();
             processScan(document.activeElement);
         });
-        const handleAutoSubmit = (event) => {
-            clearTimeout(scanDebounceTimer);
-            if (autoSubmitCheck.checked) {
-                scanDebounceTimer = setTimeout(() => {
-                    processScan(event.target);
-                }, 200);
-            }
-        };
-        studentIdInput.addEventListener('input', handleAutoSubmit);
-        itemIdInput.addEventListener('input', handleAutoSubmit);
-        scanAnotherItemBtn.addEventListener('click', scanAnotherItem); // Added
-        cancelScanBtn.addEventListener('click', cancelTransaction); // Added
+
+        // --- MODIFIED: Use the auto-submit handlers (already defined above) ---
+        enableAutoSubmit();
+        
+        // --- ADDED: Listeners for new scan buttons ---
+        scanAnotherItemBtn.addEventListener('click', scanAnotherItem);
+        cancelScanBtn.addEventListener('click', cancelTransaction);
         
         mainContentArea.addEventListener('click', (event) => {
             const liveScanPage = document.getElementById('live-scan-content');
@@ -1072,7 +1092,7 @@
             isViewingTrash = false; // Reset view
             fetchAllRequests();
         }
-        else if (pageId === 'notifications') renderNotifications();
+        else if (pageId === 'notifications') fetchAdminNotifications();
         else if (pageId === 'live-scan') initializeLiveScan();
         else if (pageId === 'history') fetchHistoryLogs(); // Added
         else if (pageId === 'reports') { /* Handled by button */ } // Added
@@ -1081,16 +1101,16 @@
       // --- 5. LIVE SCAN ---
       function initializeLiveScan() {
           resetScannerUI();
+          enableAutoSubmit(); // Ensure auto-submit is enabled when live scan is initialized
       }
       
       function clearTrackingDetails() {
           trackingDetailsContainer.innerHTML = '<p>Scan an item to see its details here.</p>';
       }
 
-      // FIXED: Updated to support all modes
       function resetScannerUI() {
           currentBorrowingStudentId = null;
-          equipmentModeCapturedItemId = null;
+          scannedEquipmentId = null;
           studentIdInput.value = '';
           itemIdInput.value = '';
           studentIdPrefixInput.value = '';
@@ -1099,57 +1119,156 @@
           
           scanStatus.textContent = 'Awaiting scan...';
           scanStatus.className = 'status-box';
+          
           scanAnotherItemBtn.style.display = 'none';
           cancelScanBtn.style.display = 'none';
-          
+          updateStatusBtn.style.display = 'none';
+
           const mode = scanMode.value;
-          
+
+          // Hide all groups by default
           studentIdPrefixGroup.style.display = 'none';
           studentIdGroup.style.display = 'none';
           itemIdGroup.style.display = 'none';
 
-          if (mode === 'Returning') {
-              itemIdGroup.style.display = 'block';
-              itemIdInput.placeholder = 'Scan item to RETURN...';
-              itemIdPrefixInput.focus();
-          } else if (mode === 'Equipment Mode') {
-              itemIdGroup.style.display = 'block';
-              itemIdInput.placeholder = 'Scan item to TRACK...';
-              itemIdPrefixInput.focus();
-          } else if (mode === 'Check Status') {
-              itemIdGroup.style.display = 'block';
-              itemIdInput.placeholder = 'Scan item to CHECK STATUS...';
-              itemIdPrefixInput.focus();
-          } else { // Borrowing
+          if (mode === 'Borrowing') {
               studentIdPrefixGroup.style.display = 'block';
               studentIdGroup.style.display = 'block';
+              itemIdGroup.style.display = 'none';
               studentIdInput.placeholder = 'Scan student ID to BORROW...';
               studentIdPrefixInput.focus();
+          } else if (mode === 'Returning' || mode === 'Status Check' || mode === 'Equipment') {
+              studentIdPrefixGroup.style.display = 'none';
+              studentIdGroup.style.display = 'none';
+              itemIdGroup.style.display = 'block';
+              if (mode === 'Returning') { itemIdInput.placeholder = 'Scan item to RETURN...'; }
+              else if (mode === 'Status Check') { itemIdInput.placeholder = 'Scan item for STATUS CHECK...'; }
+              else if (mode === 'Equipment') { itemIdInput.placeholder = 'Scan item to change status...'; }
+              itemIdPrefixInput.focus();
           }
           
-          if (mode !== 'Equipment Mode') {
-            clearTrackingDetails();
-          }
+          clearTrackingDetails();
       }
       
-      // FIXED: Added scanAnotherItem and cancelTransaction
       window.scanAnotherItem = () => {
-        if (scanMode.value === 'Borrowing' && currentBorrowingStudentId) {
-            itemIdInput.value = '';
-            itemIdPrefixInput.value = '';
-            scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Scan next item.`;
-            scanStatus.className = 'status-box info';
-            scanAnotherItemBtn.style.display = 'none';
-            cancelScanBtn.style.display = 'inline-block';
-            itemIdPrefixInput.focus();
-        } else {
-            resetScannerUI();
-        }
+          const mode = scanMode.value;
+          if (mode === 'Borrowing' && currentBorrowingStudentId) {
+              itemIdInput.value = '';
+              itemIdPrefixInput.value = '';
+              scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Scan next item.`;
+              scanStatus.className = 'status-box info';
+              scanAnotherItemBtn.style.display = 'none';
+              cancelScanBtn.style.display = 'inline-block';
+              itemIdPrefixInput.focus();
+          } else if (mode === 'Equipment' || mode === 'Returning' || mode === 'Status Check') {
+              scannedEquipmentId = null;
+              itemIdInput.value = '';
+              itemIdPrefixInput.value = '';
+              scanStatus.textContent = `Awaiting scan for next item...`;
+              scanStatus.className = 'status-box';
+              updateStatusBtn.style.display = 'none';
+              scanAnotherItemBtn.style.display = 'none';
+              cancelScanBtn.style.display = 'none';
+              clearTrackingDetails();
+              itemIdPrefixInput.focus();
+          } else {
+              resetScannerUI();
+          }
       };
       
       window.cancelTransaction = () => {
-        showToast('Transaction cancelled. Scanner reset.');
-        resetScannerUI();
+          showToast('Transaction cancelled. Scanner reset.');
+          resetScannerUI();
+      };
+
+      // --- ADDED: Equipment Mode functions from admin_panel2.html ---
+      function renderEquipmentStatusChange(itemData) {
+          scannedEquipmentId = itemData.itemId;
+          const statusClass = itemData.status.replace(/[^a-zA-Z0-9]/g, '');
+          trackingDetailsContainer.innerHTML = `
+              <h3>${itemData.name} (${itemData.itemId})</h3>
+              <p>
+                  <strong>Current Status:</strong> <span class="status-badge status-${statusClass}">${itemData.status}</span><br>
+                  <strong>Available Qty:</strong> ${itemData.quantity || 0} / ${itemData.originalQuantity || 0}
+              </p>
+              <div class="form-group" style="margin-top: 1.5rem;">
+                  <label for="newEquipmentStatus">Change Status To:</label>
+                  <select id="newEquipmentStatus" class="prefix-input">
+                      <option value="Available" ${itemData.status === 'Available' ? 'selected' : ''}>Available</option>
+                      <option value="Maintenance" ${itemData.status === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                      <option value="Calibration" ${itemData.status === 'Calibration' ? 'selected' : ''}>Calibration</option>
+                      <option value="Damaged" ${itemData.status === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                      <option value="In-Use" disabled>In-Use (System-managed)</option>
+                  </select>
+              </div>`;
+          scanStatus.textContent = `Item **${itemData.itemId}** is ready for status change.`;
+          scanStatus.className = 'status-box equipment-ready';
+          updateStatusBtn.style.display = 'inline-block';
+          scanAnotherItemBtn.style.display = 'none';
+          cancelScanBtn.style.display = 'inline-block';
+      }
+
+      window.updateEquipmentStatus = async () => {
+          const newStatus = document.getElementById('newEquipmentStatus').value;
+          const itemId = scannedEquipmentId;
+          if (!itemId || !newStatus || newStatus === 'In-Use') return;
+          
+          // Find the item in any of the stores
+          let originalItem = null;
+          let apiToCall = null;
+          for (const type in inventoryTypes) {
+              originalItem = inventoryTypes[type].store.find(i => i.itemId === itemId);
+              if (originalItem) {
+                  apiToCall = inventoryTypes[type].api;
+                  break;
+              }
+          }
+
+          if (!originalItem) {
+              showToast(`Error: Item ${itemId} not found locally.`, 'error');
+              return;
+          }
+
+          try {
+              scanStatus.textContent = `Updating status for ${itemId}...`;
+              scanStatus.className = 'status-box info';
+              updateStatusBtn.style.display = 'none';
+              
+              const isNowAvailable = newStatus === 'Available';
+              const isNowUnavailable = ['Maintenance', 'Calibration', 'Damaged'].includes(newStatus);
+              
+              const updateData = {
+                  status: newStatus,
+                  quantity: isNowUnavailable ? 0 : (isNowAvailable ? originalItem.originalQuantity : originalItem.quantity)
+              };
+
+              const response = await fetch(`${apiToCall}/${itemId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(updateData)
+              });
+              if (!response.ok) throw new Error((await response.json()).message || 'Failed to update equipment status.');
+              
+              showToast(`Status for ${itemId} updated to **${newStatus}**!`, 'success');
+              scanStatus.textContent = `Success: Item **${itemId}** is now **${newStatus}**.`;
+              scanStatus.className = 'status-box success';
+              
+              for (const type in inventoryTypes) {
+                  if (inventoryTypes[type].api === apiToCall) {
+                      fetchInventory(type);
+                      break;
+                  }
+              }
+              
+              setTimeout(() => fetchAndDisplayItemDetails(itemId), 500);
+              scanAnotherItemBtn.style.display = 'inline-block';
+              cancelScanBtn.style.display = 'inline-block';
+          } catch (error) {
+              showToast(`Error: ${error.message}`, 'error');
+              scanStatus.textContent = `Error: ${error.message}`;
+              scanStatus.className = 'status-box error';
+              updateStatusBtn.style.display = 'inline-block';
+          }
       };
 
       async function fetchAndDisplayItemDetails(itemId) {
@@ -1157,32 +1276,50 @@
           try {
               const response = await fetch(`/api/item-details/${itemId}`);
               if (!response.ok) {
-                  throw new Error('Item not found in any inventory.');
+                  if (response.status === 404) { throw new Error(`Item ID **${itemId}** not found in the database.`); }
+                  throw new Error(`Failed to fetch details for ${itemId}.`);
               }
               const data = await response.json();
-              const statusClass = (data.status || 'Available').replace(/[^a-zA-Z0-9]/g, '');
-              let trackingHTML = `<h3>${data.name}</h3><p><strong>ID:</strong> ${data.itemId} | <strong>Status:</strong> <span class="status-badge status-${statusClass}">${data.status}</span></p>`;
-              if (data.currentLoan) {
+              const originalQty = data.originalQuantity || data.quantity || 0;
+              const availableQty = data.quantity || 0;
+              const borrowedQty = originalQty - availableQty;
+              // Use the item's status, but default to In-Use if borrowed
+              const currentStatus = (borrowedQty > 0 && data.status !== 'Maintenance' && data.status !== 'Calibration' && data.status !== 'Damaged') ? 'In-Use' : (data.status || 'Available');
+              const statusClass = currentStatus.replace(/[^a-zA-Z0-9]/g, '');
+              
+              let trackingHTML = `
+                  <h3>${data.name}</h3>
+                  <p>
+                      <strong>ID:</strong> ${data.itemId} |
+                      <strong>Category:</strong> ${data.category} |
+                      <strong>Location:</strong> ${data.location}
+                  </p>
+                  <p>
+                      <strong>Current Status:</strong> <span class="status-badge status-${statusClass}">${currentStatus}</span> |
+                      <strong>Available Qty:</strong> ${availableQty} / ${originalQty}
+                  </p>`;
+              if (borrowedQty > 0 && data.currentLoan) {
                   trackingHTML += `<div id="trackingBorrowerInfo"><p class="detail-item">Currently Borrowed By:</p><span>${data.currentLoan.studentName} (${data.currentLoan.studentID})</span><br><span><strong>Due Date:</strong> ${new Date(data.currentLoan.dueDate).toLocaleDateString()}</span></div>`;
+              } else if (currentStatus === 'Maintenance' || currentStatus === 'Calibration' || currentStatus === 'Damaged') {
+                  trackingHTML += `<div id="trackingBorrowerInfo" style="background-color: var(${currentStatus === 'Maintenance' ? '--warning' : (currentStatus === 'Damaged' ? '--danger' : '--calibration')}); color: white; border-color: #d1d5db;"><p class="detail-item">ITEM UNDER ${currentStatus.toUpperCase()}</p></div>`;
               }
               trackingHTML += `<h4>History</h4><div id="trackingHistoryLog">`;
               if(data.history && data.history.length > 0) {
-                  data.history.forEach(log => {
+                  data.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(log => {
                       trackingHTML += `<div><strong>${log.action}</strong> by ${log.studentName || 'N/A'} on ${new Date(log.timestamp).toLocaleString()}</div>`;
                   });
               } else {
-                  trackingHTML += `<div>No transaction history for this item.</div>`;
+                  trackingHTML += `<div><div>No transaction history for this item.</div>`;
               }
               trackingHTML += `</div>`;
               trackingDetailsContainer.innerHTML = trackingHTML;
-              return { success: true, status: data.status, data: data }; // Return data
+              return { success: true, status: currentStatus, itemData: data };
           } catch (error) {
-              trackingDetailsContainer.innerHTML = `<p style="color: var(--danger);">${error.message}</p>`;
+              trackingDetailsContainer.innerHTML = `<p style="color: var(--danger);">**Error:** ${error.message}</p>`;
               return { success: false, message: error.message };
           }
       }
       
-      // FIXED: Added this function to handle the modal submission
       window.handleReturnConditionSubmission = async (e) => {
             e.preventDefault();
             const modal = document.getElementById('returnConditionModal');
@@ -1194,7 +1331,10 @@
                 showToast('Notes on damage/loss are required for non-Good conditions.', 'error');
                 return;
             }
+
             modal.style.display = 'none';
+            disableAutoSubmit();
+
             try {
                 const response = await fetch('/api/return-by-barcode', {
                     method: 'POST',
@@ -1207,89 +1347,102 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Failed to process return.');
+
                 scanStatus.textContent = result.message;
                 scanStatus.className = 'status-box success';
                 showToast(result.message, 'success');
-                setTimeout(() => fetchAndDisplayItemDetails(finalItemId), 500);
+                fetchAndDisplayItemDetails(finalItemId); // Re-fetch details after return
+                
+                // Refetch all inventories
+                for (const type in inventoryTypes) fetchInventory(type);
+
             } catch (error) {
                 scanStatus.textContent = error.message;
                 scanStatus.className = 'status-box error';
                 showToast(error.message, 'error');
             } finally {
+                // Reset UI for next scan
                 scanAnotherItemBtn.style.display = 'inline-block';
                 cancelScanBtn.style.display = 'inline-block';
-                itemIdInput.value = '';
-                itemIdPrefixInput.value = '';
+                enableAutoSubmit();
                 itemIdPrefixInput.focus();
             }
       };
 
-      // FIXED: processScan to use prefixes and handle return modal
       async function processScan(triggeredInput) {
           const mode = scanMode.value;
-          // FIXED: Read from prefix inputs
-          const studentIdValue = studentIdPrefixInput.value.trim() + studentIdInput.value.trim();
-          const itemIdValue = itemIdPrefixInput.value.trim() + itemIdInput.value.trim();
+          const isStudentInput = triggeredInput === studentIdInput;
+          const isItemInput = triggeredInput === itemIdInput;
           
-          scanAnotherItemBtn.style.display = 'none';
-          cancelScanBtn.style.display = 'none';
+          // Consolidate prefix/suffix logic
+          const finalItemId = (itemIdPrefixInput.value || '') + (itemIdInput.value || '');
+          const finalStudentId = (studentIdPrefixInput.value || '') + (studentIdInput.value || '');
 
-          if (mode === 'Borrowing') {
-              if (triggeredInput === studentIdInput && studentIdValue !== '' && studentIdInput.value.trim() !== '') {
-                  currentBorrowingStudentId = studentIdValue;
-                  studentIdInput.readOnly = true;
-                  scanStatus.textContent = `Student ID ${currentBorrowingStudentId} captured. Now scan the item.`;
-                  scanStatus.className = 'status-box info';
-                  itemIdGroup.style.display = 'block';
-                  itemIdPrefixInput.focus();
+          if (mode === 'Borrowing' && isStudentInput && finalStudentId.trim() !== '') {
+              currentBorrowingStudentId = finalStudentId.trim();
+              studentIdInput.readOnly = true;
+              scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Now scan the item.`;
+              scanStatus.className = 'status-box info';
+              itemIdGroup.style.display = 'block';
+              itemIdPrefixInput.focus();
+              cancelScanBtn.style.display = 'inline-block';
+              return;
+          }
+
+          if (isItemInput && finalItemId.trim() !== '') {
+              const itemId = finalItemId.trim();
+              disableAutoSubmit();
+              itemIdInput.value = '';
+              itemIdPrefixInput.value = '';
+
+              const itemDetailsResult = await fetchAndDisplayItemDetails(itemId);
+              if (!itemDetailsResult.success) {
+                  scanStatus.textContent = `Error: ${itemDetailsResult.message}`;
+                  scanStatus.className = 'status-box error';
+                  scanAnotherItemBtn.style.display = 'inline-block';
                   cancelScanBtn.style.display = 'inline-block';
+                  enableAutoSubmit();
+                  itemIdPrefixInput.focus();
                   return;
               }
-              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '' && currentBorrowingStudentId) {
-                  const finalItemId = itemIdValue;
+
+              if (mode === 'Borrowing' && currentBorrowingStudentId) {
                   const studentID = currentBorrowingStudentId;
-                  await fetchAndDisplayItemDetails(finalItemId);
-                  try {
-                     const response = await fetch('/api/borrow-by-barcode', {
-                          method: 'POST',
-                          headers: {'Content-Type': 'application/json'},
-                          body: JSON.stringify({ itemId: finalItemId, studentID })
-                     });
-                     const result = await response.json();
-                     if (!response.ok) throw new Error(result.message || 'Failed to process borrowing.');
-                     scanStatus.textContent = result.message;
-                     scanStatus.className = 'status-box success';
-                     showToast(result.message, 'success');
-                     setTimeout(() => fetchAndDisplayItemDetails(finalItemId), 500);
-                  } catch(error) {
-                     scanStatus.textContent = error.message;
-                     scanStatus.className = 'status-box error';
-                     showToast(error.message, 'error');
-                  } finally {
-                     scanAnotherItemBtn.style.display = 'inline-block';
-                     cancelScanBtn.style.display = 'inline-block';
-                     itemIdInput.value = ''; // Clear for next scan
-                     itemIdPrefixInput.value = '';
-                     itemIdPrefixInput.focus();
+                  if (itemDetailsResult.status === 'Maintenance' || itemDetailsResult.status === 'Calibration' || itemDetailsResult.status === 'Damaged') {
+                      scanStatus.textContent = `Error: Item **${itemId}** is under ${itemDetailsResult.status} and cannot be borrowed.`;
+                      scanStatus.className = 'status-box error';
+                      showToast(`Error: Item ${itemId} under ${itemDetailsResult.status}.`, 'error');
+                  } else {
+                      try {
+                          const response = await fetch('/api/borrow-by-barcode', {
+                              method: 'POST',
+                              headers: {'Content-Type': 'application/json'},
+                              body: JSON.stringify({ itemId: itemId, studentID })
+                          });
+                          const result = await response.json();
+                          if (!response.ok) throw new Error(result.message || 'Failed to process borrowing.');
+                          scanStatus.textContent = result.message;
+                          scanStatus.className = 'status-box success';
+                          showToast(result.message, 'success');
+                          for (const type in inventoryTypes) fetchInventory(type);
+                      } catch(error) {
+                          scanStatus.textContent = error.message;
+                          scanStatus.className = 'status-box error';
+                          showToast(error.message, 'error');
+                      } finally {
+                          enableAutoSubmit();
+                      }
                   }
-              }
-          } else if (mode === 'Returning') {
-              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '') {
-                  const finalItemId = itemIdValue;
-                  const itemDetails = await fetchAndDisplayItemDetails(finalItemId);
-                  
-                  itemIdInput.value = ''; // Clear for next scan
-                  itemIdPrefixInput.value = '';
-                  itemIdPrefixInput.focus();
+                  scanAnotherItemBtn.style.display = 'inline-block';
                   cancelScanBtn.style.display = 'inline-block';
 
-                  if (itemDetails.success && itemDetails.data.currentLoan) {
-                      // FIXED: Open modal instead of blind return
-                      const borrowerName = itemDetails.data.currentLoan.studentName;
+              } else if (mode === 'Returning') {
+                  if (itemDetailsResult.itemData && itemDetailsResult.itemData.currentLoan) {
+                      const borrowerName = itemDetailsResult.itemData.currentLoan.studentName;
                       const modal = document.getElementById('returnConditionModal');
-                      document.getElementById('returnConditionItemId').value = finalItemId;
-                      document.getElementById('modalItemName').textContent = itemDetails.data.name;
-                      document.getElementById('modalBorrowerName').textContent = `${borrowerName} (${itemDetails.data.currentLoan.studentID})`;
+                      document.getElementById('returnConditionItemId').value = itemId;
+                      document.getElementById('modalItemName').textContent = itemDetailsResult.itemData.name;
+                      document.getElementById('modalBorrowerName').textContent = `${borrowerName} (${itemDetailsResult.itemData.currentLoan.studentID})`;
                       
                       document.getElementById('conditionSelect').value = 'Good';
                       document.getElementById('damageNotes').value = '';
@@ -1298,75 +1451,25 @@
                       document.getElementById('damageNotes').required = false;
 
                       modal.style.display = 'flex';
-                  } else if (itemDetails.success && !itemDetails.data.currentLoan) {
-                      scanStatus.textContent = `Error: No active loan found for item ID ${finalItemId}.`;
-                      scanStatus.className = 'status-box error';
-                      scanAnotherItemBtn.style.display = 'inline-block';
                   } else {
-                      scanStatus.textContent = itemDetails.message || `Error checking item ${finalItemId}.`;
+                      scanStatus.textContent = `Error: No active loan found for item ID ${itemId}. Cannot return.`;
                       scanStatus.className = 'status-box error';
-                      scanAnotherItemBtn.style.display = 'inline-block';
-                  }
-              }
-          } else if (mode === 'Equipment Mode' || mode === 'Check Status') {
-              // This logic is from admin_panel2.html
-              if (triggeredInput === itemIdInput && itemIdValue !== '' && itemIdInput.value.trim() !== '') {
-                  const finalItemId = itemIdValue;
-                  if (mode === 'Equipment Mode') {
-                      equipmentModeCapturedItemId = finalItemId;
-                      await fetchAndDisplayItemDetails(finalItemId);
-                      scanStatus.textContent = `Tracking Item: ${finalItemId}. Scan Student ID to borrow.`;
-                      scanStatus.className = 'status-box info';
-                      studentIdPrefixGroup.style.display = 'block';
-                      studentIdGroup.style.display = 'block';
-      
-                      
-                      studentIdInput.placeholder = 'Scan Student ID...';
-                      studentIdInput.readOnly = false;
-                      studentIdPrefixInput.focus();
-                      cancelScanBtn.style.display = 'inline-block';
-                  } else { // Check Status
-                      const itemDetails = await fetchAndDisplayItemDetails(finalItemId);
-                      if (itemDetails.success) {
-                          scanStatus.textContent = `Displaying status for ${finalItemId}. Status: ${itemDetails.status}`;
-                          scanStatus.className = 'status-box info';
-                      } else {
-                          scanStatus.textContent = itemDetails.message || `Item ${finalItemId} not found.`;
-                          scanStatus.className = 'status-box error';
-                      }
+                      showToast(`Error: No active loan found for ${itemId}.`, 'error');
                       scanAnotherItemBtn.style.display = 'inline-block';
                       cancelScanBtn.style.display = 'inline-block';
-                      itemIdInput.value = '';
-                      itemIdPrefixInput.value = '';
-                      itemIdPrefixInput.focus();
+                      enableAutoSubmit();
                   }
-              } else if (mode === 'Equipment Mode' && triggeredInput === studentIdInput && studentIdValue !== '' && studentIdInput.value.trim() !== '' && equipmentModeCapturedItemId) {
-                  // This is the second step of Equipment Mode: processing the borrow
-                  const finalItemId = equipmentModeCapturedItemId;
-                  const studentID = studentIdValue;
-                  
-                  try {
-                     const response = await fetch('/api/borrow-by-barcode', {
-                          method: 'POST',
-                          headers: {'Content-Type': 'application/json'},
-                          body: JSON.stringify({ itemId: finalItemId, studentID })
-                     });
-                     const result = await response.json();
-                     if (!response.ok) throw new Error(result.message || 'Failed to process borrowing.');
-                     
-                     scanStatus.textContent = result.message;
-                     scanStatus.className = 'status-box success';
-                     showToast(result.message, 'success');
-                     fetchAndDisplayItemDetails(finalItemId); // Update details after borrow
-                  } catch(error) {
-                     scanStatus.textContent = error.message;
-                     scanStatus.className = 'status-box error';
-                     showToast(error.message, 'error');
-                  } finally {
-                     // Reset for the next item scan
-                     setTimeout(resetScannerUI, 2000);
-                  }
+              } else if (mode === 'Status Check') {
+                  scanStatus.textContent = `Item **${itemId}** Status: **${itemDetailsResult.status}**`;
+                  scanStatus.className = `status-box info`;
+                  scanAnotherItemBtn.style.display = 'inline-block';
+                  cancelScanBtn.style.display = 'inline-block';
+              } else if (mode === 'Equipment') {
+                  renderEquipmentStatusChange(itemDetailsResult.itemData);
               }
+              
+              enableAutoSubmit();
+              if(mode !== 'Returning') itemIdPrefixInput.focus();
           }
       }
       
@@ -2305,7 +2408,7 @@
           }
           // Mark as read on the server
           fetch('/api/notifications/mark-read', { method: 'POST' });
-          notifications.forEach(n => n.read = true);
+          notifications.forEach(n => n.isRead = true);
           updateNotificationBadge();
       };
       
