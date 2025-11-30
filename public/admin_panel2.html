@@ -1279,7 +1279,7 @@ function updateMasterAndBulkActionUI() {
 
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
             if (typeof input === 'string' && input.startsWith('/')) {
