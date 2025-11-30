@@ -702,7 +702,7 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="password" name="password" placeholder="Password (for Admins)" />
                     <select name="role" required>
                         <option value="student">Student</option>
-                        <option value="admin">Admin</option>
+                        <option value="faculty">Faculty</option>
                     </select>
                     <button type="submit">Add User</button>
                 </form>
@@ -2932,6 +2932,8 @@ function updateMasterAndBulkActionUI() {
                     <select id="editUserRole">
                         <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="faculty" ${user.role === 'faculty' ? 'selected' : ''}>Faculty</option>
+
                     </select>
                     <label for="editUserPassword">New Password (optional)</label>
                     <input type="password" id="editUserPassword" placeholder="Leave blank to keep current password">
