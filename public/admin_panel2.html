@@ -772,7 +772,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="text" name="name" placeholder="Equipment Name" required />
                     <input type="hidden" name="category" value="Science" />
                     <input type="number" name="quantity" placeholder="Quantity" min="0" required />
-                    <input type="text" name="location" placeholder="Location" required />
+                    <select name="location" required>
+                        <option value="">Select Location</option>
+                        <option value="ROOM 143">ROOM 143</option>
+                    </select>
                     <button type="submit">Add Item</button>
                 </form>
             </section>
@@ -814,7 +817,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="text" name="name" placeholder="Equipment Name" required />
                     <input type="hidden" name="category" value="Sports" />
                     <input type="number" name="quantity" placeholder="Quantity" min="0" required />
-                    <input type="text" name="location" placeholder="Location" required />
+                    <select name="location" required>
+                        <option value="">Select Location</option>
+                        <option value="ROOM 212">ROOM 212</option>
+                    </select>
                     <button type="submit">Add Item</button>
                 </form>
             </section>
@@ -3151,13 +3157,22 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
     }, 0);
 
     document.getElementById('editModalTitle').innerText = `Edit ${type} Model: ${item.name}`;
+    
+    // Generate location dropdown based on category
+    let locationOptions = '';
+    if (item.category === 'Science') {
+        locationOptions = '<option value="ROOM 143" ' + (item.location === 'ROOM 143' ? 'selected' : '') + '>ROOM 143</option>';
+    } else if (item.category === 'Sports') {
+        locationOptions = '<option value="ROOM 212" ' + (item.location === 'ROOM 212' ? 'selected' : '') + '>ROOM 212</option>';
+    }
+    
     editForm.innerHTML = `
             <input type="hidden" id="editItemId" value="${item.itemId}">
             <input type="hidden" id="editItemType" value="${type}">
             <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
             <label for="editCategory">Category</label><input type="text" id="editCategory" value="${item.category}" readonly />
             <label for="editQuantity" style="display:none;">Total Quantity</label><input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
-            <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
+            <label for="editLocation">Location</label><select id="editLocation" required>${locationOptions}</select>
             <button type="submit">Save Changes</button>`;
     editForm.dataset.type = 'inventory';
     editForm.dataset.itemIds = itemIds.join(',');

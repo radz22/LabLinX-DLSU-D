@@ -1696,12 +1696,11 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="CL 1">CL 1</option>
+                <option value="CL 2">CL 2</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -1780,12 +1779,17 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="FL 1 STOCKROOM">FL 1 STOCKROOM</option>
+                <option value="FL2 STOCKROOM">FL2 STOCKROOM</option>
+                <option value="MMH">MMH</option>
+                <option value="F1 KITCHEN">F1 KITCHEN</option>
+                <option value="FL 2 KITCHEN">FL 2 KITCHEN</option>
+                <option value="ANIMO LOUNGE">ANIMO LOUNGE</option>
+                <option value="FL 1 KITCHEN">FL 1 KITCHEN</option>
+                <option value="LECTURE AREA">LECTURE AREA</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -1864,12 +1868,10 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="MUSIC ROOM">MUSIC ROOM</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -4161,6 +4163,44 @@
           document.getElementById(
             'editModalTitle'
           ).innerText = `Edit ${type} Model: ${item.name}`;
+
+          // Generate location dropdown based on category
+          let locationOptions = '';
+          if (item.category === 'Food Lab') {
+            const foodLocations = [
+              'FL 1 STOCKROOM',
+              'FL2 STOCKROOM',
+              'MMH',
+              'F1 KITCHEN',
+              'FL 2 KITCHEN',
+              'ANIMO LOUNGE',
+              'FL 1 KITCHEN',
+              'LECTURE AREA',
+            ];
+            locationOptions = foodLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+          } else if (item.category === 'Computer Lab') {
+            const compLocations = ['CL 1', 'CL 2'];
+            locationOptions = compLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+          } else if (item.category === 'Music Instruments') {
+            locationOptions = `<option value="MUSIC ROOM" ${
+              item.location === 'MUSIC ROOM' ? 'selected' : ''
+            }>MUSIC ROOM</option>`;
+          }
+
           editForm.innerHTML = `
             <input type="hidden" id="editItemId" value="${item.itemId}">
             <input type="hidden" id="editItemType" value="${type}">
@@ -4170,7 +4210,7 @@
             <input type="text" id="editCategory" value="${item.category}" readonly />
             <input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
             <label for="editLocation">Location</label>
-            <input type="text" id="editLocation" value="${item.location}" required />
+            <select id="editLocation" required>${locationOptions}</select>
             <button type="submit">Save Changes</button>
           `;
           editForm.dataset.type = 'inventory';

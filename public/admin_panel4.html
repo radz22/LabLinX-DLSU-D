@@ -1533,12 +1533,11 @@
               min="0"
               required
             />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location (e.g., Robotics Lab)"
-              required
-            />
+            <select name="location" required>
+              <option value="">Select Location</option>
+              <option value="ROOM 246">ROOM 246</option>
+              <option value="CL 1">CL 1</option>
+            </select>
             <button type="submit">Save Item</button>
           </form>
         </section>
@@ -3488,6 +3487,18 @@
             document.getElementById(
               'editModalTitle'
             ).innerText = `Edit ${type} Item`;
+
+            // Generate location dropdown for Robotics
+            const roboticsLocations = ['ROOM 246', 'CL 1'];
+            const locationOptions = roboticsLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+
             editForm.innerHTML = `
                         <input type="hidden" id="editItemId" value="${
                           item.itemId
@@ -3502,9 +3513,7 @@
                         <input type="hidden" id="editQuantity" value="${
                           item.originalQuantity || item.quantity
                         }" />
-                        <label for="editLocation">Location</label><input type="text" id="editLocation" value="${
-                          item.location
-                        }" required />
+                        <label for="editLocation">Location</label><select id="editLocation" required>${locationOptions}</select>
                         <button type="submit">Save Changes</button>`;
             editForm.dataset.type = 'inventory';
             editForm.onsubmit = handleUpdateItem; // Re-set onsubmit
