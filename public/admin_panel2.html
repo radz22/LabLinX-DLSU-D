@@ -1153,8 +1153,12 @@ window.deleteInventoryModelPermanently = async (itemId, groupName, type) => {
     // --- Helper Function for Sequential ID Generation (NEWLY ADDED) ---
     function findNextSequenceId(prefix, items) {
         let maxNum = 0;
+        // Normalize prefix to uppercase for consistent comparison
+        const normalizedPrefix = String(prefix).toUpperCase().trim();
+        // Escape special regex characters in prefix
+        const escapedPrefix = normalizedPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         // Regex to match the prefix followed by a hyphen and digits, case insensitive
-        const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+        const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
 
         items.forEach(item => {
             const match = item.itemId.match(prefixPattern);
@@ -2429,8 +2433,12 @@ function updateMasterAndBulkActionUI() {
         // --- NEW HELPER FUNCTION FOR ID GENERATION ---
         function findNextSequenceId(prefix, items) {
             let maxNum = 0;
+            // Normalize prefix to uppercase for consistent comparison
+            const normalizedPrefix = String(prefix).toUpperCase().trim();
+            // Escape special regex characters in prefix
+            const escapedPrefix = normalizedPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             // Regex to match the prefix followed by a hyphen and digits, case insensitive
-            const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+            const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
 
             items.forEach(item => {
                 const match = item.itemId.match(prefixPattern);
@@ -2467,6 +2475,18 @@ function updateMasterAndBulkActionUI() {
                 return;
             }
 
+            // CRITICAL: Refresh inventory store before calculating next sequence ID
+            // This ensures we have the latest data including any recently created items
+            try {
+                const refreshResponse = await fetch(config.api);
+                if (refreshResponse.ok) {
+                    config.store = await refreshResponse.json();
+                }
+            } catch (refreshError) {
+                console.warn('Failed to refresh inventory before adding item:', refreshError);
+                // Continue anyway - server will catch duplicates
+            }
+
             // 1. Determine the starting sequence number
             const nextSequenceNumber = findNextSequenceId(prefix, config.store);
             
@@ -2481,8 +2501,8 @@ function updateMasterAndBulkActionUI() {
                 // 2. Format the sequential number with leading zeros (e.g., 1 -> 01, 10 -> 10, 100 -> 100)
                 let sequence = String(currentNumber).padStart(maxDigits, '0');
                 
-                // 3. Construct the unique Item ID
-                const uniqueItemId = `${prefix}-${sequence}`;
+                // 3. Construct the unique Item ID (normalize to uppercase for consistency)
+                const uniqueItemId = `${prefix}-${sequence}`.toUpperCase().trim();
 
                 itemsToCreate.push({
                     itemId: uniqueItemId,
@@ -2497,23 +2517,39 @@ function updateMasterAndBulkActionUI() {
 
             try {
                 // Send the array of uniquely generated items to the server
-                const response = await fetch(config.api, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
+                const response = await fetch(config.api, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(itemsToCreate) // The server must be able to handle an array
                 });
                 
                 if (!response.ok) {
-                    // Assuming the server returns an object with a 'message' property on error
-                    throw new Error((await response.json()).message || `Failed to add ${quantity} items.`);
+                    const errorBody = await response.json().catch(() => ({}));
+                    const errorMessage = errorBody.message || `Failed to add ${quantity} items.`;
+                    
+                    // Check if it's a duplicate Item ID error (409 Conflict)
+                    if (response.status === 409) {
+                        showToast(`❌ ${errorMessage} Item ID already exists in this inventory table. Cannot create duplicate.`, 'error');
+                        // Refresh inventory to show current state
+                        fetchInventory(type);
+                        return; // Stop execution - do not reset form or refresh inventory again
+                    } else {
+                        throw new Error(errorMessage);
+                    }
                 }
                 
-                showToast(`Successfully added ${quantity} items (IDs: ${itemsToCreate[0].itemId} to ${itemsToCreate[itemsToCreate.length - 1].itemId})!`, 'success');
+                // Success - only reached if no duplicates found
+                showToast(`✅ Successfully added ${quantity} items (IDs: ${itemsToCreate[0].itemId} to ${itemsToCreate[itemsToCreate.length - 1].itemId})!`, 'success');
                 form.reset();
                 fetchInventory(type);
 
-            } catch (error) { 
-                showToast(`Error: ${error.message}`, 'error'); 
+            } catch (error) { 
+                // Network or other errors
+                if (error.message.includes('already exist') || error.message.includes('Duplicate')) {
+                    showToast(`❌ ${error.message} Item ID already exists. Cannot create duplicate.`, 'error');
+                } else {
+                    showToast(`❌ Error: ${error.message}`, 'error');
+                }
             }
         }
         // --- END OF MODIFIED handleAddItem FUNCTION ---

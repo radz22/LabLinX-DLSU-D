@@ -3820,22 +3820,90 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(itemsToCreate),
             });
-            if (!response.ok) {
-              const errorBody = await response.json().catch(() => ({}));
-              throw new Error(
-                errorBody.message || `Failed to add ${quantity} items.`
+
+            // Get response status FIRST before any parsing
+            const responseStatus = response.status;
+
+            // CRITICAL: Check for 409 (duplicate) BEFORE checking response.ok
+            // This ensures we catch duplicates even if response.ok is somehow true
+            if (responseStatus === 409) {
+              let errorMessage = `Failed to add ${quantity} items.`;
+
+              try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorMessage;
+              } catch (parseError) {
+                errorMessage =
+                  response.statusText ||
+                  'Item ID already exists in this inventory table.';
+              }
+
+              showToast(`❌ ${errorMessage} Cannot create duplicate.`, 'error');
+              console.error(
+                `[${type}] Duplicate Item ID detected - Status: ${responseStatus}`,
+                errorMessage
               );
+              return; // CRITICAL: Stop execution immediately - do not reset form or refresh inventory
             }
-            showToast(
-              `Successfully added ${quantity} items (IDs: ${
-                itemsToCreate[0].itemId
-              } - ${itemsToCreate[itemsToCreate.length - 1].itemId}).`,
-              'success'
-            );
-            form.reset();
-            fetchInventory(type);
+
+            // If not 409, check if response is OK
+            if (!response.ok) {
+              let errorMessage = `Failed to add ${quantity} items.`;
+
+              try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorMessage;
+              } catch (parseError) {
+                errorMessage = response.statusText || errorMessage;
+              }
+
+              throw new Error(errorMessage);
+            }
+
+            // Only reach here if response is OK (200-299) and NOT 409
+            // Parse response body for success case
+            const result = await response.json().catch(() => null);
+
+            // Double-check status is in success range
+            if (
+              responseStatus >= 200 &&
+              responseStatus < 300 &&
+              responseStatus !== 409
+            ) {
+              showToast(
+                `✅ Successfully added ${quantity} items (IDs: ${
+                  itemsToCreate[0].itemId
+                } - ${itemsToCreate[itemsToCreate.length - 1].itemId}).`,
+                'success'
+              );
+              form.reset();
+              fetchInventory(type);
+            } else {
+              // This should never happen, but safety check
+              throw new Error(`Unexpected response status: ${responseStatus}`);
+            }
           } catch (error) {
-            showToast(`Error: ${error.message}`, 'error');
+            // Network or other errors
+            const errorMsg = error.message || 'Unknown error occurred';
+
+            // Check for duplicate-related errors in message
+            if (
+              errorMsg.includes('already exist') ||
+              errorMsg.includes('Duplicate') ||
+              errorMsg.includes('409') ||
+              errorMsg.toLowerCase().includes('duplicate')
+            ) {
+              showToast(
+                `❌ ${errorMsg} Item ID already exists. Cannot create duplicate.`,
+                'error'
+              );
+            } else {
+              showToast(`❌ Error: ${errorMsg}`, 'error');
+            }
+            console.error(`[${type}] Error adding items:`, error, {
+              api: config.api,
+              itemIds: itemsToCreate.map((i) => i.itemId),
+            });
           }
         }
         async function handleUpdateItem(e) {

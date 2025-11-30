@@ -1827,7 +1827,14 @@
 
         function findNextSequenceId(prefix, items) {
           let maxNum = 0;
-          const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+          // Normalize prefix to uppercase for consistent comparison
+          const normalizedPrefix = String(prefix).toUpperCase().trim();
+          // Escape special regex characters in prefix
+          const escapedPrefix = normalizedPrefix.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            '\\$&'
+          );
+          const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
           items.forEach((item) => {
             const match = item.itemId.match(prefixPattern);
             if (match) {
@@ -3113,12 +3120,27 @@
           const location = form.querySelector('[name="location"]').value;
 
           if (!prefixInput) {
-            showToast('Item ID Prefix cannot be empty.');
+            showToast('Item ID Prefix cannot be empty.', 'error');
             return;
           }
           if (!Number.isFinite(quantityInput) || quantityInput <= 0) {
-            showToast('Quantity must be 1 or more.');
+            showToast('Quantity must be 1 or more.', 'error');
             return;
+          }
+
+          // CRITICAL: Refresh inventory store before calculating next sequence ID
+          // This ensures we have the latest data including any recently created items
+          try {
+            const refreshResponse = await fetch(config.api);
+            if (refreshResponse.ok) {
+              config.store = await refreshResponse.json();
+            }
+          } catch (refreshError) {
+            console.warn(
+              'Failed to refresh inventory before adding item:',
+              refreshError
+            );
+            // Continue anyway - server will catch duplicates
           }
 
           const nextSequenceNumber = findNextSequenceId(
@@ -3154,22 +3176,35 @@
             });
             if (!response.ok) {
               const errorBody = await response.json().catch(() => ({}));
-              throw new Error(
+              const errorMessage =
                 errorBody.message ||
-                  `Failed to add ${quantityInput} robotics item(s).`
-              );
+                `Failed to add ${quantityInput} robotics item(s).`;
+
+              // Check if it's a duplicate Item ID error (409 Conflict)
+              if (response.status === 409) {
+                showToast(
+                  `❌ ${errorMessage} Item ID already exists in this inventory table. Cannot create duplicate.`,
+                  'error'
+                );
+                // Refresh inventory to show current state
+                fetchInventory(type);
+                return; // Stop execution - do not reset form or refresh inventory again
+              } else {
+                throw new Error(errorMessage);
+              }
             }
             const firstId = itemsToCreate[0].itemId;
             const lastId = itemsToCreate[itemsToCreate.length - 1].itemId;
             showToast(
-              `Successfully added ${quantityInput} item${
+              `✅ Successfully added ${quantityInput} item${
                 quantityInput === 1 ? '' : 's'
-              } (IDs: ${firstId}${quantityInput > 1 ? ` – ${lastId}` : ''}).`
+              } (IDs: ${firstId}${quantityInput > 1 ? ` – ${lastId}` : ''}).`,
+              'success'
             );
             form.reset();
             fetchInventory(type);
           } catch (error) {
-            showToast(`Error: ${error.message}`);
+            showToast(`Error: ${error.message}`, 'error');
           }
         }
 
@@ -3667,10 +3702,22 @@
 
         // --- 9. UTILITIES ---
         // ... (showToast is correct) ...
-        window.showToast = (message) => {
+        window.showToast = (message, type = 'info') => {
           const container = document.getElementById('toast-container');
           const toast = document.createElement('div');
           toast.className = 'toast';
+
+          // Add type-specific styling
+          if (type === 'error') {
+            toast.style.backgroundColor = 'var(--danger)';
+          } else if (type === 'success') {
+            toast.style.backgroundColor = 'var(--success)';
+          } else if (type === 'warning') {
+            toast.style.backgroundColor = 'var(--warning)';
+          } else {
+            toast.style.backgroundColor = 'var(--primary-dark)';
+          }
+
           toast.textContent = message;
           container.appendChild(toast);
           setTimeout(() => {
