@@ -146,6 +146,12 @@ body.dark .inventory-card h2 { color: var(--accent-gold); border-bottom-color: v
 body.dark .search-bar input, body.dark .filter-select select, body.dark .filter-row button {
     background-color: #2a2a2e; border-color: var(--border-dark); color: var(--text-light);
 }
+body.dark .inventory-category-select {
+    background-color: var(--card-bg-dark); border-color: var(--border-dark); color: var(--text-light);
+}
+body.dark .inventory-category-select option {
+    background-color: var(--card-bg-dark); color: var(--text-light);
+}
 body.dark .filter-row button { background-color: #343a40; border-color: #495057; }
 body.dark .filter-row button:hover { background-color: #495057; }
 .search-bar input:focus, .filter-select select:focus {
@@ -968,6 +974,14 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                 <option value="registeredStudents">Registered Students Report</option>
                 <option value="accountability">User Accountability</option>
               </select>
+              <div id="inventoryCategoryGroup" style="display:none; margin-bottom:1rem;">
+                <label for="inventoryCategory">Select Inventory Category:</label>
+                <select id="inventoryCategory" class="inventory-category-select" style="padding:8px; border-radius:5px; border:1px solid var(--border-light); width: 250px; background-color: var(--card-bg-light); color: var(--text-dark);">
+                  <option value="All">All Categories (Science & Sports)</option>
+                  <option value="Science">Science Equipment</option>
+                  <option value="Sports">Sports Equipment</option>
+                </select>
+              </div>
               <div style="margin-bottom:1rem;">
                 <button id="dailyBtn" class="period-btn active">Daily</button>
                 <button id="weeklyBtn" class="period-btn">Weekly</button>
@@ -3425,7 +3439,21 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
         const generateReportBtn = document.getElementById('generateReportBtn');
         const reportResult = document.getElementById('reportResult');
         const printReportBtn = document.getElementById('printReportBtn');
+        const inventoryCategoryGroup = document.getElementById('inventoryCategoryGroup');
+        const inventoryCategorySelect = document.getElementById('inventoryCategory');
         let selectedPeriod = 'daily';
+        
+        // Show/hide inventory category dropdown based on report type
+        reportTypeSelect.addEventListener('change', () => {
+            const reportType = reportTypeSelect.value;
+            // Show category dropdown for reports that need inventory filtering
+            if (reportType === 'inventory' || reportType === 'requests' || reportType === 'usage' || reportType === 'accountability') {
+                inventoryCategoryGroup.style.display = 'block';
+            } else {
+                inventoryCategoryGroup.style.display = 'none';
+            }
+        });
+        
         const periodBtns = document.querySelectorAll('.period-btn');
         periodBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -3468,17 +3496,36 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                 const startDateStr = startDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
                 const endDateStr = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
+                // Get selected inventory category (default to "All" if not applicable)
+                const selectedCategory = inventoryCategorySelect ? inventoryCategorySelect.value : 'All';
+                const categoryLabel = selectedCategory === 'All' ? 'Science & Sports' : selectedCategory;
+                
                 let reportText = `<b>Report Type:</b> ${reportTypeSelect.options[reportTypeSelect.selectedIndex].text} (${selectedPeriod})<br>`;
-                reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br><br>`;
+                reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br>`;
+                if (selectedCategory !== 'All') {
+                    reportText += `<b>Category:</b> ${categoryLabel}<br>`;
+                }
+                reportText += `<br>`;
                             
                 // This data is specific to Admin 2 (Science & Sports)
                 const inventoryDataArrays = await Promise.all(
                     Object.values(inventoryTypes).map(type => fetch(type.api).then(res => res.json()))
                 );
-                const allInventory = [].concat(...inventoryDataArrays);
+                let allInventory = [].concat(...inventoryDataArrays);
+                
+                // Filter inventory by selected category
+                if (selectedCategory !== 'All') {
+                    allInventory = allInventory.filter(item => item.category === selectedCategory);
+                }
+                
                 const requestsResponse = await fetch('/api/admin2-requests'); 
                 if (!requestsResponse.ok) throw new Error('Failed to fetch requests');
-                const allRequests = await requestsResponse.json();
+                let allRequests = await requestsResponse.json();
+                
+                // Filter requests by selected category
+                if (selectedCategory !== 'All') {
+                    allRequests = allRequests.filter(req => req.category === selectedCategory);
+                }
                             
                 const filteredRequests = allRequests.filter(r => new Date(r.requestDate) >= startDate);
                 const filteredReturnedRequests = allRequests.filter(r => r.status === 'Returned' && new Date(r.requestDate) >= startDate);
@@ -3489,7 +3536,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     const inUseItems = totalItems - availableItems;
                     // --- MODIFIED: Include Damaged & Calibration ---
                     const maintenanceItems = allInventory.filter(i => i.status === 'Maintenance' || i.status === 'Damaged' || i.status === 'Calibration').length;
-                    reportText += `<b>Summary (Science & Sports):</b><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>`;
                     reportText += `Total Items: ${totalItems}<br>`;
                     reportText += `Available Items: ${availableItems}<br>`;
                     reportText += `Items In Use: ${inUseItems}<br>`;
@@ -3505,7 +3552,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     });
                     reportText += `</tbody></table>`;
                 } else if (selectedReportType === 'requests') {
-                    reportText += `<b>Summary (Science & Sports):</b><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>`;
                     reportText += `Pending: ${filteredRequests.filter(r => r.status === 'Pending').length}<br>`;
                     reportText += `Approved: ${filteredRequests.filter(r => r.status === 'Approved').length}<br>`;
                     reportText += `Rejected: ${filteredRequests.filter(r => r.status === 'Rejected').length}<br>`;
@@ -3522,7 +3569,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     approvedRequestsInPeriod.forEach(req => {
                         usageMap[req.itemName] = (usageMap[req.itemName] || 0) + req.quantity;
                     });
-                    reportText += `<b>Summary (Science & Sports):</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
                     reportText += `<b>Most Used Items:</b><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
                     reportText += `<thead><tr><th>Item Name</th><th>Quantity Borrowed</th></tr></thead><tbody>`;
@@ -3579,11 +3626,11 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     }, {});
 
                     const accountabilityData = await fetch('/api/reports/user-accountability').then(res => res.json());
-                    const adminCategories = ['Science', 'Sports'];
+                    const adminCategories = selectedCategory === 'All' ? ['Science', 'Sports'] : [selectedCategory];
                     const relevantStudentIds = new Set(allRequests.map(r => r.studentId.toString()));
                     const filteredAccountabilityData = accountabilityData.filter(acc => relevantStudentIds.has(acc.studentId.toString()));
 
-                    reportText += `<b>Summary (Science & Sports):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
                     reportText += `<h2>User Accountability Report Summary (Time-Filtered Returns)</h2>`;
                     reportText += `<p>Data reflects the quantity of items marked 'Returned' in the selected period, grouped by condition.</p><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
@@ -3635,8 +3682,8 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     }
                     reportText += `</tbody></table>`;
                                 
-                    reportText += `<br><h2>All-Time Pending Incidents Summary (Science & Sports)</h2>`;
-                    reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from your categories.</p><br>`;
+                    reportText += `<br><h2>All-Time Pending Incidents Summary (${categoryLabel})</h2>`;
+                    reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from ${selectedCategory === 'All' ? 'your categories' : 'the ' + selectedCategory + ' category'}.</p><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
                     reportText += `<thead><tr><th>Student Name</th><th>Pending Incidents</th></tr></thead><tbody>`;
                                 
