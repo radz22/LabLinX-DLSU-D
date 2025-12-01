@@ -1793,6 +1793,22 @@
       </div>
     </div>
 
+    <!-- View Request Details Modal -->
+    <div id="viewRequestDetailsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Request Details</h2>
+          <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+        </div>
+        <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <script>
@@ -2020,6 +2036,8 @@
             if (returnConditionModal && event.target == returnConditionModal) {
               returnConditionModal.style.display = 'none';
             }
+            if (event.target == document.getElementById('viewRequestDetailsModal'))
+              closeViewRequestDetailsModal();
           });
 
           document
@@ -2052,6 +2070,11 @@
               if (returnConditionModal)
                 returnConditionModal.style.display = 'none';
             };
+          }
+
+          const closeViewRequestDetailsModalBtn = document.getElementById('closeViewRequestDetailsModal');
+          if (closeViewRequestDetailsModalBtn) {
+            closeViewRequestDetailsModalBtn.onclick = () => closeViewRequestDetailsModal();
           }
 
           if (conditionSelect) {
@@ -3416,6 +3439,10 @@
               actions = `
                             <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                             <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+            } else if (req.status === 'Returned') {
+              // For Returned status, only show View Details button
+              actions = `
+                            <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
             } else {
               actions = `
                             <button class="btn btn-edit" onclick="openEditRequestModal('${req._id}')">Edit</button>
@@ -3510,6 +3537,71 @@
           } catch (error) {
             showToast(`Error: ${error.message}`);
           }
+        };
+
+        window.openViewRequestDetailsModal = (requestId) => {
+          const request = allRequestsData.find((r) => r._id === requestId);
+          if (!request) {
+            showToast('Request not found.', 'error');
+            return;
+          }
+
+          const modal = document.getElementById('viewRequestDetailsModal');
+          const content = document.getElementById('viewRequestDetailsContent');
+          
+          const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
+          const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
+          const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
+          const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+          const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+          content.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+              <div>
+                <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+              </div>
+              <div>
+                <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+              </div>
+              <div>
+                <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+              </div>
+              <div>
+                <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+              </div>
+              <div>
+                <strong>Category:</strong> ${request.category || 'N/A'}
+              </div>
+              <div>
+                <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+              </div>
+              <div>
+                <strong>Reason:</strong> ${request.reason || 'N/A'}
+              </div>
+              <div>
+                <strong>Start Date:</strong> ${startDate}
+              </div>
+              <div>
+                <strong>Due Date:</strong> ${dueDate}
+              </div>
+              <div>
+                <strong>Request Date:</strong> ${requestDate}
+              </div>
+              ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+              <div>
+                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+              </div>
+              ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
+              ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
+              ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+            </div>
+          `;
+
+          modal.style.display = 'flex';
+        };
+
+        window.closeViewRequestDetailsModal = () => {
+          document.getElementById('viewRequestDetailsModal').style.display = 'none';
         };
 
         // --- 8. WINDOW-SCOPED FUNCTIONS ---
