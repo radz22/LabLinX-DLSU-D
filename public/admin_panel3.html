@@ -600,14 +600,14 @@
       .status-Calibration {
         background-color: var(--calibration);
       } /* <-- ADDED FROM ADMIN 4 */
-      .actions-cell {
+      /* .actions-cell {
         display: flex;
         gap: 10px;
         padding: 15px;
         width: auto;
         flex-wrap: wrap;
         justify-content: flex-start;
-      }
+      } */
       .btn {
         padding: 6px 10px;
         border: none;
@@ -2053,9 +2053,23 @@
             <option value="usage">Usage Report</option>
             <option value="accountability">User Accountability</option>
           </select>
-          <div id="inventoryCategoryGroup" style="display:none; margin-bottom:1rem;">
+          <div
+            id="inventoryCategoryGroup"
+            style="display: none; margin-bottom: 1rem"
+          >
             <label for="inventoryCategory">Select Inventory Category:</label>
-            <select id="inventoryCategory" class="inventory-category-select" style="padding:8px; border-radius:5px; border:1px solid var(--border-light); width: 250px; background-color: var(--card-bg-light); color: var(--text-dark);">
+            <select
+              id="inventoryCategory"
+              class="inventory-category-select"
+              style="
+                padding: 8px;
+                border-radius: 5px;
+                border: 1px solid var(--border-light);
+                width: 250px;
+                background-color: var(--card-bg-light);
+                color: var(--text-dark);
+              "
+            >
               <option value="All">All Categories</option>
               <option value="Tables & Chairs">Tables & Chairs</option>
               <option value="Computer Lab">Computer Lab</option>
@@ -2187,13 +2201,21 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Request Details</h2>
-          <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+          <span class="close-button" id="closeViewRequestDetailsModal"
+            >&times;</span
+          >
         </div>
-        <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+        <div id="viewRequestDetailsContent" style="padding: 1rem 0">
           <!-- Content will be populated by JavaScript -->
         </div>
-        <div style="margin-top: 1.5rem; text-align: right;">
-          <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+        <div style="margin-top: 1.5rem; text-align: right">
+          <button
+            class="btn"
+            style="background-color: var(--primary-dark); color: white"
+            onclick="closeViewRequestDetailsModal()"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -2479,7 +2501,8 @@
             (document.getElementById('returnConditionModal').style.display =
               'none');
 
-          document.getElementById('closeViewRequestDetailsModal').onclick = () => closeViewRequestDetailsModal();
+          document.getElementById('closeViewRequestDetailsModal').onclick =
+            () => closeViewRequestDetailsModal();
 
           window.addEventListener('click', (event) => {
             if (event.target == editModal) editModal.style.display = 'none';
@@ -2488,7 +2511,9 @@
             if (event.target == document.getElementById('returnConditionModal'))
               document.getElementById('returnConditionModal').style.display =
                 'none';
-            if (event.target == document.getElementById('viewRequestDetailsModal'))
+            if (
+              event.target == document.getElementById('viewRequestDetailsModal')
+            )
               closeViewRequestDetailsModal();
           });
 
@@ -4245,11 +4270,19 @@
 
           const modal = document.getElementById('viewRequestDetailsModal');
           const content = document.getElementById('viewRequestDetailsContent');
-          
-          const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
-          const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
-          const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
-          const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+
+          const startDate = request.startDate
+            ? new Date(request.startDate).toLocaleDateString()
+            : 'N/A';
+          const dueDate = request.dueDate
+            ? new Date(request.dueDate).toLocaleDateString()
+            : 'N/A';
+          const requestDate = request.requestDate
+            ? new Date(request.requestDate).toLocaleDateString()
+            : 'N/A';
+          const returnDate = request.returnDate
+            ? new Date(request.returnDate).toLocaleDateString()
+            : 'N/A';
           const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
 
           content.innerHTML = `
@@ -4258,7 +4291,9 @@
                 <strong>Student Name:</strong> ${request.studentName || 'N/A'}
               </div>
               <div>
-                <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+                <strong>Student ID:</strong> ${
+                  request.studentId || request.studentID || 'N/A'
+                }
               </div>
               <div>
                 <strong>Item ID:</strong> ${request.itemId || 'N/A'}
@@ -4284,13 +4319,31 @@
               <div>
                 <strong>Request Date:</strong> ${requestDate}
               </div>
-              ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+              ${
+                request.returnDate
+                  ? `<div><strong>Return Date:</strong> ${returnDate}</div>`
+                  : ''
+              }
               <div>
-                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${
+            request.status
+          }</span>
               </div>
-              ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
-              ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
-              ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+              ${
+                request.returnCondition
+                  ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>`
+                  : ''
+              }
+              ${
+                request.damageNotes
+                  ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>`
+                  : ''
+              }
+              ${
+                request.adminNotes
+                  ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>`
+                  : ''
+              }
             </div>
           `;
 
@@ -4298,7 +4351,8 @@
         };
 
         window.closeViewRequestDetailsModal = () => {
-          document.getElementById('viewRequestDetailsModal').style.display = 'none';
+          document.getElementById('viewRequestDetailsModal').style.display =
+            'none';
         };
 
         // --- 8. WINDOW-SCOPED FUNCTIONS for inline on-click ---
@@ -4622,15 +4676,23 @@
         };
 
         // --- 10. Reports Feature (Copied from Admin 3, as it's already correct) ---
-        const inventoryCategoryGroup = document.getElementById('inventoryCategoryGroup');
-        const inventoryCategorySelect = document.getElementById('inventoryCategory');
-        
+        const inventoryCategoryGroup = document.getElementById(
+          'inventoryCategoryGroup'
+        );
+        const inventoryCategorySelect =
+          document.getElementById('inventoryCategory');
+
         reportTypeSelect.addEventListener('change', () => {
           const selectedType = reportTypeSelect.value;
           const needsPeriod = selectedType !== '';
-          
+
           // Show/hide inventory category dropdown based on report type
-          if (selectedType === 'inventory' || selectedType === 'requests' || selectedType === 'usage' || selectedType === 'accountability') {
+          if (
+            selectedType === 'inventory' ||
+            selectedType === 'requests' ||
+            selectedType === 'usage' ||
+            selectedType === 'accountability'
+          ) {
             inventoryCategoryGroup.style.display = 'block';
           } else {
             inventoryCategoryGroup.style.display = 'none';
@@ -4717,29 +4779,36 @@
             });
 
             // Get selected inventory category (default to "All" if not applicable)
-            const selectedCategory = inventoryCategorySelect ? inventoryCategorySelect.value : 'All';
-            const categoryLabel = selectedCategory === 'All' ? 'All Categories' : selectedCategory;
-            
+            const selectedCategory = inventoryCategorySelect
+              ? inventoryCategorySelect.value
+              : 'All';
+            const categoryLabel =
+              selectedCategory === 'All' ? 'All Categories' : selectedCategory;
+
             const inventoryDataArrays = await Promise.all(
               Object.values(inventoryTypes).map((type) =>
                 fetch(type.api).then((res) => res.json())
               )
             );
             let allInventory = [].concat(...inventoryDataArrays);
-            
+
             // Filter inventory by selected category
             if (selectedCategory !== 'All') {
-              allInventory = allInventory.filter(item => item.category === selectedCategory);
+              allInventory = allInventory.filter(
+                (item) => item.category === selectedCategory
+              );
             }
 
             const requestsResponse = await fetch('/api/admin3-requests');
             if (!requestsResponse.ok)
               throw new Error('Failed to fetch requests');
             let allRequests = await requestsResponse.json();
-            
+
             // Filter requests by selected category
             if (selectedCategory !== 'All') {
-              allRequests = allRequests.filter(req => req.category === selectedCategory);
+              allRequests = allRequests.filter(
+                (req) => req.category === selectedCategory
+              );
             }
 
             const filteredRequests = allRequests.filter(
@@ -4877,14 +4946,22 @@
               const accountabilityData = await fetch(
                 '/api/reports/user-accountability'
               ).then((res) => res.json());
-              
+
               // Filter accountability data by selected category
-              const adminCategories = selectedCategory === 'All' 
-                ? ['Tables & Chairs', 'Computer Lab', 'Food Lab', 'Music Instruments']
-                : [selectedCategory];
-              const relevantStudentIds = new Set(allRequests.map(r => r.studentId.toString()));
-              const filteredAccountabilityData = accountabilityData.filter(acc => 
-                relevantStudentIds.has(acc.studentId.toString())
+              const adminCategories =
+                selectedCategory === 'All'
+                  ? [
+                      'Tables & Chairs',
+                      'Computer Lab',
+                      'Food Lab',
+                      'Music Instruments',
+                    ]
+                  : [selectedCategory];
+              const relevantStudentIds = new Set(
+                allRequests.map((r) => r.studentId.toString())
+              );
+              const filteredAccountabilityData = accountabilityData.filter(
+                (acc) => relevantStudentIds.has(acc.studentId.toString())
               );
 
               reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce(
@@ -4966,7 +5043,11 @@
               reportText += `</tbody></table>`;
 
               reportText += `<br><h2>All-Time Pending Incidents Summary (${categoryLabel})</h2>`;
-              reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from ${selectedCategory === 'All' ? 'your categories' : 'the ' + selectedCategory + ' category'}, regardless of the selected period.</p><br>`;
+              reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from ${
+                selectedCategory === 'All'
+                  ? 'your categories'
+                  : 'the ' + selectedCategory + ' category'
+              }, regardless of the selected period.</p><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
               reportText += `<thead><tr><th>Student Name</th><th>Pending Incidents</th></tr></thead><tbody>`;
 
@@ -4974,7 +5055,9 @@
                 (s) => s.pendingIncidents > 0
               );
               if (pendingIncidents.length === 0) {
-                reportText += `<tr><td colspan="2" style="text-align:center;">No students have pending incidents${selectedCategory !== 'All' ? ' for ' + selectedCategory : ''}.</td></tr>`;
+                reportText += `<tr><td colspan="2" style="text-align:center;">No students have pending incidents${
+                  selectedCategory !== 'All' ? ' for ' + selectedCategory : ''
+                }.</td></tr>`;
               } else {
                 pendingIncidents.forEach((student) => {
                   reportText += `<tr><td>${student.studentName}</td><td style="color:var(--danger); font-weight:600;">${student.pendingIncidents}</td></tr>`;

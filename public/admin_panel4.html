@@ -588,14 +588,14 @@
       .status-Returned {
         background-color: #6c757d;
       }
-      .actions-cell {
+      /* .actions-cell {
         display: flex;
         gap: 10px;
         padding: 15px;
         width: auto;
         flex-wrap: wrap;
         justify-content: flex-start;
-      }
+      } */
       .btn {
         padding: 6px 10px;
         border: none;
@@ -1798,13 +1798,21 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Request Details</h2>
-          <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+          <span class="close-button" id="closeViewRequestDetailsModal"
+            >&times;</span
+          >
         </div>
-        <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+        <div id="viewRequestDetailsContent" style="padding: 1rem 0">
           <!-- Content will be populated by JavaScript -->
         </div>
-        <div style="margin-top: 1.5rem; text-align: right;">
-          <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+        <div style="margin-top: 1.5rem; text-align: right">
+          <button
+            class="btn"
+            style="background-color: var(--primary-dark); color: white"
+            onclick="closeViewRequestDetailsModal()"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -2036,7 +2044,9 @@
             if (returnConditionModal && event.target == returnConditionModal) {
               returnConditionModal.style.display = 'none';
             }
-            if (event.target == document.getElementById('viewRequestDetailsModal'))
+            if (
+              event.target == document.getElementById('viewRequestDetailsModal')
+            )
               closeViewRequestDetailsModal();
           });
 
@@ -2072,9 +2082,12 @@
             };
           }
 
-          const closeViewRequestDetailsModalBtn = document.getElementById('closeViewRequestDetailsModal');
+          const closeViewRequestDetailsModalBtn = document.getElementById(
+            'closeViewRequestDetailsModal'
+          );
           if (closeViewRequestDetailsModalBtn) {
-            closeViewRequestDetailsModalBtn.onclick = () => closeViewRequestDetailsModal();
+            closeViewRequestDetailsModalBtn.onclick = () =>
+              closeViewRequestDetailsModal();
           }
 
           if (conditionSelect) {
@@ -3543,11 +3556,19 @@
 
           const modal = document.getElementById('viewRequestDetailsModal');
           const content = document.getElementById('viewRequestDetailsContent');
-          
-          const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
-          const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
-          const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
-          const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+
+          const startDate = request.startDate
+            ? new Date(request.startDate).toLocaleDateString()
+            : 'N/A';
+          const dueDate = request.dueDate
+            ? new Date(request.dueDate).toLocaleDateString()
+            : 'N/A';
+          const requestDate = request.requestDate
+            ? new Date(request.requestDate).toLocaleDateString()
+            : 'N/A';
+          const returnDate = request.returnDate
+            ? new Date(request.returnDate).toLocaleDateString()
+            : 'N/A';
           const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
 
           content.innerHTML = `
@@ -3556,7 +3577,9 @@
                 <strong>Student Name:</strong> ${request.studentName || 'N/A'}
               </div>
               <div>
-                <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+                <strong>Student ID:</strong> ${
+                  request.studentId || request.studentID || 'N/A'
+                }
               </div>
               <div>
                 <strong>Item ID:</strong> ${request.itemId || 'N/A'}
@@ -3582,13 +3605,31 @@
               <div>
                 <strong>Request Date:</strong> ${requestDate}
               </div>
-              ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+              ${
+                request.returnDate
+                  ? `<div><strong>Return Date:</strong> ${returnDate}</div>`
+                  : ''
+              }
               <div>
-                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${
+            request.status
+          }</span>
               </div>
-              ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
-              ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
-              ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+              ${
+                request.returnCondition
+                  ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>`
+                  : ''
+              }
+              ${
+                request.damageNotes
+                  ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>`
+                  : ''
+              }
+              ${
+                request.adminNotes
+                  ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>`
+                  : ''
+              }
             </div>
           `;
 
@@ -3596,7 +3637,8 @@
         };
 
         window.closeViewRequestDetailsModal = () => {
-          document.getElementById('viewRequestDetailsModal').style.display = 'none';
+          document.getElementById('viewRequestDetailsModal').style.display =
+            'none';
         };
 
         // --- 8. WINDOW-SCOPED FUNCTIONS ---
