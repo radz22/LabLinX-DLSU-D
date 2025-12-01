@@ -664,6 +664,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             
             <section class="inventory-card">
                 <h2>Science Inventory (Admin 2)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin2ScienceStatusFilter">Filter by Status</label>
+                        <select id="superAdmin2ScienceStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin2ScienceInventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -671,6 +684,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Sports Inventory (Admin 2)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin2SportsStatusFilter">Filter by Status</label>
+                        <select id="superAdmin2SportsStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin2SportsInventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -678,6 +704,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Facility Inventory (Admin 3) </h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin3StatusFilter">Filter by Status</label>
+                        <select id="superAdmin3StatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin3Inventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -685,6 +724,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Robotics Inventory (Admin 4)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin4StatusFilter">Filter by Status</label>
+                        <select id="superAdmin4StatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin4Inventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -1355,7 +1407,12 @@ function updateMasterAndBulkActionUI() {
         let allRequestsData = [], allUsersData = [], allHistoryLogs = [], notifications = [];
         let isViewingTrash = false; 
         let isViewingUserArchive = false; 
-        let isViewingInventoryArchive = false; 
+        let isViewingInventoryArchive = false;
+        // Super Admin inventory data storage
+        let superAdmin2ScienceData = [];
+        let superAdmin2SportsData = [];
+        let superAdmin3InventoryData = [];
+        let superAdmin4InventoryData = []; 
         let inventoryPieChartInstance = null;
         let requestStatusBarChartInstance = null;
         selectedArchivedItems = [];
@@ -1600,8 +1657,58 @@ function updateMasterAndBulkActionUI() {
                     notesTextarea.required = false;
                 }
             });
+            
+            // --- ADDED: Super Admin Inventory Filter Listeners ---
+            const superAdmin2ScienceFilter = document.getElementById('superAdmin2ScienceStatusFilter');
+            const superAdmin2SportsFilter = document.getElementById('superAdmin2SportsStatusFilter');
+            const superAdmin3Filter = document.getElementById('superAdmin3StatusFilter');
+            const superAdmin4Filter = document.getElementById('superAdmin4StatusFilter');
+            
+            if (superAdmin2ScienceFilter) {
+                superAdmin2ScienceFilter.addEventListener('change', () => {
+                    const filterValue = superAdmin2ScienceFilter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin2ScienceData, 
+                        document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin2SportsFilter) {
+                superAdmin2SportsFilter.addEventListener('change', () => {
+                    const filterValue = superAdmin2SportsFilter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin2SportsData, 
+                        document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin3Filter) {
+                superAdmin3Filter.addEventListener('change', () => {
+                    const filterValue = superAdmin3Filter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin3InventoryData, 
+                        document.getElementById('tableAdmin3Inventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin4Filter) {
+                superAdmin4Filter.addEventListener('change', () => {
+                    const filterValue = superAdmin4Filter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin4InventoryData, 
+                        document.getElementById('tableAdmin4Inventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
         }
-                    
+                    
         // --- 3. PAGE NAVIGATION & CONTENT LOADING (MODIFIED) ---
         window.showPage = function(pageId) {
             if (!pageId) {
@@ -2816,10 +2923,22 @@ function updateMasterAndBulkActionUI() {
                 const admin3Inventories = [].concat(...admin3InventoriesJson);
                 const admin4Inventories = await admin4InvRes.json();
                             
-                renderSuperAdminInventoryTable(admin2Science, document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin2Sports, document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin3Inventories, document.getElementById('tableAdmin3Inventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin4Inventories, document.getElementById('tableAdmin4Inventory').querySelector('tbody'));
+                // Store data for filtering
+                superAdmin2ScienceData = admin2Science;
+                superAdmin2SportsData = admin2Sports;
+                superAdmin3InventoryData = admin3Inventories;
+                superAdmin4InventoryData = admin4Inventories;
+                            
+                // Render tables with current filter values
+                const scienceFilter = document.getElementById('superAdmin2ScienceStatusFilter')?.value || 'All';
+                const sportsFilter = document.getElementById('superAdmin2SportsStatusFilter')?.value || 'All';
+                const admin3Filter = document.getElementById('superAdmin3StatusFilter')?.value || 'All';
+                const admin4Filter = document.getElementById('superAdmin4StatusFilter')?.value || 'All';
+                            
+                renderSuperAdminInventoryTable(admin2Science, document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'), scienceFilter);
+                renderSuperAdminInventoryTable(admin2Sports, document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'), sportsFilter);
+                renderSuperAdminInventoryTable(admin3Inventories, document.getElementById('tableAdmin3Inventory').querySelector('tbody'), admin3Filter);
+                renderSuperAdminInventoryTable(admin4Inventories, document.getElementById('tableAdmin4Inventory').querySelector('tbody'), admin4Filter);
 
                 const allMonitoredRequests = [
                     ...(await admin2ReqRes.json()),
@@ -2833,17 +2952,42 @@ function updateMasterAndBulkActionUI() {
             }
         }
 
-        function renderSuperAdminInventoryTable(data, tableBody) {
+        function renderSuperAdminInventoryTable(data, tableBody, statusFilter = 'All') {
             tableBody.innerHTML = '';
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No inventory data.</td></tr>`;
                 return;
             }
-            data.forEach(item => {
+            
+            // Filter data by status
+            let filteredData = data;
+            if (statusFilter !== 'All') {
+                filteredData = data.filter(item => {
+                    const originalQty = item.originalQuantity || item.quantity || 0;
+                    const borrowedQty = originalQty - (item.quantity || 0);
+                    const displayStatus = (borrowedQty > 0 && item.status !== 'Maintenance' && item.status !== 'Damaged' && item.status !== 'Calibration') 
+                        ? 'In-Use' 
+                        : (item.status || 'Available');
+                    return displayStatus === statusFilter || (statusFilter === 'In-Use' && displayStatus === 'In-Use');
+                });
+            }
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No items found with status "${statusFilter}".</td></tr>`;
+                return;
+            }
+            
+            filteredData.forEach(item => {
+                const originalQty = item.originalQuantity || item.quantity || 0;
+                const borrowedQty = originalQty - (item.quantity || 0);
+                const displayStatus = (borrowedQty > 0 && item.status !== 'Maintenance' && item.status !== 'Damaged' && item.status !== 'Calibration') 
+                    ? 'In-Use' 
+                    : (item.status || 'Available');
+                const statusClass = displayStatus.replace(/[^a-zA-Z0-9]/g, '');
                 const row = tableBody.insertRow();
                 row.innerHTML = `
                     <td>${item.itemId}</td><td>${item.name}</td><td>${item.category}</td>
-                    <td>${item.originalQuantity || item.quantity}</td><td>${item.location}</td><td>${item.status}</td>`;
+                    <td>${item.originalQuantity || item.quantity}</td><td>${item.location}</td><td><span class="status-badge status-${statusClass}">${displayStatus}</span></td>`;
             });
         }
                     
