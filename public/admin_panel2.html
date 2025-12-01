@@ -625,19 +625,11 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                         </div>
                     </div>
                     <form id="scanForm">
-                        <div class="form-group" id="studentIdPrefixGroup">
-                            <label for="studentIdPrefixInput">Prefix/Suffix for Student ID</label>
-                            <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="">
-                        </div>
                         <div class="form-group" id="studentIdGroup">
                             <label for="studentIdInput">1. Scan Student ID</label>
                             <input type="text" id="studentIdInput" class="scan-input" placeholder="Scan Student ID to Borrow..." autocomplete="off">
                         </div>
                         <div id="itemIdGroup" style="display: none;">
-                            <div class="form-group" id="itemIdPrefixGroup">
-                                <label for="itemIdPrefixInput">Prefix/Suffix for Item</label>
-                                <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="">
-                            </div>
                             <div class="form-group">
                                <label for="itemIdInput">2. Scan Item Barcode</label>
                                <input type="text" id="itemIdInput" class="scan-input" placeholder="Scan Item to Borrow..." autocomplete="off">
@@ -1456,12 +1448,9 @@ function updateMasterAndBulkActionUI() {
         const trackingDetailsContainer = document.getElementById('trackingDetailsContainer');
                
         const autoSubmitCheck = document.getElementById('autoSubmitCheck');
-        const studentIdPrefixInput = document.getElementById('studentIdPrefixInput');
         const studentIdInput = document.getElementById('studentIdInput');
-        const itemIdPrefixInput = document.getElementById('itemIdPrefixInput');
         const itemIdInput = document.getElementById('itemIdInput');
-               
-        const studentIdPrefixGroup = document.getElementById('studentIdPrefixGroup');
+        
         const studentIdGroup = document.getElementById('studentIdGroup');
         const itemIdGroup = document.getElementById('itemIdGroup');
         let currentBorrowingStudentId = null;
@@ -1578,10 +1567,10 @@ function updateMasterAndBulkActionUI() {
                 const liveScanPage = document.getElementById('live-scan-content');
                 if (liveScanPage.classList.contains('active') && !event.target.closest('.live-scan-container form, .live-scan-container select, .scan-action-buttons')) {
                     if (itemIdGroup.style.display !== 'none') {
-                        itemIdPrefixInput.focus();
-                    } 
+                        itemIdInput.focus();
+                    } 
                     else if (studentIdGroup.style.display !== 'none') {
-                        studentIdPrefixInput.focus();
+                        studentIdInput.focus();
                     }
                 }
             });
@@ -1933,16 +1922,14 @@ function updateMasterAndBulkActionUI() {
 
         function resetScannerUI() {
             currentBorrowingStudentId = null;
-            scannedEquipmentId = null; 
+            scannedEquipmentId = null; 
             studentIdInput.value = '';
             itemIdInput.value = '';
-            studentIdPrefixInput.value = '';
-            itemIdPrefixInput.value = '';
             studentIdInput.readOnly = false;
-                        
+            
             scanStatus.textContent = 'Awaiting scan...';
             scanStatus.className = 'status-box';
-                        
+            
             scanAnotherItemBtn.style.display = 'none';
             cancelScanBtn.style.display = 'none';
             updateStatusBtn.style.display = 'none'; // --- ADDED ---
@@ -1950,26 +1937,23 @@ function updateMasterAndBulkActionUI() {
             const mode = scanMode.value;
 
             // Hide all groups by default
-            studentIdPrefixGroup.style.display = 'none';
             studentIdGroup.style.display = 'none';
             itemIdGroup.style.display = 'none';
 
             if (mode === 'Borrowing') {
-                studentIdPrefixGroup.style.display = 'block';
                 studentIdGroup.style.display = 'block';
                 itemIdGroup.style.display = 'none';
                 studentIdInput.placeholder = 'Scan student ID to BORROW...';
-                studentIdPrefixInput.focus();
-            } else if (mode === 'Returning' || mode === 'Status Check' || mode === 'Equipment') { 
-                studentIdPrefixGroup.style.display = 'none';
+                studentIdInput.focus();
+            } else if (mode === 'Returning' || mode === 'Status Check' || mode === 'Equipment') { 
                 studentIdGroup.style.display = 'none';
                 itemIdGroup.style.display = 'block';
-                if (mode === 'Returning') { itemIdInput.placeholder = 'Scan item to RETURN...'; } 
+                if (mode === 'Returning') { itemIdInput.placeholder = 'Scan item to RETURN...'; } 
                 else if (mode === 'Status Check') { itemIdInput.placeholder = 'Scan item for STATUS CHECK...'; }
                 else if (mode === 'Equipment') { itemIdInput.placeholder = 'Scan item to change status...'; }
-                itemIdPrefixInput.focus();
+                itemIdInput.focus();
             }
-                        
+            
             clearTrackingDetails();
         }
 
@@ -1977,23 +1961,21 @@ function updateMasterAndBulkActionUI() {
             const mode = scanMode.value;
             if (mode === 'Borrowing' && currentBorrowingStudentId) {
                 itemIdInput.value = '';
-                itemIdPrefixInput.value = '';
                 scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Scan next item.`;
                 scanStatus.className = 'status-box info';
                 scanAnotherItemBtn.style.display = 'none';
                 cancelScanBtn.style.display = 'inline-block';
-                itemIdPrefixInput.focus();
+                itemIdInput.focus();
             } else if (mode === 'Equipment' || mode === 'Returning' || mode === 'Status Check') {
                 scannedEquipmentId = null;
                 itemIdInput.value = '';
-                itemIdPrefixInput.value = '';
                 scanStatus.textContent = `Awaiting scan for next item...`;
                 scanStatus.className = 'status-box';
                 updateStatusBtn.style.display = 'none';
                 scanAnotherItemBtn.style.display = 'none';
                 cancelScanBtn.style.display = 'none';
                 clearTrackingDetails();
-                itemIdPrefixInput.focus();
+                itemIdInput.focus();
             } else {
                 resetScannerUI();
             }
@@ -2191,7 +2173,7 @@ function updateMasterAndBulkActionUI() {
                 scanAnotherItemBtn.style.display = 'inline-block';
                 cancelScanBtn.style.display = 'inline-block';
                 enableAutoSubmit();
-                itemIdPrefixInput.focus();
+                itemIdInput.focus();
             }
         };
         // --- *** END OF FIX *** ---
@@ -2202,26 +2184,25 @@ function updateMasterAndBulkActionUI() {
             const isStudentInput = triggeredInput === studentIdInput;
             const isItemInput = triggeredInput === itemIdInput;
                         
-            // Consolidate prefix/suffix logic
-            const finalItemId = (itemIdPrefixInput.value || '') + (itemIdInput.value || '');
-            const finalStudentId = (studentIdPrefixInput.value || '') + (studentIdInput.value || '');
+            // Use input values directly
+            const finalItemId = itemIdInput.value.trim();
+            const finalStudentId = studentIdInput.value.trim();
 
-            if (mode === 'Borrowing' && isStudentInput && finalStudentId.trim() !== '') {
-                currentBorrowingStudentId = finalStudentId.trim();
+            if (mode === 'Borrowing' && isStudentInput && finalStudentId !== '') {
+                currentBorrowingStudentId = finalStudentId;
                 studentIdInput.readOnly = true;
                 scanStatus.textContent = `Student ID **${currentBorrowingStudentId}** captured. Now scan the item.`;
                 scanStatus.className = 'status-box info';
                 itemIdGroup.style.display = 'block';
-                itemIdPrefixInput.focus();
+                itemIdInput.focus();
                 cancelScanBtn.style.display = 'inline-block';
                 return;
             }
 
-            if (isItemInput && finalItemId.trim() !== '') {
-                const itemId = finalItemId.trim();
-                disableAutoSubmit(); 
+            if (isItemInput && finalItemId !== '') {
+                const itemId = finalItemId;
+                disableAutoSubmit(); 
                 itemIdInput.value = '';
-                itemIdPrefixInput.value = '';
 
                 const itemDetailsResult = await fetchAndDisplayItemDetails(itemId);
                 if (!itemDetailsResult.success) {
@@ -2230,7 +2211,7 @@ function updateMasterAndBulkActionUI() {
                     scanAnotherItemBtn.style.display = 'inline-block';
                     cancelScanBtn.style.display = 'inline-block';
                     enableAutoSubmit();
-                    itemIdPrefixInput.focus();
+                    itemIdInput.focus();
                     return;
                 }
 
@@ -2283,18 +2264,25 @@ function updateMasterAndBulkActionUI() {
                         showToast(`Error: No active loan found for ${itemId}.`, 'error');
                         scanAnotherItemBtn.style.display = 'inline-block';
                         cancelScanBtn.style.display = 'inline-block';
+                        enableAutoSubmit();
+                        itemIdInput.focus();
                     }
                 } else if (mode === 'Status Check') {
                     scanStatus.textContent = `Item **${itemId}** Status: **${itemDetailsResult.status}**`;
                     scanStatus.className = `status-box info`;
                     scanAnotherItemBtn.style.display = 'inline-block';
                     cancelScanBtn.style.display = 'inline-block';
+                    enableAutoSubmit();
+                    itemIdInput.focus();
                 } else if (mode === 'Equipment') {
                     renderEquipmentStatusChange(itemDetailsResult.itemData);
+                    enableAutoSubmit();
                 }
-                            
-                enableAutoSubmit();
-                if(mode !== 'Returning') itemIdPrefixInput.focus();
+                
+                if(mode !== 'Returning' && mode !== 'Status Check' && mode !== 'Equipment') {
+                    enableAutoSubmit();
+                    itemIdInput.focus();
+                }
             }
         }
 
