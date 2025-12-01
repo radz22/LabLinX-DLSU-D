@@ -1668,8 +1668,6 @@
               },
               { total: 0, borrowed: 0, available: 0 }
             );
-            const headerStatus = group.items.length ? getDisplayStatus(group.items[0]) : 'Available';
-            const headerStatusClass = headerStatus.replace(/[^a-zA-Z0-9]/g, '');
 
             const itemIdsAttr = group.items.map((item) => item.itemId).join(',');
             const isGroupChecked = group.items.every((item) => selectedArchivedItems.includes(item.itemId));
@@ -1696,7 +1694,7 @@
               <td>${totals.borrowed}</td>
               <td>${totals.available}</td>
               <td>${group.location}</td>
-              <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+              <td></td>
               <td class="actions-cell">${headerActionsHtml}</td>
             `;
 

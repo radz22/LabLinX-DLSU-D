@@ -3295,31 +3295,6 @@
               const totalAvailable =
                 group.totalQuantity - group.totalBorrowed || 0;
 
-              let headerStatus = 'Available';
-              if (group.totalBorrowed > 0) {
-                headerStatus = 'In-Use';
-              } else if (
-                group.items.some((item) =>
-                  [
-                    'Maintenance',
-                    'Damaged',
-                    'Calibration',
-                    'Decommissioned',
-                  ].includes(item.status)
-                )
-              ) {
-                headerStatus =
-                  group.items[0].status === 'Decommissioned'
-                    ? 'Decommissioned'
-                    : group.items[0].status || 'Available';
-              } else if (isArchiveView) {
-                headerStatus = 'Decommissioned';
-              }
-
-              const headerStatusClass = headerStatus.replace(
-                /[^a-zA-Z0-9]/g,
-                ''
-              );
               const isGroupChecked = group.items.every((item) =>
                 selectedArchivedItems.includes(item.itemId)
               );
@@ -3383,7 +3358,7 @@
                 <td>${group.totalBorrowed}</td>
                 <td>${totalAvailable}</td>
                 <td>${group.location}</td>
-                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td></td>
                 <td class="actions-cell">${headerActionsHtml}</td>
               `;
 

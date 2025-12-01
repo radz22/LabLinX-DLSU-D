@@ -2426,17 +2426,6 @@ function renderTable(type) {
         const groupId = `group-${type}-${groupIndex}`;
         const totalAvailable = group.totalQuantity - group.totalBorrowed;
         const modelIdForActions = group.modelItemId;
-        
-        let headerStatus = 'Available';
-        if (group.totalBorrowed > 0) {
-            headerStatus = 'In-Use';
-        } else if (group.items.some(i => i.status === 'Maintenance' || i.status === 'Damaged' || i.status === 'Calibration' || i.status === 'Decommissioned')) {
-             headerStatus = group.totalBorrowed > 0 ? 'In-Use' : (group.items[0].status || 'Available');
-        } else if (isArchiveView) {
-            headerStatus = 'Decommissioned';
-        }
-        
-        const headerStatusClass = headerStatus.replace(/[^a-zA-Z0-9]/g, '');
 
         // Check if all items in this group are currently selected
         const isGroupChecked = group.items.every(item => selectedArchivedItems.includes(item.itemId));
@@ -2481,7 +2470,7 @@ function renderTable(type) {
             <td>${group.totalBorrowed}</td>
             <td>${totalAvailable}</td>
             <td>${group.location}</td>
-            <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+            <td></td>
             <td class="actions-cell">
                 ${headerActionsHtml}
             </td>

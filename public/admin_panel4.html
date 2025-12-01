@@ -2780,11 +2780,6 @@
               groupIndex += 1;
               const groupId = `group-${type}-${groupIndex}`;
               const totalAvailable = group.totalQuantity - group.totalBorrowed;
-              const headerStatus = group.displayStatus || 'Available';
-              const headerStatusClass = headerStatus.replace(
-                /[^a-zA-Z0-9]/g,
-                ''
-              );
               const modelId = group.modelItemId;
               const groupLabel = `${group.prefix} (${groupName})`;
 
@@ -2810,7 +2805,7 @@
                 <td>${group.totalBorrowed}</td>
                 <td>${totalAvailable}</td>
                 <td>${group.location}</td>
-                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td></td>
                 <td class="actions-cell">${headerActions}</td>
               `;
 
