@@ -1468,7 +1468,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. Global State and DOM Elements ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -1497,9 +1497,21 @@
 
         const logoutLink = document.querySelector('a[href="/logout"]');
         if (logoutLink) {
-          logoutLink.addEventListener('click', (event) => {
+          logoutLink.addEventListener('click', async (event) => {
             event.preventDefault();
-            window.location.href = `${apiBaseUrl}/logout`;
+            try {
+              // Call logout endpoint
+              const response = await fetch(`${apiBaseUrl}/logout`, {
+                method: 'POST',
+                credentials: 'include',
+              });
+              // Explicitly redirect to index page
+              window.location.replace('/');
+            } catch (error) {
+              // Fallback: redirect even if fetch fails
+              console.error('Logout error:', error);
+              window.location.replace('/');
+            }
           });
         }
 
