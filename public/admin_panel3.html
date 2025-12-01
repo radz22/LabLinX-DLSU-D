@@ -4848,7 +4848,7 @@
 
               reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
 
               inventoryForReport.forEach((item) => {
                 const originalQty = item.originalQuantity || item.quantity || 0;
@@ -4872,7 +4872,7 @@
                 filteredRequests.filter((r) => r.status === 'Returned').length
               }<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
               filteredRequests.forEach((req) => {
                 reportText += `<tr><td>${req.studentName}</td><td>${
                   req.itemName

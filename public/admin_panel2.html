@@ -3676,7 +3676,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     reportText += `Items In Use: ${inUseItems}<br>`;
                     reportText += `Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                    reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+                    reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
                     allInventory.forEach(item => {
                         const originalQty = item.originalQuantity || item.quantity || 0;
                         const availableQty = item.quantity || 0;
@@ -3692,7 +3692,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     reportText += `Rejected: ${filteredRequests.filter(r => r.status === 'Rejected').length}<br>`;
                     reportText += `Returned: ${filteredRequests.filter(r => r.status === 'Returned').length}<br><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                    reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead><tbody>`;
+                    reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date</th></tr></thead><tbody>`;
                     filteredRequests.forEach(req => {
                         reportText += `<tr><td>${req.studentName}</td><td>${req.itemName}</td><td>${req.quantity}</td><td>${req.status}</td><td>${new Date(req.requestDate).toLocaleDateString()}</td></tr>`;
                     });
