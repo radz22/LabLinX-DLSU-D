@@ -1458,6 +1458,132 @@ app.delete('/api/inventory/permanent/:itemId', isAdmin, async (req, res) => {
   }
 });
 
+// ================== HELPER FUNCTIONS FOR MULTI-QUANTITY REQUESTS ==================
+/**
+ * Extract baseId from itemId (e.g., "SCI" from "SCI-01")
+ */
+function extractBaseId(itemId) {
+  if (!itemId) return null;
+  const match = String(itemId).match(/^(.+?)(-\d+)?$/);
+  return match ? match[1] : itemId;
+}
+
+/**
+ * Check if an item is available for request (not pending/approved for any student)
+ */
+async function isItemAvailableForRequest(itemId, studentId) {
+  // Check if item is already pending/approved for this student
+  const existingRequestForStudent = await ItemRequest.findOne({
+    studentId,
+    itemId,
+    status: { $in: ['Pending', 'Approved'] },
+  });
+  if (existingRequestForStudent) {
+    return false;
+  }
+
+  // Check if item is already pending/approved for any other student
+  const existingRequestForOthers = await ItemRequest.findOne({
+    itemId,
+    status: { $in: ['Pending', 'Approved'] },
+  });
+  if (existingRequestForOthers) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Find available items in a group matching the baseId pattern
+ */
+async function findAvailableItemsInGroup(
+  baseId,
+  itemName,
+  category,
+  requestedQuantity,
+  studentId
+) {
+  const availableItems = [];
+
+  // Search through all inventory models
+  for (const Model of allInventoryModels) {
+    // Find all items matching the baseId pattern (e.g., SCI-01, SCI-02, etc.)
+    // We'll use a regex pattern to match items that start with the baseId
+    const allItemsInGroup = await Model.find({
+      itemId: {
+        $regex: new RegExp(
+          `^${baseId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-\\d+$`,
+          'i'
+        ),
+      },
+      name: itemName,
+      category: category,
+      status: 'Available',
+    }).sort({ itemId: 1 }); // Sort by itemId to ensure consistent ordering
+
+    // Filter items that are available (quantity > 0 and not pending/approved)
+    for (const item of allItemsInGroup) {
+      if (
+        item.quantity > 0 &&
+        (await isItemAvailableForRequest(item.itemId, studentId))
+      ) {
+        availableItems.push({
+          itemId: item.itemId,
+          itemName: item.name,
+          category: item.category,
+          Model: Model,
+        });
+        // Stop once we have enough items
+        if (availableItems.length >= requestedQuantity) {
+          break;
+        }
+      }
+    }
+
+    // If we have enough items, stop searching
+    if (availableItems.length >= requestedQuantity) {
+      break;
+    }
+  }
+
+  // If we didn't find enough items, also check items that match the exact baseId
+  // (for items that don't have a numeric suffix)
+  if (availableItems.length < requestedQuantity) {
+    for (const Model of allInventoryModels) {
+      const exactMatchItem = await Model.findOne({
+        itemId: baseId,
+        name: itemName,
+        category: category,
+        status: 'Available',
+      });
+
+      if (
+        exactMatchItem &&
+        exactMatchItem.quantity > 0 &&
+        (await isItemAvailableForRequest(exactMatchItem.itemId, studentId))
+      ) {
+        // Only add if not already in the list
+        if (
+          !availableItems.some((item) => item.itemId === exactMatchItem.itemId)
+        ) {
+          availableItems.push({
+            itemId: exactMatchItem.itemId,
+            itemName: exactMatchItem.name,
+            category: exactMatchItem.category,
+            Model: Model,
+          });
+          if (availableItems.length >= requestedQuantity) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return availableItems;
+}
+
 // ================== STUDENT-FACING API ROUTES ==================
 app.get('/api/current-user', isAuthenticated, async (req, res) => {
   try {
@@ -1501,7 +1627,6 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
     const { itemId, itemName, quantity, startDate, dueDate, reason, category } =
       req.body;
     const { id: studentId, fullName: studentName } = req.session.user;
-    let itemModel = null;
 
     const user = await User.findById(studentId);
     if (!user) return res.status(404).send('Student not found.');
@@ -1529,61 +1654,47 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
     }
     // --- END NEW ---
 
-    for (const Model of allInventoryModels) {
-      const itemToUpdate = await Model.findOne({ itemId });
-      if (itemToUpdate) {
-        itemModel = Model;
-        break;
-      }
-    }
-    if (!itemModel) return res.status(404).send('Item not found.');
+    // Extract baseId from the provided itemId (e.g., "SCI" from "SCI-01")
+    const baseId = extractBaseId(itemId);
 
-    const existingRequest = await ItemRequest.findOne({
-      studentId,
-      itemId,
-      status: { $in: ['Pending', 'Approved'] },
-    });
-    if (existingRequest)
-      return res
-        .status(409)
-        .send('You already have an active request for this item.');
-
-    const item = await itemModel.findOne({ itemId });
-    if (!item) {
-      return res.status(404).send('Item not found in inventory.');
-    }
-    if (item.quantity < quantity) {
-      return res
-        .status(409)
-        .send('Failed to request item. Item may be out of stock.');
-    }
-
-    if (typeof item.originalQuantity === 'undefined') {
-      item.originalQuantity = item.quantity;
-    }
-
-    // Do not decrease quantity here for 'Pending' requests. Only for direct borrowing.
-    // item.quantity -= quantity;
-    // if (item.quantity === 0 && item.status === 'Available') {
-    //     item.status = 'In-Use';
-    // }
-    // await item.save();
-    // await checkStockAndNotify(item);
-
-    const newRequest = new ItemRequest({
-      itemId,
+    // Find available items in the group
+    const availableItems = await findAvailableItemsInGroup(
+      baseId,
       itemName,
-      studentId,
-      studentName,
-      studentID: user.studentID,
-      quantity,
-      startDate,
-      dueDate,
-      reason,
       category,
-    });
-    await newRequest.save();
+      quantity,
+      studentId
+    );
 
+    // Check if we have enough available items
+    if (availableItems.length < quantity) {
+      return res.status(409).json({
+        message: `Insufficient items available. Only ${availableItems.length} out of ${quantity} requested items are available.`,
+      });
+    }
+
+    // Create separate ItemRequest records for each item (quantity = 1 for each)
+    const requestsToCreate = [];
+    for (let i = 0; i < quantity; i++) {
+      const item = availableItems[i];
+      requestsToCreate.push({
+        itemId: item.itemId,
+        itemName: item.itemName,
+        studentId,
+        studentName,
+        studentID: user.studentID,
+        quantity: 1, // Always 1 for individual item requests
+        startDate,
+        dueDate,
+        reason,
+        category: item.category,
+      });
+    }
+
+    // Insert all requests at once
+    const createdRequests = await ItemRequest.insertMany(requestsToCreate);
+
+    // Send notification to admin (only once, not per request)
     const adminUsername = categoryAdminMap[category];
     if (adminUsername) {
       const targetAdmin = await User.findOne({ username: adminUsername });
@@ -1600,7 +1711,10 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
     // 🔄 Broadcast refresh to all clients
     broadcastRefresh();
 
-    res.status(201).json(newRequest);
+    res.status(201).json({
+      message: `Successfully created ${createdRequests.length} request(s).`,
+      requests: createdRequests,
+    });
   } catch (e) {
     console.error('Request Error:', e);
     res.status(500).json({ message: 'Error creating request.' });
