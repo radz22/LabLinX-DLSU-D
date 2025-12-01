@@ -1051,6 +1051,10 @@
 
           const formData = new FormData(studentRegisterForm);
           const data = Object.fromEntries(formData.entries());
+          // Prepend '20' to student ID before saving
+          if (data.studentID) {
+            data.studentID = '20' + data.studentID;
+          }
           data.role = 'student'; // Explicitly set role
           data.gradeLevel = document.getElementById('gradeLevel').value;
 

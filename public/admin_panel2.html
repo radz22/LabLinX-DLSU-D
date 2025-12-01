@@ -194,8 +194,14 @@ body.dark table td .status-select option { background-color: var(--card-bg-dark)
     background-color: rgba(147, 112, 219, 0.22);
     color: #45307d;
 }
-.actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; }
-.btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
+.actions-cell { display: flex; gap: 8px; padding: 10px; width: auto; flex-wrap: wrap; align-items: center; justify-content: flex-start; min-width: 150px; max-width: 300px; }
+table th:last-child, table td:last-child { 
+    width: auto; 
+    min-width: 150px; 
+    max-width: 300px; 
+    overflow: visible; 
+}
+.btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0; }
 .btn:hover { opacity: 0.85; }
 .btn svg { width: 14px; height: 14px; }
 .btn-edit { background-color: var(--success); color: white; }
@@ -1100,6 +1106,22 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
         </div>
     </div>
 
+    <!-- View Request Details Modal -->
+    <div id="viewRequestDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Details</h2>
+                <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+            </div>
+            <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
      <script>
@@ -1509,16 +1531,18 @@ function updateMasterAndBulkActionUI() {
             editForm.addEventListener('submit', handleUpdateItem);
             editModal.querySelector('.close-button').onclick = () => editModal.style.display = 'none';
             statusEditModal.querySelector('.close-button').onclick = () => statusEditModal.style.display = 'none';
-                        
+                            
             document.getElementById('closeReturnConditionModal').onclick = () => document.getElementById('returnConditionModal').style.display = 'none';
+            document.getElementById('closeViewRequestDetailsModal').onclick = () => closeViewRequestDetailsModal();
                         
             // --- REMOVED: Incident Modal Listeners ---
 
 
-            window.addEventListener('click', (event) => { 
-                if (event.target == editModal) editModal.style.display = 'none'; 
+            window.addEventListener('click', (event) => { 
+                if (event.target == editModal) editModal.style.display = 'none'; 
                 if (event.target == statusEditModal) statusEditModal.style.display = 'none';
                 if (event.target == document.getElementById('returnConditionModal')) document.getElementById('returnConditionModal').style.display = 'none';
+                if (event.target == document.getElementById('viewRequestDetailsModal')) closeViewRequestDetailsModal();
                 // --- REMOVED: Incident modal window click ---
             });
                         
@@ -2688,12 +2712,16 @@ function updateMasterAndBulkActionUI() {
                 const row = requestsTableBody.insertRow();
                 const startDate = req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A';
                 const dueDate = req.dueDate ? new Date(req.dueDate).toLocaleDateString() : 'N/A';
-                            
+                            
                 let actions;
                 if (isViewingTrash) {
                     actions = `
                         <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                         <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+                } else if (req.status === 'Returned') {
+                    // For Returned status, only show View Details button
+                    actions = `
+                        <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
                 } else {
                     actions = `
                         <button class="btn btn-edit" onclick="openEditRequestModal('${req._id}')">Edit</button>
@@ -3244,6 +3272,71 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                 document.getElementById('statusSelect').value = request.status;
                 statusEditModal.style.display = 'flex';
             }
+        };
+
+        window.openViewRequestDetailsModal = (requestId) => {
+            const request = allRequestsData.find(r => r._id === requestId);
+            if (!request) {
+                showToast('Request not found.', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('viewRequestDetailsModal');
+            const content = document.getElementById('viewRequestDetailsContent');
+            
+            const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
+            const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
+            const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
+            const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+            const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+            content.innerHTML = `
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Category:</strong> ${request.category || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Reason:</strong> ${request.reason || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Start Date:</strong> ${startDate}
+                    </div>
+                    <div>
+                        <strong>Due Date:</strong> ${dueDate}
+                    </div>
+                    <div>
+                        <strong>Request Date:</strong> ${requestDate}
+                    </div>
+                    ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+                    <div>
+                        <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+                    </div>
+                    ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
+                    ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
+                    ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+        };
+
+        window.closeViewRequestDetailsModal = () => {
+            document.getElementById('viewRequestDetailsModal').style.display = 'none';
         };
 
         window.archiveInventoryItem = async (type, itemId) => {
