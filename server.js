@@ -80,6 +80,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: true, credentials: true }));
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
     secret: 'labsystem-secret-key-super-secure',
@@ -88,8 +90,6 @@ app.use(
     cookie: { secure: false }, // Set to true if using HTTPS
   })
 );
-app.use(express.static(path.join(__dirname, 'public')));
-
 // NEW: Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
@@ -589,7 +589,7 @@ const isSuperAdmin = (req, res, next) => {
 };
 
 app.get('/', (req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'login_register.html'))
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
 );
 app.get('/admin', isAuthenticated, (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'admin_panel.html'))
@@ -3248,6 +3248,48 @@ app.post('/api/notifications/mark-read', isAuthenticated, async (req, res) => {
     res.status(200).send('Notifications marked as read');
   } catch (error) {
     res.status(500).send('Error updating notifications');
+  }
+});
+
+app.delete('/api/notifications/:id', isAuthenticated, async (req, res) => {
+  try {
+    const notificationId = req.params.id;
+    console.log(
+      'DELETE /api/notifications/:id called with ID:',
+      notificationId
+    );
+
+    // Validate MongoDB ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+      return res
+        .status(400)
+        .json({ message: 'Invalid notification ID format' });
+    }
+
+    const notification = await Notification.findById(notificationId);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    // Check if the notification belongs to the current user
+    if (
+      notification.userId &&
+      notification.userId.toString() !== req.session.user.id.toString()
+    ) {
+      return res.status(403).json({
+        message: 'You do not have permission to delete this notification',
+      });
+    }
+
+    await Notification.findByIdAndDelete(notificationId);
+    broadcastRefresh();
+    res.status(200).json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res
+      .status(500)
+      .json({ message: error.message || 'Error deleting notification' });
   }
 });
 

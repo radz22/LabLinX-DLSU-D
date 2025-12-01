@@ -513,6 +513,7 @@
         border-radius: 8px;
         box-shadow: var(--shadow-sm);
         transition: var(--transition-fast);
+        position: relative;
       }
       body.dark #notification-list .notification-item {
         border-left-color: var(--accent-gold);
@@ -529,6 +530,27 @@
       }
       body.dark #notification-list .notification-title {
         color: var(--accent-gold);
+      }
+      #notification-list .notification-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      #notification-list .btn-delete-notification {
+        background-color: var(--status-rejected);
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: var(--transition-fast);
+      }
+      #notification-list .btn-delete-notification:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
       }
 
       #toast-container {
@@ -2162,9 +2184,58 @@
                             <div class="notification-time">${new Date(
                               n.createdAt
                             ).toLocaleString()}</div>
+                            <div class="notification-actions">
+                                <button class="btn-delete-notification" onclick="deleteNotification('${
+                                  n._id
+                                }')">Delete</button>
+                            </div>
                         `;
               notificationList.appendChild(item);
             });
+          }
+        };
+
+        window.deleteNotification = async (notificationId) => {
+          if (!confirm('Are you sure you want to delete this notification?'))
+            return;
+          try {
+            const response = await fetch(
+              `/api/notifications/${notificationId}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+
+            const text = await response.text();
+            let result;
+            try {
+              result = JSON.parse(text);
+            } catch (jsonError) {
+              throw new Error(text || 'Failed to parse server response');
+            }
+
+            if (!response.ok) {
+              throw new Error(
+                result.message || 'Failed to delete notification.'
+              );
+            }
+
+            showToast(
+              result.message || 'Notification deleted successfully.',
+              'success'
+            );
+            // Remove from local array
+            notifications = notifications.filter(
+              (n) => n._id !== notificationId
+            );
+            renderNotifications();
+            updateNotificationBadge();
+          } catch (error) {
+            showToast(`Error: ${error.message}`, 'error');
+            console.error('Delete notification error:', error);
           }
         };
 
