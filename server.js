@@ -1764,9 +1764,15 @@ app.get('/api/student-incident-reports', isAuthenticated, async (req, res) => {
     const reports = await StudentIncidentReport.find({
       studentId,
     })
-      .populate('incidentId')
-      .sort({ deadlineAt: 1 });
-    res.json(reports);
+      .populate({
+        path: 'incidentId',
+        options: { strictPopulate: false }, // Allow null references
+      })
+      .sort({ deadlineAt: 1 })
+      .lean(); // Convert to plain objects to avoid Mongoose issues
+
+    // Ensure we always return an array, even if empty
+    res.json(reports || []);
   } catch (error) {
     console.error('Error fetching student incident reports:', error);
     res.status(500).json({ message: 'Error fetching incident reports.' });

@@ -1104,6 +1104,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="text" id="resolve-item-name" readonly style="background-color: #f3f4f6;" />
                 </div>
                 <div class="form-group">
+                    <label>Student's Reason/Description:</label>
+                    <textarea id="resolve-student-reason" readonly rows="4" style="background-color: #f3f4f6; resize: none;"></textarea>
+                </div>
+                <div class="form-group">
                     <label for="resolve-replacement-item">New Replacement Item ID:</label>
                     <input type="text" id="resolve-replacement-item" required />
                 </div>
@@ -1135,6 +1139,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                 <div class="form-group">
                     <label>Item:</label>
                     <input type="text" id="reject-item-name" readonly style="background-color: #f3f4f6;" />
+                </div>
+                <div class="form-group">
+                    <label>Student's Reason/Description:</label>
+                    <textarea id="reject-student-reason" readonly rows="4" style="background-color: #f3f4f6; resize: none;"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="reject-notes">Rejection Reason:</label>
@@ -4299,15 +4307,17 @@ window.handleModelEditClick = (event, type, itemId) => {
                 const reportIdInput = document.getElementById('resolve-report-id');
                 const studentNameInput = document.getElementById('resolve-student-name');
                 const itemNameInput = document.getElementById('resolve-item-name');
+                const studentReasonInput = document.getElementById('resolve-student-reason');
                 const replacementItemInput = document.getElementById('resolve-replacement-item');
                 const notesInput = document.getElementById('resolve-notes');
                 const modal = document.getElementById('resolveIncidentModal');
 
-                if (!reportIdInput || !studentNameInput || !itemNameInput || !replacementItemInput || !notesInput || !modal) {
+                if (!reportIdInput || !studentNameInput || !itemNameInput || !studentReasonInput || !replacementItemInput || !notesInput || !modal) {
                     console.error('Modal elements not found:', {
                         reportIdInput: !!reportIdInput,
                         studentNameInput: !!studentNameInput,
                         itemNameInput: !!itemNameInput,
+                        studentReasonInput: !!studentReasonInput,
                         replacementItemInput: !!replacementItemInput,
                         notesInput: !!notesInput,
                         modal: !!modal
@@ -4321,6 +4331,16 @@ window.handleModelEditClick = (event, type, itemId) => {
                 itemNameInput.value = report.item?.name && report.item?.itemId 
                     ? `${report.item.name} (${report.item.itemId})`
                     : report.item?.name || report.item?.itemId || 'N/A';
+                
+                // Display student's reason/description
+                let studentReason = report.detailedDescription || 'No description provided.';
+                if (report.incidentType === 'Other' && report.otherDescription) {
+                    studentReason += `\n\nAdditional Details (Other): ${report.otherDescription}`;
+                }
+                if (report.incidentType) {
+                    studentReason = `Incident Type: ${report.incidentType}\n\n${studentReason}`;
+                }
+                studentReasonInput.value = studentReason;
                 
                 // Check if report is already resolved or rejected
                 const isResolved = report.status === 'Resolved';
@@ -4378,11 +4398,17 @@ window.handleModelEditClick = (event, type, itemId) => {
             const form = document.getElementById('resolveIncidentForm');
             const replacementItemInput = document.getElementById('resolve-replacement-item');
             const notesInput = document.getElementById('resolve-notes');
+            const studentReasonInput = document.getElementById('resolve-student-reason');
             const submitBtn = form?.querySelector('button[type="submit"]');
             const modalTitle = modal?.querySelector('.modal-header h2');
             
             // Reset form
             form?.reset();
+            
+            // Reset student reason field
+            if (studentReasonInput) {
+                studentReasonInput.value = '';
+            }
             
             // Reset read-only states
             if (replacementItemInput) {
@@ -4431,14 +4457,16 @@ window.handleModelEditClick = (event, type, itemId) => {
                 const reportIdInput = document.getElementById('reject-report-id');
                 const studentNameInput = document.getElementById('reject-student-name');
                 const itemNameInput = document.getElementById('reject-item-name');
+                const studentReasonInput = document.getElementById('reject-student-reason');
                 const notesInput = document.getElementById('reject-notes');
                 const modal = document.getElementById('rejectIncidentModal');
 
-                if (!reportIdInput || !studentNameInput || !itemNameInput || !notesInput || !modal) {
+                if (!reportIdInput || !studentNameInput || !itemNameInput || !studentReasonInput || !notesInput || !modal) {
                     console.error('Modal elements not found:', {
                         reportIdInput: !!reportIdInput,
                         studentNameInput: !!studentNameInput,
                         itemNameInput: !!itemNameInput,
+                        studentReasonInput: !!studentReasonInput,
                         notesInput: !!notesInput,
                         modal: !!modal
                     });
@@ -4451,6 +4479,16 @@ window.handleModelEditClick = (event, type, itemId) => {
                 itemNameInput.value = report.item?.name && report.item?.itemId 
                     ? `${report.item.name} (${report.item.itemId})`
                     : report.item?.name || report.item?.itemId || 'N/A';
+                
+                // Display student's reason/description
+                let studentReason = report.detailedDescription || 'No description provided.';
+                if (report.incidentType === 'Other' && report.otherDescription) {
+                    studentReason += `\n\nAdditional Details (Other): ${report.otherDescription}`;
+                }
+                if (report.incidentType) {
+                    studentReason = `Incident Type: ${report.incidentType}\n\n${studentReason}`;
+                }
+                studentReasonInput.value = studentReason;
                 notesInput.value = '';
 
                 modal.style.display = 'flex';
@@ -4462,8 +4500,19 @@ window.handleModelEditClick = (event, type, itemId) => {
         };
 
         const closeRejectModal = () => {
-            document.getElementById('rejectIncidentModal').style.display = 'none';
-            document.getElementById('rejectIncidentForm').reset();
+            const modal = document.getElementById('rejectIncidentModal');
+            const form = document.getElementById('rejectIncidentForm');
+            const studentReasonInput = document.getElementById('reject-student-reason');
+            
+            // Reset form
+            form?.reset();
+            
+            // Reset student reason field
+            if (studentReasonInput) {
+                studentReasonInput.value = '';
+            }
+            
+            modal.style.display = 'none';
         };
 
         window.openRejectModal = openRejectModal;
