@@ -1003,8 +1003,7 @@
           modeIcon.src =
             'https://api.iconify.design/mdi:white-balance-sunny.svg';
         }
-
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
 
         loginForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -1052,6 +1051,10 @@
 
           const formData = new FormData(studentRegisterForm);
           const data = Object.fromEntries(formData.entries());
+          // Prepend '20' to student ID before saving
+          if (data.studentID) {
+            data.studentID = '20' + data.studentID;
+          }
           data.role = 'student'; // Explicitly set role
           data.gradeLevel = document.getElementById('gradeLevel').value;
 

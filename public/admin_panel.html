@@ -175,7 +175,7 @@
     .status-Rejected { background-color: var(--danger); }
     .status-Returned { background-color: #6c757d; }
     .status-PastDue { background-color: #c82333; }
-    .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; flex-direction: column; justify-content: center; align-items: center;}
+    /* .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; flex-direction: column; justify-content: center; align-items: center;} */
     .btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
     .btn:hover { opacity: 0.85; }
     .btn svg { width: 14px; height: 14px; }
@@ -535,7 +535,7 @@
                 <form id="scanForm">
                     <div class="form-group" id="studentIdPrefixGroup">
                         <label for="studentIdPrefixInput">Prefix/Suffix for Student ID</label>
-                        <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                        <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="">
                     </div>
                     <div class="form-group" id="studentIdGroup">
                         <label for="studentIdInput">1. Scan Student ID</label>
@@ -544,7 +544,7 @@
                     <div id="itemIdGroup" style="display: none;">
                         <div class="form-group" id="itemIdPrefixGroup">
                             <label for="itemIdPrefixInput">Prefix/Suffix for Item</label>
-                            <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                            <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="">
                         </div>
                         <div class="form-group">
                            <label for="itemIdInput">2. Scan Item Barcode</label>
@@ -620,7 +620,7 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Category</th>
-                            <th>Total Qty</th>
+                            <th>Total Quantity</th>
                             <th>Borrowed</th>
                             <th>Available</th>
                             <th>Location</th>
@@ -792,12 +792,28 @@
     </div>
   </div>
 
+  <!-- View Request Details Modal -->
+  <div id="viewRequestDetailsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Request Details</h2>
+        <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+      </div>
+      <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // --- 1. CONFIGURATION & STATE ---
-      const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+      const apiBaseUrl = 'http://localhost:3000';
       const originalFetch = window.fetch.bind(window);
       window.fetch = (input, init) => {
         if (typeof input === 'string' && input.startsWith('/')) {
@@ -1010,6 +1026,9 @@
             statusEditModal.style.display = 'none';
         });
 
+        // FIXED: Added listener for View Request Details Modal
+        document.getElementById('closeViewRequestDetailsModal').onclick = () => closeViewRequestDetailsModal();
+
         // FIXED: Added listener for Return Condition Modal
         document.getElementById('returnConditionForm').addEventListener('submit', window.handleReturnConditionSubmission);
         document.getElementById('conditionSelect').addEventListener('change', (e) => {
@@ -1045,6 +1064,7 @@
 
         window.onclick = (event) => { 
             if (event.target == modal) modal.style.display = 'none';
+            if (event.target == document.getElementById('viewRequestDetailsModal')) closeViewRequestDetailsModal();
             if (event.target == statusEditModal) statusEditModal.style.display = 'none'; // Added
             if (event.target == document.getElementById('returnConditionModal')) document.getElementById('returnConditionModal').style.display = 'none'; // Added
         };
@@ -1648,8 +1668,6 @@
               },
               { total: 0, borrowed: 0, available: 0 }
             );
-            const headerStatus = group.items.length ? getDisplayStatus(group.items[0]) : 'Available';
-            const headerStatusClass = headerStatus.replace(/[^a-zA-Z0-9]/g, '');
 
             const itemIdsAttr = group.items.map((item) => item.itemId).join(',');
             const isGroupChecked = group.items.every((item) => selectedArchivedItems.includes(item.itemId));
@@ -1676,7 +1694,7 @@
               <td>${totals.borrowed}</td>
               <td>${totals.available}</td>
               <td>${group.location}</td>
-              <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+              <td></td>
               <td class="actions-cell">${headerActionsHtml}</td>
             `;
 
@@ -2286,6 +2304,10 @@
                   actions = `
                       <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                       <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+              } else if (req.status === 'Returned') {
+                  // For Returned status, only show View Details button
+                  actions = `
+                      <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
               } else {
                   actions = `
                       <button class="btn btn-edit" onclick="openEditModal('request', '${req._id}')">Edit</button>
@@ -2366,6 +2388,71 @@
             showToast(result.message);
             fetchDeletedRequests();
         } catch (error) { showToast(`Error: ${error.message}`); }
+      };
+
+      window.openViewRequestDetailsModal = (requestId) => {
+        const request = allRequestsData.find(r => r._id === requestId);
+        if (!request) {
+          showToast('Request not found.', 'error');
+          return;
+        }
+
+        const modal = document.getElementById('viewRequestDetailsModal');
+        const content = document.getElementById('viewRequestDetailsContent');
+        
+        const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
+        const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
+        const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
+        const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+        const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+        content.innerHTML = `
+          <div style="display: grid; gap: 1rem;">
+            <div>
+              <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+            </div>
+            <div>
+              <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+            </div>
+            <div>
+              <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+            </div>
+            <div>
+              <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+            </div>
+            <div>
+              <strong>Category:</strong> ${request.category || 'N/A'}
+            </div>
+            <div>
+              <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+            </div>
+            <div>
+              <strong>Reason:</strong> ${request.reason || 'N/A'}
+            </div>
+            <div>
+              <strong>Start Date:</strong> ${startDate}
+            </div>
+            <div>
+              <strong>Due Date:</strong> ${dueDate}
+            </div>
+            <div>
+              <strong>Request Date:</strong> ${requestDate}
+            </div>
+            ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+            <div>
+              <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+            </div>
+            ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
+            ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
+            ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+          </div>
+        `;
+
+        modal.style.display = 'flex';
+      };
+
+      window.closeViewRequestDetailsModal = () => {
+        document.getElementById('viewRequestDetailsModal').style.display = 'none';
       };
       
       // --- 9. NOTIFICATIONS (FIXED) ---
@@ -2503,7 +2590,7 @@
                 
                 reportText += `<b>Summary (Current Active Inventory):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged: ${maintenanceItems}<br><br>`;
                 reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+                reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
                 
                 allInventory.forEach(item => {
                     const originalQty = item.originalQuantity || item.quantity || 0;
@@ -2516,7 +2603,7 @@
             } else if (selectedReportType === 'requests') {
                 reportText += `<b>Summary (Requests Submitted in Period):</b><br>Total Requests in Period: ${filteredRequests.length}<br>Pending: ${filteredRequests.filter(r => r.status === 'Pending').length}<br>Approved: ${filteredRequests.filter(r => r.status === 'Approved').length}<br>Rejected: ${filteredRequests.filter(r => r.status === 'Rejected').length}<br>Returned: ${filteredRequests.filter(r => r.status === 'Returned').length}<br><br>`;
                 reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
+                reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
                 filteredRequests.forEach(req => {
                     reportText += `<tr><td>${req.studentName}</td><td>${req.itemName}</td><td>${req.quantity}</td><td>${req.status}</td><td>${new Date(req.requestDate).toLocaleDateString()}</td></tr>`;
                 });

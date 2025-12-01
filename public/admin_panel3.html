@@ -436,6 +436,15 @@
         border-color: var(--border-dark);
         color: var(--text-light);
       }
+      body.dark .inventory-category-select {
+        background-color: var(--card-bg-dark);
+        border-color: var(--border-dark);
+        color: var(--text-light);
+      }
+      body.dark .inventory-category-select option {
+        background-color: var(--card-bg-dark);
+        color: var(--text-light);
+      }
       body.dark .filter-row button {
         background-color: #343a40;
         border-color: #495057;
@@ -591,14 +600,14 @@
       .status-Calibration {
         background-color: var(--calibration);
       } /* <-- ADDED FROM ADMIN 4 */
-      .actions-cell {
+      /* .actions-cell {
         display: flex;
         gap: 10px;
         padding: 15px;
         width: auto;
         flex-wrap: wrap;
         justify-content: flex-start;
-      }
+      } */
       .btn {
         padding: 6px 10px;
         border: none;
@@ -1493,7 +1502,7 @@
                   type="text"
                   id="studentIdPrefixInput"
                   class="prefix-input"
-                  placeholder="Enter prefix/suffix"
+                  placeholder=""
                 />
               </div>
               <div class="form-group" id="studentIdGroup">
@@ -1513,7 +1522,7 @@
                     type="text"
                     id="itemIdPrefixInput"
                     class="prefix-input"
-                    placeholder="Enter prefix/suffix"
+                    placeholder=""
                   />
                 </div>
                 <div class="form-group">
@@ -1696,12 +1705,11 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="CL 1">CL 1</option>
+                <option value="CL 2">CL 2</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -1780,12 +1788,17 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="FL 1 STOCKROOM">FL 1 STOCKROOM</option>
+                <option value="FL2 STOCKROOM">FL2 STOCKROOM</option>
+                <option value="MMH">MMH</option>
+                <option value="F1 KITCHEN">F1 KITCHEN</option>
+                <option value="FL 2 KITCHEN">FL 2 KITCHEN</option>
+                <option value="ANIMO LOUNGE">ANIMO LOUNGE</option>
+                <option value="FL 1 KITCHEN">FL 1 KITCHEN</option>
+                <option value="LECTURE AREA">LECTURE AREA</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -1864,12 +1877,10 @@
                 min="1"
                 required
               />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                required
-              />
+              <select name="location" required>
+                <option value="">Select Location</option>
+                <option value="MUSIC ROOM">MUSIC ROOM</option>
+              </select>
               <button type="submit">Add Item</button>
             </form>
           </section>
@@ -2042,6 +2053,30 @@
             <option value="usage">Usage Report</option>
             <option value="accountability">User Accountability</option>
           </select>
+          <div
+            id="inventoryCategoryGroup"
+            style="display: none; margin-bottom: 1rem"
+          >
+            <label for="inventoryCategory">Select Inventory Category:</label>
+            <select
+              id="inventoryCategory"
+              class="inventory-category-select"
+              style="
+                padding: 8px;
+                border-radius: 5px;
+                border: 1px solid var(--border-light);
+                width: 250px;
+                background-color: var(--card-bg-light);
+                color: var(--text-dark);
+              "
+            >
+              <option value="All">All Categories</option>
+              <option value="Tables & Chairs">Tables & Chairs</option>
+              <option value="Computer Lab">Computer Lab</option>
+              <option value="Food Lab">Food Lab</option>
+              <option value="Music Instruments">Music Instruments</option>
+            </select>
+          </div>
           <div style="margin-bottom: 1rem">
             <button id="dailyBtn" class="period-btn active">Daily</button>
             <button id="weeklyBtn" class="period-btn">Weekly</button>
@@ -2161,11 +2196,35 @@
         </form>
       </div>
     </div>
+    <!-- View Request Details Modal -->
+    <div id="viewRequestDetailsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Request Details</h2>
+          <span class="close-button" id="closeViewRequestDetailsModal"
+            >&times;</span
+          >
+        </div>
+        <div id="viewRequestDetailsContent" style="padding: 1rem 0">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        <div style="margin-top: 1.5rem; text-align: right">
+          <button
+            class="btn"
+            style="background-color: var(--primary-dark); color: white"
+            onclick="closeViewRequestDetailsModal()"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast-container"></div>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -2442,6 +2501,9 @@
             (document.getElementById('returnConditionModal').style.display =
               'none');
 
+          document.getElementById('closeViewRequestDetailsModal').onclick =
+            () => closeViewRequestDetailsModal();
+
           window.addEventListener('click', (event) => {
             if (event.target == editModal) editModal.style.display = 'none';
             if (event.target == statusEditModal)
@@ -2449,6 +2511,10 @@
             if (event.target == document.getElementById('returnConditionModal'))
               document.getElementById('returnConditionModal').style.display =
                 'none';
+            if (
+              event.target == document.getElementById('viewRequestDetailsModal')
+            )
+              closeViewRequestDetailsModal();
           });
 
           document
@@ -3254,31 +3320,6 @@
               const totalAvailable =
                 group.totalQuantity - group.totalBorrowed || 0;
 
-              let headerStatus = 'Available';
-              if (group.totalBorrowed > 0) {
-                headerStatus = 'In-Use';
-              } else if (
-                group.items.some((item) =>
-                  [
-                    'Maintenance',
-                    'Damaged',
-                    'Calibration',
-                    'Decommissioned',
-                  ].includes(item.status)
-                )
-              ) {
-                headerStatus =
-                  group.items[0].status === 'Decommissioned'
-                    ? 'Decommissioned'
-                    : group.items[0].status || 'Available';
-              } else if (isArchiveView) {
-                headerStatus = 'Decommissioned';
-              }
-
-              const headerStatusClass = headerStatus.replace(
-                /[^a-zA-Z0-9]/g,
-                ''
-              );
               const isGroupChecked = group.items.every((item) =>
                 selectedArchivedItems.includes(item.itemId)
               );
@@ -3342,7 +3383,7 @@
                 <td>${group.totalBorrowed}</td>
                 <td>${totalAvailable}</td>
                 <td>${group.location}</td>
-                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td></td>
                 <td class="actions-cell">${headerActionsHtml}</td>
               `;
 
@@ -3818,22 +3859,90 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(itemsToCreate),
             });
-            if (!response.ok) {
-              const errorBody = await response.json().catch(() => ({}));
-              throw new Error(
-                errorBody.message || `Failed to add ${quantity} items.`
+
+            // Get response status FIRST before any parsing
+            const responseStatus = response.status;
+
+            // CRITICAL: Check for 409 (duplicate) BEFORE checking response.ok
+            // This ensures we catch duplicates even if response.ok is somehow true
+            if (responseStatus === 409) {
+              let errorMessage = `Failed to add ${quantity} items.`;
+
+              try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorMessage;
+              } catch (parseError) {
+                errorMessage =
+                  response.statusText ||
+                  'Item ID already exists in this inventory table.';
+              }
+
+              showToast(`❌ ${errorMessage} Cannot create duplicate.`, 'error');
+              console.error(
+                `[${type}] Duplicate Item ID detected - Status: ${responseStatus}`,
+                errorMessage
               );
+              return; // CRITICAL: Stop execution immediately - do not reset form or refresh inventory
             }
-            showToast(
-              `Successfully added ${quantity} items (IDs: ${
-                itemsToCreate[0].itemId
-              } - ${itemsToCreate[itemsToCreate.length - 1].itemId}).`,
-              'success'
-            );
-            form.reset();
-            fetchInventory(type);
+
+            // If not 409, check if response is OK
+            if (!response.ok) {
+              let errorMessage = `Failed to add ${quantity} items.`;
+
+              try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorMessage;
+              } catch (parseError) {
+                errorMessage = response.statusText || errorMessage;
+              }
+
+              throw new Error(errorMessage);
+            }
+
+            // Only reach here if response is OK (200-299) and NOT 409
+            // Parse response body for success case
+            const result = await response.json().catch(() => null);
+
+            // Double-check status is in success range
+            if (
+              responseStatus >= 200 &&
+              responseStatus < 300 &&
+              responseStatus !== 409
+            ) {
+              showToast(
+                `✅ Successfully added ${quantity} items (IDs: ${
+                  itemsToCreate[0].itemId
+                } - ${itemsToCreate[itemsToCreate.length - 1].itemId}).`,
+                'success'
+              );
+              form.reset();
+              fetchInventory(type);
+            } else {
+              // This should never happen, but safety check
+              throw new Error(`Unexpected response status: ${responseStatus}`);
+            }
           } catch (error) {
-            showToast(`Error: ${error.message}`, 'error');
+            // Network or other errors
+            const errorMsg = error.message || 'Unknown error occurred';
+
+            // Check for duplicate-related errors in message
+            if (
+              errorMsg.includes('already exist') ||
+              errorMsg.includes('Duplicate') ||
+              errorMsg.includes('409') ||
+              errorMsg.toLowerCase().includes('duplicate')
+            ) {
+              showToast(
+                `❌ ${errorMsg} Item ID already exists. Cannot create duplicate.`,
+                'error'
+              );
+            } else {
+              showToast(`❌ Error: ${errorMsg}`, 'error');
+            }
+            console.error(`[${type}] Error adding items:`, error, {
+              api: config.api,
+              itemIds: itemsToCreate.map((i) => i.itemId),
+            });
           }
         }
         async function handleUpdateItem(e) {
@@ -4054,6 +4163,10 @@
               actions = `
                         <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                         <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+            } else if (req.status === 'Returned') {
+              // For Returned status, only show View Details button
+              actions = `
+                        <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
             } else {
               actions = `
                         <button class="btn btn-edit" onclick="openEditRequestModal('${req._id}')">Edit</button>
@@ -4148,6 +4261,100 @@
           }
         };
 
+        window.openViewRequestDetailsModal = (requestId) => {
+          const request = allRequestsData.find((r) => r._id === requestId);
+          if (!request) {
+            showToast('Request not found.', 'error');
+            return;
+          }
+
+          const modal = document.getElementById('viewRequestDetailsModal');
+          const content = document.getElementById('viewRequestDetailsContent');
+
+          const startDate = request.startDate
+            ? new Date(request.startDate).toLocaleDateString()
+            : 'N/A';
+          const dueDate = request.dueDate
+            ? new Date(request.dueDate).toLocaleDateString()
+            : 'N/A';
+          const requestDate = request.requestDate
+            ? new Date(request.requestDate).toLocaleDateString()
+            : 'N/A';
+          const returnDate = request.returnDate
+            ? new Date(request.returnDate).toLocaleDateString()
+            : 'N/A';
+          const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+          content.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+              <div>
+                <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+              </div>
+              <div>
+                <strong>Student ID:</strong> ${
+                  request.studentId || request.studentID || 'N/A'
+                }
+              </div>
+              <div>
+                <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+              </div>
+              <div>
+                <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+              </div>
+              <div>
+                <strong>Category:</strong> ${request.category || 'N/A'}
+              </div>
+              <div>
+                <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+              </div>
+              <div>
+                <strong>Reason:</strong> ${request.reason || 'N/A'}
+              </div>
+              <div>
+                <strong>Start Date:</strong> ${startDate}
+              </div>
+              <div>
+                <strong>Due Date:</strong> ${dueDate}
+              </div>
+              <div>
+                <strong>Request Date:</strong> ${requestDate}
+              </div>
+              ${
+                request.returnDate
+                  ? `<div><strong>Return Date:</strong> ${returnDate}</div>`
+                  : ''
+              }
+              <div>
+                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${
+            request.status
+          }</span>
+              </div>
+              ${
+                request.returnCondition
+                  ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>`
+                  : ''
+              }
+              ${
+                request.damageNotes
+                  ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>`
+                  : ''
+              }
+              ${
+                request.adminNotes
+                  ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>`
+                  : ''
+              }
+            </div>
+          `;
+
+          modal.style.display = 'flex';
+        };
+
+        window.closeViewRequestDetailsModal = () => {
+          document.getElementById('viewRequestDetailsModal').style.display =
+            'none';
+        };
+
         // --- 8. WINDOW-SCOPED FUNCTIONS for inline on-click ---
         window.openEditModal = (type, itemId, itemIds = [itemId]) => {
           const config = inventoryTypes[type];
@@ -4161,6 +4368,44 @@
           document.getElementById(
             'editModalTitle'
           ).innerText = `Edit ${type} Model: ${item.name}`;
+
+          // Generate location dropdown based on category
+          let locationOptions = '';
+          if (item.category === 'Food Lab') {
+            const foodLocations = [
+              'FL 1 STOCKROOM',
+              'FL2 STOCKROOM',
+              'MMH',
+              'F1 KITCHEN',
+              'FL 2 KITCHEN',
+              'ANIMO LOUNGE',
+              'FL 1 KITCHEN',
+              'LECTURE AREA',
+            ];
+            locationOptions = foodLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+          } else if (item.category === 'Computer Lab') {
+            const compLocations = ['CL 1', 'CL 2'];
+            locationOptions = compLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+          } else if (item.category === 'Music Instruments') {
+            locationOptions = `<option value="MUSIC ROOM" ${
+              item.location === 'MUSIC ROOM' ? 'selected' : ''
+            }>MUSIC ROOM</option>`;
+          }
+
           editForm.innerHTML = `
             <input type="hidden" id="editItemId" value="${item.itemId}">
             <input type="hidden" id="editItemType" value="${type}">
@@ -4170,7 +4415,7 @@
             <input type="text" id="editCategory" value="${item.category}" readonly />
             <input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
             <label for="editLocation">Location</label>
-            <input type="text" id="editLocation" value="${item.location}" required />
+            <select id="editLocation" required>${locationOptions}</select>
             <button type="submit">Save Changes</button>
           `;
           editForm.dataset.type = 'inventory';
@@ -4431,9 +4676,27 @@
         };
 
         // --- 10. Reports Feature (Copied from Admin 3, as it's already correct) ---
+        const inventoryCategoryGroup = document.getElementById(
+          'inventoryCategoryGroup'
+        );
+        const inventoryCategorySelect =
+          document.getElementById('inventoryCategory');
+
         reportTypeSelect.addEventListener('change', () => {
           const selectedType = reportTypeSelect.value;
           const needsPeriod = selectedType !== '';
+
+          // Show/hide inventory category dropdown based on report type
+          if (
+            selectedType === 'inventory' ||
+            selectedType === 'requests' ||
+            selectedType === 'usage' ||
+            selectedType === 'accountability'
+          ) {
+            inventoryCategoryGroup.style.display = 'block';
+          } else {
+            inventoryCategoryGroup.style.display = 'none';
+          }
 
           periodBtns.forEach((btn) => {
             btn.disabled = !needsPeriod;
@@ -4515,17 +4778,38 @@
               year: 'numeric',
             });
 
+            // Get selected inventory category (default to "All" if not applicable)
+            const selectedCategory = inventoryCategorySelect
+              ? inventoryCategorySelect.value
+              : 'All';
+            const categoryLabel =
+              selectedCategory === 'All' ? 'All Categories' : selectedCategory;
+
             const inventoryDataArrays = await Promise.all(
               Object.values(inventoryTypes).map((type) =>
                 fetch(type.api).then((res) => res.json())
               )
             );
-            const allInventory = [].concat(...inventoryDataArrays);
+            let allInventory = [].concat(...inventoryDataArrays);
+
+            // Filter inventory by selected category
+            if (selectedCategory !== 'All') {
+              allInventory = allInventory.filter(
+                (item) => item.category === selectedCategory
+              );
+            }
 
             const requestsResponse = await fetch('/api/admin3-requests');
             if (!requestsResponse.ok)
               throw new Error('Failed to fetch requests');
-            const allRequests = await requestsResponse.json();
+            let allRequests = await requestsResponse.json();
+
+            // Filter requests by selected category
+            if (selectedCategory !== 'All') {
+              allRequests = allRequests.filter(
+                (req) => req.category === selectedCategory
+              );
+            }
 
             const filteredRequests = allRequests.filter(
               (r) => new Date(r.requestDate) >= startDate
@@ -4538,7 +4822,11 @@
             reportText += `<b>Report Type:</b> ${
               reportTypeSelect.options[reportTypeSelect.selectedIndex].text
             } (${selectedPeriod})<br>`;
-            reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br><br>`;
+            reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br>`;
+            if (selectedCategory !== 'All') {
+              reportText += `<b>Category:</b> ${categoryLabel}<br>`;
+            }
+            reportText += `<br>`;
 
             if (selectedReportType === 'inventory') {
               const inventoryForReport = allInventory;
@@ -4558,9 +4846,9 @@
                   i.status === 'Calibration'
               ).length; // <-- ADDED CALIBRATION
 
-              reportText += `<b>Summary (Current Active Inventory):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
+              reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
 
               inventoryForReport.forEach((item) => {
                 const originalQty = item.originalQuantity || item.quantity || 0;
@@ -4572,7 +4860,7 @@
               });
               reportText += `</tbody></table>`;
             } else if (selectedReportType === 'requests') {
-              reportText += `<b>Summary (Requests Submitted in Period):</b><br>Total Requests in Period: ${
+              reportText += `<b>Summary (${categoryLabel}):</b><br>Total Requests in Period: ${
                 filteredRequests.length
               }<br>Pending: ${
                 filteredRequests.filter((r) => r.status === 'Pending').length
@@ -4584,7 +4872,7 @@
                 filteredRequests.filter((r) => r.status === 'Returned').length
               }<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
               filteredRequests.forEach((req) => {
                 reportText += `<tr><td>${req.studentName}</td><td>${
                   req.itemName
@@ -4605,7 +4893,7 @@
                   (usageMap[req.itemName] || 0) + req.quantity;
               });
 
-              reportText += `<b>Summary:</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce(
+              reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce(
                 (sum, r) => sum + r.quantity,
                 0
               )}<br><br>`;
@@ -4659,7 +4947,24 @@
                 '/api/reports/user-accountability'
               ).then((res) => res.json());
 
-              reportText += `<b>Summary:</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce(
+              // Filter accountability data by selected category
+              const adminCategories =
+                selectedCategory === 'All'
+                  ? [
+                      'Tables & Chairs',
+                      'Computer Lab',
+                      'Food Lab',
+                      'Music Instruments',
+                    ]
+                  : [selectedCategory];
+              const relevantStudentIds = new Set(
+                allRequests.map((r) => r.studentId.toString())
+              );
+              const filteredAccountabilityData = accountabilityData.filter(
+                (acc) => relevantStudentIds.has(acc.studentId.toString())
+              );
+
+              reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce(
                 (sum, r) => sum + r.quantity,
                 0
               )}<br><br>`;
@@ -4737,16 +5042,22 @@
               }
               reportText += `</tbody></table>`;
 
-              reportText += `<br><h2>All-Time Pending Incidents Summary</h2>`;
-              reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents, regardless of the selected period.</p><br>`;
+              reportText += `<br><h2>All-Time Pending Incidents Summary (${categoryLabel})</h2>`;
+              reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from ${
+                selectedCategory === 'All'
+                  ? 'your categories'
+                  : 'the ' + selectedCategory + ' category'
+              }, regardless of the selected period.</p><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
               reportText += `<thead><tr><th>Student Name</th><th>Pending Incidents</th></tr></thead><tbody>`;
 
-              const pendingIncidents = accountabilityData.filter(
+              const pendingIncidents = filteredAccountabilityData.filter(
                 (s) => s.pendingIncidents > 0
               );
               if (pendingIncidents.length === 0) {
-                reportText += `<tr><td colspan="2" style="text-align:center;">No students have pending incidents.</td></tr>`;
+                reportText += `<tr><td colspan="2" style="text-align:center;">No students have pending incidents${
+                  selectedCategory !== 'All' ? ' for ' + selectedCategory : ''
+                }.</td></tr>`;
               } else {
                 pendingIncidents.forEach((student) => {
                   reportText += `<tr><td>${student.studentName}</td><td style="color:var(--danger); font-weight:600;">${student.pendingIncidents}</td></tr>`;

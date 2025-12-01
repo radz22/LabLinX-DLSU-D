@@ -428,15 +428,17 @@ const StudentIncidentReport = mongoose.model(
   studentIncidentReportSchema
 ); // --- NEW: Student Incident Report Model ---
 
+// All inventory models - each enforces Item ID uniqueness within its own collection
+// Validation is handled in createCrudRoutes POST handler (checks if ItemId exists before insertion)
 const allInventoryModels = [
-  Inventory,
-  ScienceInventory,
-  SportsInventory,
-  FurnitureInventory,
-  ComputerInventory,
-  FoodLabInventory,
-  RoboticsInventory,
-  MusicInventory,
+  Inventory, // admin_panel.html - Lab Equipment
+  ScienceInventory, // admin_panel2.html - Science Equipment
+  SportsInventory, // admin_panel2.html - Sports Equipment
+  FurnitureInventory, // admin_panel3.html - Tables & Chairs
+  ComputerInventory, // admin_panel3.html - Computer Lab
+  FoodLabInventory, // admin_panel3.html - Food Lab
+  RoboticsInventory, // admin_panel4.html - Robotics Equipment
+  MusicInventory, // admin_panel3.html - Music Instruments
 ];
 
 // ===== HELPER FUNCTIONS FOR NOTIFICATIONS AND LOGS =====
@@ -1033,22 +1035,178 @@ const createCrudRoutes = (apiPath, Model) => {
         ? incomingData
         : [incomingData];
 
+      // Validate that all items have required fields
+      for (const item of itemsToInsert) {
+        if (!item.itemId || !item.name || !item.category) {
+          return res.status(400).json({
+            message:
+              'Missing required fields: itemId, name, and category are required.',
+          });
+        }
+      }
+
+      // Step 1: Check for duplicates within the incoming array itself (case-insensitive)
       const itemIds = itemsToInsert.map((item) => item.itemId);
-      const existingItems = await Model.find({ itemId: { $in: itemIds } });
-      if (existingItems.length > 0) {
-        const duplicates = existingItems.map((item) => item.itemId).join(', ');
+      const normalizedForBatchCheck = itemIds.map((id) =>
+        String(id).trim().toUpperCase()
+      );
+      const duplicateInBatch = normalizedForBatchCheck.filter(
+        (id, index) => normalizedForBatchCheck.indexOf(id) !== index
+      );
+      if (duplicateInBatch.length > 0) {
+        const uniqueDuplicates = [...new Set(duplicateInBatch)];
         return res.status(409).json({
-          message: `The following Item IDs already exist: ${duplicates}`,
+          message: `Duplicate Item IDs found in the request: ${uniqueDuplicates.join(
+            ', '
+          )}. Each Item ID must be unique (case-insensitive).`,
         });
       }
 
+      // Step 2: Check for duplicates in the database (including archived/decommissioned items)
+      // This ensures uniqueness per inventory table - each Model (Inventory, ScienceInventory, etc.)
+      // independently enforces Item ID uniqueness within its own collection
+      // CRITICAL: If ItemId exists → do NOT create, return 409 error and STOP
+      // CRITICAL: If ItemId does NOT exist → proceed to insert
+      // This check is case-insensitive and checks ALL items regardless of status
+      // SAME APPROACH AS SCIENCE EQUIPMENT - Direct comparison method
+
+      // Check for existing items in this specific inventory table
+      // This query checks ALL items regardless of status (including archived/decommissioned)
+      // CRITICAL: Normalize itemIds to ensure consistent comparison (trim + uppercase for case-insensitive)
+      const normalizedItemIds = itemIds.map((id) =>
+        String(id).trim().toUpperCase()
+      );
+
+      // PRIMARY CHECK: Fetch ALL items and do case-insensitive comparison
+      // This is the most reliable method - EXACT SAME APPROACH AS SCIENCE EQUIPMENT
+      // Works for both ScienceInventory (/api/inventory2) and SportsInventory (/api/inventory3)
+      const allItems = await Model.find({}); // Get ALL items regardless of status
+      const existingItems = [];
+
+      // Check each normalized ItemID against all existing items (case-insensitive)
+      // This direct comparison is more reliable than regex queries
+      for (const normalizedId of normalizedItemIds) {
+        const match = allItems.find(
+          (item) => String(item.itemId).trim().toUpperCase() === normalizedId
+        );
+        if (match) {
+          existingItems.push(match);
+        }
+      }
+
+      // BACKUP CHECK: Also use regex queries as additional safety net
+      // This ensures we catch any edge cases that direct comparison might miss
+      if (existingItems.length === 0) {
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const existingItemsQueries = normalizedItemIds.map((normalizedId) => ({
+          itemId: { $regex: new RegExp(`^${escapeRegex(normalizedId)}$`, 'i') },
+        }));
+
+        const regexMatches = await Model.find({
+          $or: existingItemsQueries,
+        });
+
+        if (regexMatches.length > 0) {
+          existingItems.push(...regexMatches);
+        }
+      }
+
+      if (existingItems.length > 0) {
+        // ItemId already exists in this inventory table - prevent insertion
+        const duplicates = existingItems.map((item) => item.itemId);
+        const modelName = Model.modelName || 'Inventory';
+
+        // Find which requested ItemIDs match the duplicates (case-insensitive)
+        const matchingRequestedIds = normalizedItemIds.filter((requestedId) =>
+          duplicates.some((dup) => dup.toUpperCase() === requestedId)
+        );
+
+        // Log for debugging (especially for MusicInventory and SportsInventory)
+        console.log(`[${modelName}] Duplicate Item ID detected:`, {
+          duplicates,
+          requestedItemIds: normalizedItemIds,
+          matchingRequestedIds,
+          apiPath,
+          existingItemsCount: existingItems.length,
+          modelCollection: Model.collection.name, // Log collection name for SportsInventory
+        });
+
+        // Additional logging for SportsInventory specifically
+        if (modelName === 'SportsInventory' || apiPath === '/api/inventory3') {
+          console.error(`[SportsInventory] BLOCKING duplicate insertion:`, {
+            requestedItemIds: normalizedItemIds,
+            existingDuplicates: duplicates,
+            collection: 'sports_inventories',
+          });
+        }
+
+        const duplicateList =
+          duplicates.length <= 5
+            ? duplicates.join(', ')
+            : `${duplicates.slice(0, 5).join(', ')} and ${
+                duplicates.length - 5
+              } more`;
+
+        return res.status(409).json({
+          message: `The following Item ID(s) already exist in this inventory table: ${duplicateList}. Each Item ID must be unique within the same inventory table (case-insensitive).`,
+        });
+      }
+
+      // Normalize itemIds to uppercase for consistency (prevents case-sensitivity issues)
       const itemsWithOriginalQty = itemsToInsert.map((item) => ({
         ...item,
+        itemId: String(item.itemId).trim().toUpperCase(), // Normalize to uppercase
         originalQuantity: item.quantity,
         status: 'Available',
       }));
 
-      const savedItems = await Model.insertMany(itemsWithOriginalQty);
+      // CRITICAL: Final check before insertion - double-check for any items that might have been
+      // added between the initial check and now (race condition protection)
+      // Use normalized itemIds from itemsWithOriginalQty for consistency
+      // Same direct approach as initial check - fetch all items and compare
+      const finalNormalizedItemIds = itemsWithOriginalQty.map(
+        (item) => item.itemId
+      );
+
+      // Fetch all items again for final check (race condition protection)
+      const allItemsFinal = await Model.find({});
+      const finalCheck = [];
+
+      // Check each normalized ItemID against all existing items (case-insensitive)
+      for (const normalizedId of finalNormalizedItemIds) {
+        const match = allItemsFinal.find(
+          (item) => String(item.itemId).trim().toUpperCase() === normalizedId
+        );
+        if (match) {
+          finalCheck.push(match);
+        }
+      }
+
+      if (finalCheck.length > 0) {
+        const duplicates = finalCheck.map((item) => item.itemId);
+        const modelName = Model.modelName || 'Inventory';
+
+        const duplicateList =
+          duplicates.length <= 5
+            ? duplicates.join(', ')
+            : `${duplicates.slice(0, 5).join(', ')} and ${
+                duplicates.length - 5
+              } more`;
+
+        console.log(
+          `[${modelName}] Race condition detected - duplicates found in final check:`,
+          duplicates
+        );
+        return res.status(409).json({
+          message: `The following Item ID(s) already exist in this inventory table: ${duplicateList}. Each Item ID must be unique within the same inventory table (case-insensitive).`,
+        });
+      }
+
+      // Attempt insertion - MongoDB unique index will also prevent duplicates
+      // Using ordered: true (default) ensures all-or-nothing insertion
+      const savedItems = await Model.insertMany(itemsWithOriginalQty, {
+        ordered: true, // Stop on first error - prevents partial inserts
+      });
       const firstId = savedItems[0].itemId;
       const lastId = savedItems[savedItems.length - 1].itemId;
       const logDetail =
@@ -1069,12 +1227,44 @@ const createCrudRoutes = (apiPath, Model) => {
       res.status(201).json(savedItems);
     } catch (e) {
       console.error('Error adding item(s) to inventory:', e);
-      if (e.code === 11000) {
+
+      // Check for MongoDB duplicate key error (code 11000)
+      if (
+        e.code === 11000 ||
+        (e.writeErrors && e.writeErrors.some((err) => err.code === 11000))
+      ) {
+        const modelName = Model.modelName || 'Inventory';
+        const duplicateKey =
+          e.keyValue?.itemId ||
+          e.writeErrors?.[0]?.keyValue?.itemId ||
+          'unknown';
+        console.error(
+          `[${modelName}] MongoDB duplicate key error detected for Item ID:`,
+          duplicateKey
+        );
+
         return res.status(409).json({
-          message:
-            'Duplicate Item ID detected. Please ensure your prefix is correct and try again.',
+          message: `Duplicate Item ID detected: "${duplicateKey}". The Item ID already exists in this inventory table (case-insensitive). Please ensure your prefix is correct and try again.`,
         });
       }
+
+      // Check for writeErrors array (from insertMany with ordered: false)
+      if (e.writeErrors && Array.isArray(e.writeErrors)) {
+        const duplicateErrors = e.writeErrors.filter(
+          (err) => err.code === 11000
+        );
+        if (duplicateErrors.length > 0) {
+          const duplicateIds = duplicateErrors.map(
+            (err) => err.keyValue?.itemId || 'unknown'
+          );
+          return res.status(409).json({
+            message: `Duplicate Item ID(s) detected: ${duplicateIds.join(
+              ', '
+            )}. These Item IDs already exist in this inventory table (case-insensitive).`,
+          });
+        }
+      }
+
       res.status(500).json({
         message: 'Error adding item. Please check server console for details.',
       });

@@ -146,6 +146,12 @@ body.dark .inventory-card h2 { color: var(--accent-gold); border-bottom-color: v
 body.dark .search-bar input, body.dark .filter-select select, body.dark .filter-row button {
     background-color: #2a2a2e; border-color: var(--border-dark); color: var(--text-light);
 }
+body.dark .inventory-category-select {
+    background-color: var(--card-bg-dark); border-color: var(--border-dark); color: var(--text-light);
+}
+body.dark .inventory-category-select option {
+    background-color: var(--card-bg-dark); color: var(--text-light);
+}
 body.dark .filter-row button { background-color: #343a40; border-color: #495057; }
 body.dark .filter-row button:hover { background-color: #495057; }
 .search-bar input:focus, .filter-select select:focus {
@@ -194,8 +200,15 @@ body.dark table td .status-select option { background-color: var(--card-bg-dark)
     background-color: rgba(147, 112, 219, 0.22);
     color: #45307d;
 }
-.actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; }
-.btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; }
+    /* .actions-cell { display: flex; gap: 10px; padding: 15px; width: auto; flex-direction: column; justify-content: center; align-items: center;} */
+
+table th:last-child, table td:last-child { 
+    width: auto; 
+    min-width: 150px; 
+    max-width: 300px; 
+    overflow: visible; 
+}
+.btn { padding: 6px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0; }
 .btn:hover { opacity: 0.85; }
 .btn svg { width: 14px; height: 14px; }
 .btn-edit { background-color: var(--success); color: white; }
@@ -611,7 +624,7 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <form id="scanForm">
                         <div class="form-group" id="studentIdPrefixGroup">
                             <label for="studentIdPrefixInput">Prefix/Suffix for Student ID</label>
-                            <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                            <input type="text" id="studentIdPrefixInput" class="prefix-input" placeholder="">
                         </div>
                         <div class="form-group" id="studentIdGroup">
                             <label for="studentIdInput">1. Scan Student ID</label>
@@ -620,7 +633,7 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                         <div id="itemIdGroup" style="display: none;">
                             <div class="form-group" id="itemIdPrefixGroup">
                                 <label for="itemIdPrefixInput">Prefix/Suffix for Item</label>
-                                <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="Enter prefix/suffix">
+                                <input type="text" id="itemIdPrefixInput" class="prefix-input" placeholder="">
                             </div>
                             <div class="form-group">
                                <label for="itemIdInput">2. Scan Item Barcode</label>
@@ -652,6 +665,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             
             <section class="inventory-card">
                 <h2>Science Inventory (Admin 2)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin2ScienceStatusFilter">Filter by Status</label>
+                        <select id="superAdmin2ScienceStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin2ScienceInventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -659,6 +685,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Sports Inventory (Admin 2)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin2SportsStatusFilter">Filter by Status</label>
+                        <select id="superAdmin2SportsStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin2SportsInventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -666,6 +705,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Facility Inventory (Admin 3) </h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin3StatusFilter">Filter by Status</label>
+                        <select id="superAdmin3StatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin3Inventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -673,6 +725,19 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
             </section>
             <section class="inventory-card">
                 <h2>Robotics Inventory (Admin 4)</h2>
+                <div class="filter-row" style="margin-bottom: 1rem;">
+                    <div class="filter-select">
+                        <label for="superAdmin4StatusFilter">Filter by Status</label>
+                        <select id="superAdmin4StatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Available">Available</option>
+                            <option value="In-Use">In-Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Calibration">Calibration</option>
+                        </select>
+                    </div>
+                </div>
                 <table id="tableAdmin4Inventory">
                     <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Qty</th><th>Location</th><th>Status</th></tr></thead>
                     <tbody></tbody>
@@ -702,7 +767,7 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="password" name="password" placeholder="Password (for Admins)" />
                     <select name="role" required>
                         <option value="student">Student</option>
-                        <option value="admin">Admin</option>
+                        <option value="faculty">Faculty</option>
                     </select>
                     <button type="submit">Add User</button>
                 </form>
@@ -772,7 +837,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="text" name="name" placeholder="Equipment Name" required />
                     <input type="hidden" name="category" value="Science" />
                     <input type="number" name="quantity" placeholder="Quantity" min="0" required />
-                    <input type="text" name="location" placeholder="Location" required />
+                    <select name="location" required>
+                        <option value="">Select Location</option>
+                        <option value="ROOM 143">ROOM 143</option>
+                    </select>
                     <button type="submit">Add Item</button>
                 </form>
             </section>
@@ -814,7 +882,10 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                     <input type="text" name="name" placeholder="Equipment Name" required />
                     <input type="hidden" name="category" value="Sports" />
                     <input type="number" name="quantity" placeholder="Quantity" min="0" required />
-                    <input type="text" name="location" placeholder="Location" required />
+                    <select name="location" required>
+                        <option value="">Select Location</option>
+                        <option value="ROOM 212">ROOM 212</option>
+                    </select>
                     <button type="submit">Add Item</button>
                 </form>
             </section>
@@ -956,6 +1027,14 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
                 <option value="registeredStudents">Registered Students Report</option>
                 <option value="accountability">User Accountability</option>
               </select>
+              <div id="inventoryCategoryGroup" style="display:none; margin-bottom:1rem;">
+                <label for="inventoryCategory">Select Inventory Category:</label>
+                <select id="inventoryCategory" class="inventory-category-select" style="padding:8px; border-radius:5px; border:1px solid var(--border-light); width: 250px; background-color: var(--card-bg-light); color: var(--text-dark);">
+                  <option value="All">All Categories (Science & Sports)</option>
+                  <option value="Science">Science Equipment</option>
+                  <option value="Sports">Sports Equipment</option>
+                </select>
+              </div>
               <div style="margin-bottom:1rem;">
                 <button id="dailyBtn" class="period-btn active">Daily</button>
                 <button id="weeklyBtn" class="period-btn">Weekly</button>
@@ -1094,6 +1173,22 @@ body.dark #trackingHistoryLog div { border-bottom-color: var(--border-dark); }
         </div>
     </div>
 
+    <!-- View Request Details Modal -->
+    <div id="viewRequestDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Details</h2>
+                <span class="close-button" id="closeViewRequestDetailsModal">&times;</span>
+            </div>
+            <div id="viewRequestDetailsContent" style="padding: 1rem 0;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button class="btn" style="background-color: var(--primary-dark); color: white;" onclick="closeViewRequestDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
      <script>
@@ -1147,8 +1242,12 @@ window.deleteInventoryModelPermanently = async (itemId, groupName, type) => {
     // --- Helper Function for Sequential ID Generation (NEWLY ADDED) ---
     function findNextSequenceId(prefix, items) {
         let maxNum = 0;
+        // Normalize prefix to uppercase for consistent comparison
+        const normalizedPrefix = String(prefix).toUpperCase().trim();
+        // Escape special regex characters in prefix
+        const escapedPrefix = normalizedPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         // Regex to match the prefix followed by a hyphen and digits, case insensitive
-        const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+        const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
 
         items.forEach(item => {
             const match = item.itemId.match(prefixPattern);
@@ -1279,7 +1378,7 @@ function updateMasterAndBulkActionUI() {
 
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
             if (typeof input === 'string' && input.startsWith('/')) {
@@ -1309,7 +1408,12 @@ function updateMasterAndBulkActionUI() {
         let allRequestsData = [], allUsersData = [], allHistoryLogs = [], notifications = [];
         let isViewingTrash = false; 
         let isViewingUserArchive = false; 
-        let isViewingInventoryArchive = false; 
+        let isViewingInventoryArchive = false;
+        // Super Admin inventory data storage
+        let superAdmin2ScienceData = [];
+        let superAdmin2SportsData = [];
+        let superAdmin3InventoryData = [];
+        let superAdmin4InventoryData = []; 
         let inventoryPieChartInstance = null;
         let requestStatusBarChartInstance = null;
         selectedArchivedItems = [];
@@ -1499,16 +1603,18 @@ function updateMasterAndBulkActionUI() {
             editForm.addEventListener('submit', handleUpdateItem);
             editModal.querySelector('.close-button').onclick = () => editModal.style.display = 'none';
             statusEditModal.querySelector('.close-button').onclick = () => statusEditModal.style.display = 'none';
-                        
+                            
             document.getElementById('closeReturnConditionModal').onclick = () => document.getElementById('returnConditionModal').style.display = 'none';
+            document.getElementById('closeViewRequestDetailsModal').onclick = () => closeViewRequestDetailsModal();
                         
             // --- REMOVED: Incident Modal Listeners ---
 
 
-            window.addEventListener('click', (event) => { 
-                if (event.target == editModal) editModal.style.display = 'none'; 
+            window.addEventListener('click', (event) => { 
+                if (event.target == editModal) editModal.style.display = 'none'; 
                 if (event.target == statusEditModal) statusEditModal.style.display = 'none';
                 if (event.target == document.getElementById('returnConditionModal')) document.getElementById('returnConditionModal').style.display = 'none';
+                if (event.target == document.getElementById('viewRequestDetailsModal')) closeViewRequestDetailsModal();
                 // --- REMOVED: Incident modal window click ---
             });
                         
@@ -1552,8 +1658,58 @@ function updateMasterAndBulkActionUI() {
                     notesTextarea.required = false;
                 }
             });
+            
+            // --- ADDED: Super Admin Inventory Filter Listeners ---
+            const superAdmin2ScienceFilter = document.getElementById('superAdmin2ScienceStatusFilter');
+            const superAdmin2SportsFilter = document.getElementById('superAdmin2SportsStatusFilter');
+            const superAdmin3Filter = document.getElementById('superAdmin3StatusFilter');
+            const superAdmin4Filter = document.getElementById('superAdmin4StatusFilter');
+            
+            if (superAdmin2ScienceFilter) {
+                superAdmin2ScienceFilter.addEventListener('change', () => {
+                    const filterValue = superAdmin2ScienceFilter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin2ScienceData, 
+                        document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin2SportsFilter) {
+                superAdmin2SportsFilter.addEventListener('change', () => {
+                    const filterValue = superAdmin2SportsFilter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin2SportsData, 
+                        document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin3Filter) {
+                superAdmin3Filter.addEventListener('change', () => {
+                    const filterValue = superAdmin3Filter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin3InventoryData, 
+                        document.getElementById('tableAdmin3Inventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
+            
+            if (superAdmin4Filter) {
+                superAdmin4Filter.addEventListener('change', () => {
+                    const filterValue = superAdmin4Filter.value;
+                    renderSuperAdminInventoryTable(
+                        superAdmin4InventoryData, 
+                        document.getElementById('tableAdmin4Inventory').querySelector('tbody'),
+                        filterValue
+                    );
+                });
+            }
         }
-                    
+                    
         // --- 3. PAGE NAVIGATION & CONTENT LOADING (MODIFIED) ---
         window.showPage = function(pageId) {
             if (!pageId) {
@@ -2271,17 +2427,6 @@ function renderTable(type) {
         const groupId = `group-${type}-${groupIndex}`;
         const totalAvailable = group.totalQuantity - group.totalBorrowed;
         const modelIdForActions = group.modelItemId;
-        
-        let headerStatus = 'Available';
-        if (group.totalBorrowed > 0) {
-            headerStatus = 'In-Use';
-        } else if (group.items.some(i => i.status === 'Maintenance' || i.status === 'Damaged' || i.status === 'Calibration' || i.status === 'Decommissioned')) {
-             headerStatus = group.totalBorrowed > 0 ? 'In-Use' : (group.items[0].status || 'Available');
-        } else if (isArchiveView) {
-            headerStatus = 'Decommissioned';
-        }
-        
-        const headerStatusClass = headerStatus.replace(/[^a-zA-Z0-9]/g, '');
 
         // Check if all items in this group are currently selected
         const isGroupChecked = group.items.every(item => selectedArchivedItems.includes(item.itemId));
@@ -2326,7 +2471,7 @@ function renderTable(type) {
             <td>${group.totalBorrowed}</td>
             <td>${totalAvailable}</td>
             <td>${group.location}</td>
-            <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+            <td></td>
             <td class="actions-cell">
                 ${headerActionsHtml}
             </td>
@@ -2423,8 +2568,12 @@ function updateMasterAndBulkActionUI() {
         // --- NEW HELPER FUNCTION FOR ID GENERATION ---
         function findNextSequenceId(prefix, items) {
             let maxNum = 0;
+            // Normalize prefix to uppercase for consistent comparison
+            const normalizedPrefix = String(prefix).toUpperCase().trim();
+            // Escape special regex characters in prefix
+            const escapedPrefix = normalizedPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             // Regex to match the prefix followed by a hyphen and digits, case insensitive
-            const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+            const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
 
             items.forEach(item => {
                 const match = item.itemId.match(prefixPattern);
@@ -2461,6 +2610,18 @@ function updateMasterAndBulkActionUI() {
                 return;
             }
 
+            // CRITICAL: Refresh inventory store before calculating next sequence ID
+            // This ensures we have the latest data including any recently created items
+            try {
+                const refreshResponse = await fetch(config.api);
+                if (refreshResponse.ok) {
+                    config.store = await refreshResponse.json();
+                }
+            } catch (refreshError) {
+                console.warn('Failed to refresh inventory before adding item:', refreshError);
+                // Continue anyway - server will catch duplicates
+            }
+
             // 1. Determine the starting sequence number
             const nextSequenceNumber = findNextSequenceId(prefix, config.store);
             
@@ -2475,8 +2636,8 @@ function updateMasterAndBulkActionUI() {
                 // 2. Format the sequential number with leading zeros (e.g., 1 -> 01, 10 -> 10, 100 -> 100)
                 let sequence = String(currentNumber).padStart(maxDigits, '0');
                 
-                // 3. Construct the unique Item ID
-                const uniqueItemId = `${prefix}-${sequence}`;
+                // 3. Construct the unique Item ID (normalize to uppercase for consistency)
+                const uniqueItemId = `${prefix}-${sequence}`.toUpperCase().trim();
 
                 itemsToCreate.push({
                     itemId: uniqueItemId,
@@ -2491,23 +2652,39 @@ function updateMasterAndBulkActionUI() {
 
             try {
                 // Send the array of uniquely generated items to the server
-                const response = await fetch(config.api, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
+                const response = await fetch(config.api, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(itemsToCreate) // The server must be able to handle an array
                 });
                 
                 if (!response.ok) {
-                    // Assuming the server returns an object with a 'message' property on error
-                    throw new Error((await response.json()).message || `Failed to add ${quantity} items.`);
+                    const errorBody = await response.json().catch(() => ({}));
+                    const errorMessage = errorBody.message || `Failed to add ${quantity} items.`;
+                    
+                    // Check if it's a duplicate Item ID error (409 Conflict)
+                    if (response.status === 409) {
+                        showToast(`❌ ${errorMessage} Item ID already exists in this inventory table. Cannot create duplicate.`, 'error');
+                        // Refresh inventory to show current state
+                        fetchInventory(type);
+                        return; // Stop execution - do not reset form or refresh inventory again
+                    } else {
+                        throw new Error(errorMessage);
+                    }
                 }
                 
-                showToast(`Successfully added ${quantity} items (IDs: ${itemsToCreate[0].itemId} to ${itemsToCreate[itemsToCreate.length - 1].itemId})!`, 'success');
+                // Success - only reached if no duplicates found
+                showToast(`✅ Successfully added ${quantity} items (IDs: ${itemsToCreate[0].itemId} to ${itemsToCreate[itemsToCreate.length - 1].itemId})!`, 'success');
                 form.reset();
                 fetchInventory(type);
 
-            } catch (error) { 
-                showToast(`Error: ${error.message}`, 'error'); 
+            } catch (error) { 
+                // Network or other errors
+                if (error.message.includes('already exist') || error.message.includes('Duplicate')) {
+                    showToast(`❌ ${error.message} Item ID already exists. Cannot create duplicate.`, 'error');
+                } else {
+                    showToast(`❌ Error: ${error.message}`, 'error');
+                }
             }
         }
         // --- END OF MODIFIED handleAddItem FUNCTION ---
@@ -2646,12 +2823,16 @@ function updateMasterAndBulkActionUI() {
                 const row = requestsTableBody.insertRow();
                 const startDate = req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A';
                 const dueDate = req.dueDate ? new Date(req.dueDate).toLocaleDateString() : 'N/A';
-                            
+                            
                 let actions;
                 if (isViewingTrash) {
                     actions = `
                         <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                         <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+                } else if (req.status === 'Returned') {
+                    // For Returned status, only show View Details button
+                    actions = `
+                        <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
                 } else {
                     actions = `
                         <button class="btn btn-edit" onclick="openEditRequestModal('${req._id}')">Edit</button>
@@ -2732,10 +2913,22 @@ function updateMasterAndBulkActionUI() {
                 const admin3Inventories = [].concat(...admin3InventoriesJson);
                 const admin4Inventories = await admin4InvRes.json();
                             
-                renderSuperAdminInventoryTable(admin2Science, document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin2Sports, document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin3Inventories, document.getElementById('tableAdmin3Inventory').querySelector('tbody'));
-                renderSuperAdminInventoryTable(admin4Inventories, document.getElementById('tableAdmin4Inventory').querySelector('tbody'));
+                // Store data for filtering
+                superAdmin2ScienceData = admin2Science;
+                superAdmin2SportsData = admin2Sports;
+                superAdmin3InventoryData = admin3Inventories;
+                superAdmin4InventoryData = admin4Inventories;
+                            
+                // Render tables with current filter values
+                const scienceFilter = document.getElementById('superAdmin2ScienceStatusFilter')?.value || 'All';
+                const sportsFilter = document.getElementById('superAdmin2SportsStatusFilter')?.value || 'All';
+                const admin3Filter = document.getElementById('superAdmin3StatusFilter')?.value || 'All';
+                const admin4Filter = document.getElementById('superAdmin4StatusFilter')?.value || 'All';
+                            
+                renderSuperAdminInventoryTable(admin2Science, document.getElementById('tableAdmin2ScienceInventory').querySelector('tbody'), scienceFilter);
+                renderSuperAdminInventoryTable(admin2Sports, document.getElementById('tableAdmin2SportsInventory').querySelector('tbody'), sportsFilter);
+                renderSuperAdminInventoryTable(admin3Inventories, document.getElementById('tableAdmin3Inventory').querySelector('tbody'), admin3Filter);
+                renderSuperAdminInventoryTable(admin4Inventories, document.getElementById('tableAdmin4Inventory').querySelector('tbody'), admin4Filter);
 
                 const allMonitoredRequests = [
                     ...(await admin2ReqRes.json()),
@@ -2749,17 +2942,42 @@ function updateMasterAndBulkActionUI() {
             }
         }
 
-        function renderSuperAdminInventoryTable(data, tableBody) {
+        function renderSuperAdminInventoryTable(data, tableBody, statusFilter = 'All') {
             tableBody.innerHTML = '';
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No inventory data.</td></tr>`;
                 return;
             }
-            data.forEach(item => {
+            
+            // Filter data by status
+            let filteredData = data;
+            if (statusFilter !== 'All') {
+                filteredData = data.filter(item => {
+                    const originalQty = item.originalQuantity || item.quantity || 0;
+                    const borrowedQty = originalQty - (item.quantity || 0);
+                    const displayStatus = (borrowedQty > 0 && item.status !== 'Maintenance' && item.status !== 'Damaged' && item.status !== 'Calibration') 
+                        ? 'In-Use' 
+                        : (item.status || 'Available');
+                    return displayStatus === statusFilter || (statusFilter === 'In-Use' && displayStatus === 'In-Use');
+                });
+            }
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No items found with status "${statusFilter}".</td></tr>`;
+                return;
+            }
+            
+            filteredData.forEach(item => {
+                const originalQty = item.originalQuantity || item.quantity || 0;
+                const borrowedQty = originalQty - (item.quantity || 0);
+                const displayStatus = (borrowedQty > 0 && item.status !== 'Maintenance' && item.status !== 'Damaged' && item.status !== 'Calibration') 
+                    ? 'In-Use' 
+                    : (item.status || 'Available');
+                const statusClass = displayStatus.replace(/[^a-zA-Z0-9]/g, '');
                 const row = tableBody.insertRow();
                 row.innerHTML = `
                     <td>${item.itemId}</td><td>${item.name}</td><td>${item.category}</td>
-                    <td>${item.originalQuantity || item.quantity}</td><td>${item.location}</td><td>${item.status}</td>`;
+                    <td>${item.originalQuantity || item.quantity}</td><td>${item.location}</td><td><span class="status-badge status-${statusClass}">${displayStatus}</span></td>`;
             });
         }
                     
@@ -2890,6 +3108,8 @@ function updateMasterAndBulkActionUI() {
                     <select id="editUserRole">
                         <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="faculty" ${user.role === 'faculty' ? 'selected' : ''}>Faculty</option>
+
                     </select>
                     <label for="editUserPassword">New Password (optional)</label>
                     <input type="password" id="editUserPassword" placeholder="Leave blank to keep current password">
@@ -3151,13 +3371,22 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
     }, 0);
 
     document.getElementById('editModalTitle').innerText = `Edit ${type} Model: ${item.name}`;
+    
+    // Generate location dropdown based on category
+    let locationOptions = '';
+    if (item.category === 'Science') {
+        locationOptions = '<option value="ROOM 143" ' + (item.location === 'ROOM 143' ? 'selected' : '') + '>ROOM 143</option>';
+    } else if (item.category === 'Sports') {
+        locationOptions = '<option value="ROOM 212" ' + (item.location === 'ROOM 212' ? 'selected' : '') + '>ROOM 212</option>';
+    }
+    
     editForm.innerHTML = `
             <input type="hidden" id="editItemId" value="${item.itemId}">
             <input type="hidden" id="editItemType" value="${type}">
             <label for="editItemName">Equipment Name</label><input type="text" id="editItemName" value="${item.name}" required />
             <label for="editCategory">Category</label><input type="text" id="editCategory" value="${item.category}" readonly />
             <label for="editQuantity" style="display:none;">Total Quantity</label><input type="hidden" id="editQuantity" value="${totalQuantityToShow}" />
-            <label for="editLocation">Location</label><input type="text" id="editLocation" value="${item.location}" required />
+            <label for="editLocation">Location</label><select id="editLocation" required>${locationOptions}</select>
             <button type="submit">Save Changes</button>`;
     editForm.dataset.type = 'inventory';
     editForm.dataset.itemIds = itemIds.join(',');
@@ -3191,6 +3420,71 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                 document.getElementById('statusSelect').value = request.status;
                 statusEditModal.style.display = 'flex';
             }
+        };
+
+        window.openViewRequestDetailsModal = (requestId) => {
+            const request = allRequestsData.find(r => r._id === requestId);
+            if (!request) {
+                showToast('Request not found.', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('viewRequestDetailsModal');
+            const content = document.getElementById('viewRequestDetailsContent');
+            
+            const startDate = request.startDate ? new Date(request.startDate).toLocaleDateString() : 'N/A';
+            const dueDate = request.dueDate ? new Date(request.dueDate).toLocaleDateString() : 'N/A';
+            const requestDate = request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A';
+            const returnDate = request.returnDate ? new Date(request.returnDate).toLocaleDateString() : 'N/A';
+            const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+            content.innerHTML = `
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Student ID:</strong> ${request.studentId || request.studentID || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Category:</strong> ${request.category || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Reason:</strong> ${request.reason || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Start Date:</strong> ${startDate}
+                    </div>
+                    <div>
+                        <strong>Due Date:</strong> ${dueDate}
+                    </div>
+                    <div>
+                        <strong>Request Date:</strong> ${requestDate}
+                    </div>
+                    ${request.returnDate ? `<div><strong>Return Date:</strong> ${returnDate}</div>` : ''}
+                    <div>
+                        <strong>Status:</strong> <span class="status-badge status-${statusClass}">${request.status}</span>
+                    </div>
+                    ${request.returnCondition ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>` : ''}
+                    ${request.damageNotes ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>` : ''}
+                    ${request.adminNotes ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>` : ''}
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+        };
+
+        window.closeViewRequestDetailsModal = () => {
+            document.getElementById('viewRequestDetailsModal').style.display = 'none';
         };
 
         window.archiveInventoryItem = async (type, itemId) => {
@@ -3279,7 +3573,21 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
         const generateReportBtn = document.getElementById('generateReportBtn');
         const reportResult = document.getElementById('reportResult');
         const printReportBtn = document.getElementById('printReportBtn');
+        const inventoryCategoryGroup = document.getElementById('inventoryCategoryGroup');
+        const inventoryCategorySelect = document.getElementById('inventoryCategory');
         let selectedPeriod = 'daily';
+        
+        // Show/hide inventory category dropdown based on report type
+        reportTypeSelect.addEventListener('change', () => {
+            const reportType = reportTypeSelect.value;
+            // Show category dropdown for reports that need inventory filtering
+            if (reportType === 'inventory' || reportType === 'requests' || reportType === 'usage' || reportType === 'accountability') {
+                inventoryCategoryGroup.style.display = 'block';
+            } else {
+                inventoryCategoryGroup.style.display = 'none';
+            }
+        });
+        
         const periodBtns = document.querySelectorAll('.period-btn');
         periodBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -3322,17 +3630,36 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                 const startDateStr = startDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
                 const endDateStr = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
+                // Get selected inventory category (default to "All" if not applicable)
+                const selectedCategory = inventoryCategorySelect ? inventoryCategorySelect.value : 'All';
+                const categoryLabel = selectedCategory === 'All' ? 'Science & Sports' : selectedCategory;
+                
                 let reportText = `<b>Report Type:</b> ${reportTypeSelect.options[reportTypeSelect.selectedIndex].text} (${selectedPeriod})<br>`;
-                reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br><br>`;
+                reportText += `<b>Date Range:</b> ${startDateStr} - ${endDateStr}<br>`;
+                if (selectedCategory !== 'All') {
+                    reportText += `<b>Category:</b> ${categoryLabel}<br>`;
+                }
+                reportText += `<br>`;
                             
                 // This data is specific to Admin 2 (Science & Sports)
                 const inventoryDataArrays = await Promise.all(
                     Object.values(inventoryTypes).map(type => fetch(type.api).then(res => res.json()))
                 );
-                const allInventory = [].concat(...inventoryDataArrays);
+                let allInventory = [].concat(...inventoryDataArrays);
+                
+                // Filter inventory by selected category
+                if (selectedCategory !== 'All') {
+                    allInventory = allInventory.filter(item => item.category === selectedCategory);
+                }
+                
                 const requestsResponse = await fetch('/api/admin2-requests'); 
                 if (!requestsResponse.ok) throw new Error('Failed to fetch requests');
-                const allRequests = await requestsResponse.json();
+                let allRequests = await requestsResponse.json();
+                
+                // Filter requests by selected category
+                if (selectedCategory !== 'All') {
+                    allRequests = allRequests.filter(req => req.category === selectedCategory);
+                }
                             
                 const filteredRequests = allRequests.filter(r => new Date(r.requestDate) >= startDate);
                 const filteredReturnedRequests = allRequests.filter(r => r.status === 'Returned' && new Date(r.requestDate) >= startDate);
@@ -3343,13 +3670,13 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     const inUseItems = totalItems - availableItems;
                     // --- MODIFIED: Include Damaged & Calibration ---
                     const maintenanceItems = allInventory.filter(i => i.status === 'Maintenance' || i.status === 'Damaged' || i.status === 'Calibration').length;
-                    reportText += `<b>Summary (Science & Sports):</b><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>`;
                     reportText += `Total Items: ${totalItems}<br>`;
                     reportText += `Available Items: ${availableItems}<br>`;
                     reportText += `Items In Use: ${inUseItems}<br>`;
                     reportText += `Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                    reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+                    reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
                     allInventory.forEach(item => {
                         const originalQty = item.originalQuantity || item.quantity || 0;
                         const availableQty = item.quantity || 0;
@@ -3359,13 +3686,13 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     });
                     reportText += `</tbody></table>`;
                 } else if (selectedReportType === 'requests') {
-                    reportText += `<b>Summary (Science & Sports):</b><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>`;
                     reportText += `Pending: ${filteredRequests.filter(r => r.status === 'Pending').length}<br>`;
                     reportText += `Approved: ${filteredRequests.filter(r => r.status === 'Approved').length}<br>`;
                     reportText += `Rejected: ${filteredRequests.filter(r => r.status === 'Rejected').length}<br>`;
                     reportText += `Returned: ${filteredRequests.filter(r => r.status === 'Returned').length}<br><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-                    reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead><tbody>`;
+                    reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date</th></tr></thead><tbody>`;
                     filteredRequests.forEach(req => {
                         reportText += `<tr><td>${req.studentName}</td><td>${req.itemName}</td><td>${req.quantity}</td><td>${req.status}</td><td>${new Date(req.requestDate).toLocaleDateString()}</td></tr>`;
                     });
@@ -3376,7 +3703,7 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     approvedRequestsInPeriod.forEach(req => {
                         usageMap[req.itemName] = (usageMap[req.itemName] || 0) + req.quantity;
                     });
-                    reportText += `<b>Summary (Science & Sports):</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Borrowed (Approved) in Period: ${approvedRequestsInPeriod.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
                     reportText += `<b>Most Used Items:</b><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
                     reportText += `<thead><tr><th>Item Name</th><th>Quantity Borrowed</th></tr></thead><tbody>`;
@@ -3433,11 +3760,11 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     }, {});
 
                     const accountabilityData = await fetch('/api/reports/user-accountability').then(res => res.json());
-                    const adminCategories = ['Science', 'Sports'];
+                    const adminCategories = selectedCategory === 'All' ? ['Science', 'Sports'] : [selectedCategory];
                     const relevantStudentIds = new Set(allRequests.map(r => r.studentId.toString()));
                     const filteredAccountabilityData = accountabilityData.filter(acc => relevantStudentIds.has(acc.studentId.toString()));
 
-                    reportText += `<b>Summary (Science & Sports):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
+                    reportText += `<b>Summary (${categoryLabel}):</b><br>Total Items Returned in Period: ${filteredReturnedRequests.reduce((sum, r) => sum + r.quantity, 0)}<br><br>`;
                     reportText += `<h2>User Accountability Report Summary (Time-Filtered Returns)</h2>`;
                     reportText += `<p>Data reflects the quantity of items marked 'Returned' in the selected period, grouped by condition.</p><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
@@ -3489,8 +3816,8 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                     }
                     reportText += `</tbody></table>`;
                                 
-                    reportText += `<br><h2>All-Time Pending Incidents Summary (Science & Sports)</h2>`;
-                    reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from your categories.</p><br>`;
+                    reportText += `<br><h2>All-Time Pending Incidents Summary (${categoryLabel})</h2>`;
+                    reportText += `<p>This table shows all students with **currently pending** (unresolved) damaged/lost item incidents from ${selectedCategory === 'All' ? 'your categories' : 'the ' + selectedCategory + ' category'}.</p><br>`;
                     reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
                     reportText += `<thead><tr><th>Student Name</th><th>Pending Incidents</th></tr></thead><tbody>`;
                                 

@@ -1390,7 +1390,7 @@
           </form>
         </section>
 
-        <section class="content-container">
+        <!-- <section class="content-container">
           <h2>Change Password</h2>
           <form id="passwordUpdateForm" class="account-form">
             <div class="form-grid">
@@ -1413,7 +1413,7 @@
               </button>
             </div>
           </form>
-        </section>
+        </section> -->
       </div>
     </main>
 
@@ -1468,7 +1468,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. Global State and DOM Elements ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -2186,6 +2186,26 @@
           }, 300);
         };
 
+        const isWeekend = (dateString) => {
+          const date = new Date(dateString);
+          const dayOfWeek = date.getDay();
+          return dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
+        };
+
+        const validateDateInput = (inputElement, fieldName) => {
+          const dateValue = inputElement.value;
+          if (dateValue && isWeekend(dateValue)) {
+            showToast(
+              `${fieldName} cannot be a Saturday or Sunday. Please select a weekday.`,
+              'error'
+            );
+            inputElement.value = '';
+            inputElement.focus();
+            return false;
+          }
+          return true;
+        };
+
         window.showRequestModal = (itemId, itemName, maxQuantity) => {
           modalItemId.value = itemId;
           modalItemName.textContent = itemName;
@@ -2194,8 +2214,32 @@
           qtyInput.placeholder = `Max available: ${maxQuantity}`;
 
           const today = new Date().toISOString().split('T')[0];
-          document.getElementById('startDate').min = today;
-          document.getElementById('dueDate').min = today;
+          const startDateInput = document.getElementById('startDate');
+          const dueDateInput = document.getElementById('dueDate');
+
+          startDateInput.min = today;
+          dueDateInput.min = today;
+
+          // Add weekend validation on change
+          startDateInput.onchange = () => {
+            if (validateDateInput(startDateInput, 'Start Date')) {
+              // Update due date min to be at least start date (only if start date is valid)
+              if (startDateInput.value) {
+                dueDateInput.min = startDateInput.value;
+                // If due date is already set and is now before start date, clear it
+                if (
+                  dueDateInput.value &&
+                  new Date(dueDateInput.value) < new Date(startDateInput.value)
+                ) {
+                  dueDateInput.value = '';
+                }
+              }
+            }
+          };
+
+          dueDateInput.onchange = () => {
+            validateDateInput(dueDateInput, 'Due Date');
+          };
 
           openModal();
         };
@@ -2213,6 +2257,23 @@
           const itemCategory = allEquipment.find(
             (item) => item.itemId === itemId
           )?.category;
+
+          // Validate weekends
+          if (isWeekend(startDate)) {
+            showToast(
+              'Start Date cannot be a Saturday or Sunday. Please select a weekday.',
+              'error'
+            );
+            return;
+          }
+
+          if (isWeekend(dueDate)) {
+            showToast(
+              'Due Date cannot be a Saturday or Sunday. Please select a weekday.',
+              'error'
+            );
+            return;
+          }
 
           if (new Date(startDate) > new Date(dueDate)) {
             showToast('Start Date cannot be after Due Date.');

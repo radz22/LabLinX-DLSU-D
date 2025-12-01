@@ -588,14 +588,14 @@
       .status-Returned {
         background-color: #6c757d;
       }
-      .actions-cell {
+      /* .actions-cell {
         display: flex;
         gap: 10px;
         padding: 15px;
         width: auto;
         flex-wrap: wrap;
         justify-content: flex-start;
-      }
+      } */
       .btn {
         padding: 6px 10px;
         border: none;
@@ -1450,7 +1450,7 @@
                   type="text"
                   id="studentIdPrefixInput"
                   class="prefix-input"
-                  placeholder="Enter prefix/suffix"
+                  placeholder=""
                 />
               </div>
               <div class="form-group" id="studentIdGroup">
@@ -1470,7 +1470,7 @@
                     type="text"
                     id="itemIdPrefixInput"
                     class="prefix-input"
-                    placeholder="Enter prefix/suffix"
+                    placeholder=""
                   />
                 </div>
                 <div class="form-group">
@@ -1533,12 +1533,11 @@
               min="0"
               required
             />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location (e.g., Robotics Lab)"
-              required
-            />
+            <select name="location" required>
+              <option value="">Select Location</option>
+              <option value="ROOM 246">ROOM 246</option>
+              <option value="CL 1">CL 1</option>
+            </select>
             <button type="submit">Save Item</button>
           </form>
         </section>
@@ -1794,12 +1793,36 @@
       </div>
     </div>
 
+    <!-- View Request Details Modal -->
+    <div id="viewRequestDetailsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Request Details</h2>
+          <span class="close-button" id="closeViewRequestDetailsModal"
+            >&times;</span
+          >
+        </div>
+        <div id="viewRequestDetailsContent" style="padding: 1rem 0">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        <div style="margin-top: 1.5rem; text-align: right">
+          <button
+            class="btn"
+            style="background-color: var(--primary-dark); color: white"
+            onclick="closeViewRequestDetailsModal()"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -1828,7 +1851,14 @@
 
         function findNextSequenceId(prefix, items) {
           let maxNum = 0;
-          const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+          // Normalize prefix to uppercase for consistent comparison
+          const normalizedPrefix = String(prefix).toUpperCase().trim();
+          // Escape special regex characters in prefix
+          const escapedPrefix = normalizedPrefix.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            '\\$&'
+          );
+          const prefixPattern = new RegExp(`^${escapedPrefix}-(\\d+)$`, 'i');
           items.forEach((item) => {
             const match = item.itemId.match(prefixPattern);
             if (match) {
@@ -2014,6 +2044,10 @@
             if (returnConditionModal && event.target == returnConditionModal) {
               returnConditionModal.style.display = 'none';
             }
+            if (
+              event.target == document.getElementById('viewRequestDetailsModal')
+            )
+              closeViewRequestDetailsModal();
           });
 
           document
@@ -2046,6 +2080,14 @@
               if (returnConditionModal)
                 returnConditionModal.style.display = 'none';
             };
+          }
+
+          const closeViewRequestDetailsModalBtn = document.getElementById(
+            'closeViewRequestDetailsModal'
+          );
+          if (closeViewRequestDetailsModalBtn) {
+            closeViewRequestDetailsModalBtn.onclick = () =>
+              closeViewRequestDetailsModal();
           }
 
           if (conditionSelect) {
@@ -2751,11 +2793,6 @@
               groupIndex += 1;
               const groupId = `group-${type}-${groupIndex}`;
               const totalAvailable = group.totalQuantity - group.totalBorrowed;
-              const headerStatus = group.displayStatus || 'Available';
-              const headerStatusClass = headerStatus.replace(
-                /[^a-zA-Z0-9]/g,
-                ''
-              );
               const modelId = group.modelItemId;
               const groupLabel = `${group.prefix} (${groupName})`;
 
@@ -2781,7 +2818,7 @@
                 <td>${group.totalBorrowed}</td>
                 <td>${totalAvailable}</td>
                 <td>${group.location}</td>
-                <td><span class="status-badge status-${headerStatusClass}">${headerStatus}</span></td>
+                <td></td>
                 <td class="actions-cell">${headerActions}</td>
               `;
 
@@ -3114,12 +3151,27 @@
           const location = form.querySelector('[name="location"]').value;
 
           if (!prefixInput) {
-            showToast('Item ID Prefix cannot be empty.');
+            showToast('Item ID Prefix cannot be empty.', 'error');
             return;
           }
           if (!Number.isFinite(quantityInput) || quantityInput <= 0) {
-            showToast('Quantity must be 1 or more.');
+            showToast('Quantity must be 1 or more.', 'error');
             return;
+          }
+
+          // CRITICAL: Refresh inventory store before calculating next sequence ID
+          // This ensures we have the latest data including any recently created items
+          try {
+            const refreshResponse = await fetch(config.api);
+            if (refreshResponse.ok) {
+              config.store = await refreshResponse.json();
+            }
+          } catch (refreshError) {
+            console.warn(
+              'Failed to refresh inventory before adding item:',
+              refreshError
+            );
+            // Continue anyway - server will catch duplicates
           }
 
           const nextSequenceNumber = findNextSequenceId(
@@ -3155,22 +3207,35 @@
             });
             if (!response.ok) {
               const errorBody = await response.json().catch(() => ({}));
-              throw new Error(
+              const errorMessage =
                 errorBody.message ||
-                  `Failed to add ${quantityInput} robotics item(s).`
-              );
+                `Failed to add ${quantityInput} robotics item(s).`;
+
+              // Check if it's a duplicate Item ID error (409 Conflict)
+              if (response.status === 409) {
+                showToast(
+                  `❌ ${errorMessage} Item ID already exists in this inventory table. Cannot create duplicate.`,
+                  'error'
+                );
+                // Refresh inventory to show current state
+                fetchInventory(type);
+                return; // Stop execution - do not reset form or refresh inventory again
+              } else {
+                throw new Error(errorMessage);
+              }
             }
             const firstId = itemsToCreate[0].itemId;
             const lastId = itemsToCreate[itemsToCreate.length - 1].itemId;
             showToast(
-              `Successfully added ${quantityInput} item${
+              `✅ Successfully added ${quantityInput} item${
                 quantityInput === 1 ? '' : 's'
-              } (IDs: ${firstId}${quantityInput > 1 ? ` – ${lastId}` : ''}).`
+              } (IDs: ${firstId}${quantityInput > 1 ? ` – ${lastId}` : ''}).`,
+              'success'
             );
             form.reset();
             fetchInventory(type);
           } catch (error) {
-            showToast(`Error: ${error.message}`);
+            showToast(`Error: ${error.message}`, 'error');
           }
         }
 
@@ -3382,6 +3447,10 @@
               actions = `
                             <button class="btn btn-restore" onclick="restoreRequest('${req._id}')">Restore</button>
                             <button class="btn btn-delete" onclick="deleteRequestPermanently('${req._id}')">Delete Permanently</button>`;
+            } else if (req.status === 'Returned') {
+              // For Returned status, only show View Details button
+              actions = `
+                            <button class="btn btn-edit" onclick="openViewRequestDetailsModal('${req._id}')">View Details</button>`;
             } else {
               actions = `
                             <button class="btn btn-edit" onclick="openEditRequestModal('${req._id}')">Edit</button>
@@ -3478,6 +3547,100 @@
           }
         };
 
+        window.openViewRequestDetailsModal = (requestId) => {
+          const request = allRequestsData.find((r) => r._id === requestId);
+          if (!request) {
+            showToast('Request not found.', 'error');
+            return;
+          }
+
+          const modal = document.getElementById('viewRequestDetailsModal');
+          const content = document.getElementById('viewRequestDetailsContent');
+
+          const startDate = request.startDate
+            ? new Date(request.startDate).toLocaleDateString()
+            : 'N/A';
+          const dueDate = request.dueDate
+            ? new Date(request.dueDate).toLocaleDateString()
+            : 'N/A';
+          const requestDate = request.requestDate
+            ? new Date(request.requestDate).toLocaleDateString()
+            : 'N/A';
+          const returnDate = request.returnDate
+            ? new Date(request.returnDate).toLocaleDateString()
+            : 'N/A';
+          const statusClass = request.status.replace(/[^a-zA-Z0-9]/g, '');
+
+          content.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+              <div>
+                <strong>Student Name:</strong> ${request.studentName || 'N/A'}
+              </div>
+              <div>
+                <strong>Student ID:</strong> ${
+                  request.studentId || request.studentID || 'N/A'
+                }
+              </div>
+              <div>
+                <strong>Item ID:</strong> ${request.itemId || 'N/A'}
+              </div>
+              <div>
+                <strong>Item Name:</strong> ${request.itemName || 'N/A'}
+              </div>
+              <div>
+                <strong>Category:</strong> ${request.category || 'N/A'}
+              </div>
+              <div>
+                <strong>Quantity:</strong> ${request.quantity || 'N/A'}
+              </div>
+              <div>
+                <strong>Reason:</strong> ${request.reason || 'N/A'}
+              </div>
+              <div>
+                <strong>Start Date:</strong> ${startDate}
+              </div>
+              <div>
+                <strong>Due Date:</strong> ${dueDate}
+              </div>
+              <div>
+                <strong>Request Date:</strong> ${requestDate}
+              </div>
+              ${
+                request.returnDate
+                  ? `<div><strong>Return Date:</strong> ${returnDate}</div>`
+                  : ''
+              }
+              <div>
+                <strong>Status:</strong> <span class="status-badge status-${statusClass}">${
+            request.status
+          }</span>
+              </div>
+              ${
+                request.returnCondition
+                  ? `<div><strong>Return Condition:</strong> ${request.returnCondition}</div>`
+                  : ''
+              }
+              ${
+                request.damageNotes
+                  ? `<div><strong>Damage/Loss Notes:</strong> ${request.damageNotes}</div>`
+                  : ''
+              }
+              ${
+                request.adminNotes
+                  ? `<div><strong>Admin Notes:</strong> ${request.adminNotes}</div>`
+                  : ''
+              }
+            </div>
+          `;
+
+          modal.style.display = 'flex';
+        };
+
+        window.closeViewRequestDetailsModal = () => {
+          document.getElementById('viewRequestDetailsModal').style.display =
+            'none';
+        };
+
         // --- 8. WINDOW-SCOPED FUNCTIONS ---
         // MODIFIED: openEditModal to use originalQuantity
         window.openEditModal = (type, itemId) => {
@@ -3488,6 +3651,18 @@
             document.getElementById(
               'editModalTitle'
             ).innerText = `Edit ${type} Item`;
+
+            // Generate location dropdown for Robotics
+            const roboticsLocations = ['ROOM 246', 'CL 1'];
+            const locationOptions = roboticsLocations
+              .map(
+                (loc) =>
+                  `<option value="${loc}" ${
+                    item.location === loc ? 'selected' : ''
+                  }>${loc}</option>`
+              )
+              .join('');
+
             editForm.innerHTML = `
                         <input type="hidden" id="editItemId" value="${
                           item.itemId
@@ -3502,9 +3677,7 @@
                         <input type="hidden" id="editQuantity" value="${
                           item.originalQuantity || item.quantity
                         }" />
-                        <label for="editLocation">Location</label><input type="text" id="editLocation" value="${
-                          item.location
-                        }" required />
+                        <label for="editLocation">Location</label><select id="editLocation" required>${locationOptions}</select>
                         <button type="submit">Save Changes</button>`;
             editForm.dataset.type = 'inventory';
             editForm.onsubmit = handleUpdateItem; // Re-set onsubmit
@@ -3658,10 +3831,22 @@
 
         // --- 9. UTILITIES ---
         // ... (showToast is correct) ...
-        window.showToast = (message) => {
+        window.showToast = (message, type = 'info') => {
           const container = document.getElementById('toast-container');
           const toast = document.createElement('div');
           toast.className = 'toast';
+
+          // Add type-specific styling
+          if (type === 'error') {
+            toast.style.backgroundColor = 'var(--danger)';
+          } else if (type === 'success') {
+            toast.style.backgroundColor = 'var(--success)';
+          } else if (type === 'warning') {
+            toast.style.backgroundColor = 'var(--warning)';
+          } else {
+            toast.style.backgroundColor = 'var(--primary-dark)';
+          }
+
           toast.textContent = message;
           container.appendChild(toast);
           setTimeout(() => {
@@ -3839,7 +4024,7 @@
 
               reportText += `<b>Summary (Current Active Inventory):</b><br>Total Items: ${totalItems}<br>Available Items: ${availableItems}<br>Items In Use: ${inUseItems}<br>Items Under Maintenance/Damaged/Calibration: ${maintenanceItems}<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Qty</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Total Quantity</th><th>Borrowed</th><th>Available</th><th>Location</th><th>Status</th></tr></thead><tbody>`;
 
               inventoryForReport.forEach((item) => {
                 const originalQty = item.originalQuantity || item.quantity || 0;
@@ -3863,7 +4048,7 @@
                 filteredRequests.filter((r) => r.status === 'Returned').length
               }<br><br>`;
               reportText += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">`;
-              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Qty</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
+              reportText += `<thead><tr><th>Requester</th><th>Item</th><th>Quantity</th><th>Status</th><th>Date Submitted</th></tr></thead><tbody>`;
               filteredRequests.forEach((req) => {
                 reportText += `<tr><td>${req.studentName}</td><td>${
                   req.itemName
