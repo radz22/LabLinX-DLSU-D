@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to LabLinx DLSU-D</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --la-salle-green: #004225;
+        --la-salle-green-light: #006d3a;
+        --background-light: #e6f4ea;
+        --form-bg-light: #ffffff;
+        --text-color-light: #333333;
+        --input-border-light: #dddddd;
+        --input-focus-light: #008c48;
+        --box-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --toast-bg-light: #333333;
+        --toast-color-light: #ffffff;
+        --link-color-light: var(--la-salle-green);
+        --nav-bg-light: #f5f5f5;
+        --nav-link-color-light: #555;
+        --nav-link-active-color-light: var(--la-salle-green);
+
+        /* Dark Mode Variables */
+        --background-dark: #1a1a1a;
+        --form-bg-dark: #2c2c2c;
+        --text-color-dark: #f0f0f0;
+        --input-border-dark: #444444;
+        --input-focus-dark: #00a05a;
+        --box-shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.4);
+        --toast-bg-dark: #444444;
+        --toast-color-dark: #ffffff;
+        --link-color-dark: #70d6a4;
+        --nav-bg-dark: #1f1f1f;
+        --nav-link-color-dark: #cccccc;
+        --nav-link-active-color-dark: #70d6a4;
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #004225, #006d3a, #004225);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: var(--text-color-light);
+        transition: background-color 0.5s ease;
+      }
+
+      @keyframes gradient-animation {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      body.dark-mode {
+        background: var(--background-dark);
+        color: var(--text-color-dark);
+        animation: none;
+      }
+
+      .form-container {
+        background-color: var(--form-bg-light);
+        padding: 40px 50px;
+        border-radius: 20px;
+        box-shadow: var(--box-shadow-light);
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+        position: relative;
+        box-sizing: border-box;
+        transition: background-color 0.5s ease, box-shadow 0.5s ease;
+      }
+
+      .dark-mode .form-container {
+        background-color: var(--form-bg-dark);
+        box-shadow: var(--box-shadow-dark);
+      }
+
+      .form-section {
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .form-section.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .logo {
+        display: block;
+        margin: 0 auto 20px;
+        width: 140px;
+        height: auto;
+      }
+
+      h2 {
+        color: var(--la-salle-green);
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: 700;
+        transition: color 0.5s ease;
+      }
+
+      .dark-mode h2 {
+        color: var(--link-color-dark);
+      }
+
+      label {
+        display: block;
+        margin-top: 20px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      input,
+      select,
+      button,
+      textarea {
+        width: 100%;
+        height: 48px;
+        padding: 0 15px;
+        margin-top: 10px;
+        border: 1px solid var(--input-border-light);
+        border-radius: 10px;
+        font-size: 16px;
+        box-sizing: border-box;
+        transition: all 0.3s ease-in-out;
+        font-family: 'Poppins', sans-serif;
+      }
+
+      textarea {
+        height: 120px;
+        padding: 15px;
+        resize: vertical;
+      }
+
+      .dark-mode input,
+      .dark-mode select,
+      .dark-mode textarea {
+        background-color: #383838;
+        border-color: var(--input-border-dark);
+        color: var(--text-color-dark);
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: #999;
+      }
+      .dark-mode input::placeholder,
+      .dark-mode textarea::placeholder {
+        color: #777;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--input-focus-light);
+        box-shadow: 0 0 8px rgba(0, 109, 58, 0.3);
+      }
+
+      .dark-mode input:focus,
+      .dark-mode select:focus,
+      .dark-mode textarea:focus {
+        border-color: var(--input-focus-dark);
+        box-shadow: 0 0 8px rgba(0, 160, 90, 0.3);
+      }
+
+      .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .password-wrapper input {
+        padding-right: 45px;
+      }
+
+      .eye-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+      }
+
+      .eye-icon:hover {
+        opacity: 1;
+      }
+
+      button {
+        margin-top: 30px;
+        background-color: var(--la-salle-green);
+        color: white;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+
+      button:hover {
+        background-color: var(--la-salle-green-light);
+        transform: translateY(-2px);
+      }
+
+      .dark-mode button {
+        background-color: #00a05a;
+      }
+
+      .dark-mode button:hover {
+        background-color: #00b363;
+      }
+
+      /* NEW: Microsoft Button Styles */
+      .microsoft-btn {
+        background-color: #ffffff;
+        color: #5e5e5e;
+        border: 1px solid #8c8c8c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 500;
+      }
+      .microsoft-btn img {
+        width: 20px;
+        height: 20px;
+      }
+      .microsoft-btn:hover {
+        background-color: #f2f2f2;
+        transform: translateY(-2px);
+      }
+      .dark-mode .microsoft-btn {
+        background-color: #383838;
+        border-color: #555;
+        color: var(--text-color-dark);
+      }
+      .dark-mode .microsoft-btn:hover {
+        background-color: #444;
+      }
+
+      p {
+        margin-top: 25px;
+        font-size: 14px;
+        color: #777;
+      }
+
+      .dark-mode p {
+        color: #b0b0b0;
+      }
+
+      p a {
+        color: var(--link-color-light);
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .dark-mode p a {
+        color: var(--link-color-dark);
+      }
+
+      p a:hover {
+        text-decoration: underline;
+      }
+
+      #toast-container {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .toast {
+        padding: 15px 25px;
+        background-color: var(--toast-bg-light);
+        color: var(--toast-color-light);
+        border-radius: 8px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        transition: opacity 0.5s, transform 0.5s;
+        transform: translateX(120%);
+        font-weight: 500;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      #mode-toggle {
+        position: fixed;
+        top: 25px;
+        left: 25px;
+        cursor: pointer;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+
+      #mode-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .dark-mode #mode-toggle {
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .dark-mode #mode-toggle:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      #mode-toggle img {
+        width: 22px;
+        height: 22px;
+        filter: invert(1);
+      }
+
+      .nav-bar {
+        margin-top: 30px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        padding: 15px 0;
+        border-top: 1px solid #eee;
+        transition: border-color 0.5s ease;
+      }
+
+      .dark-mode .nav-bar {
+        border-top: 1px solid #444;
+      }
+
+      .nav-link {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--nav-link-color-light);
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .dark-mode .nav-link {
+        color: var(--nav-link-color-dark);
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        color: var(--nav-link-active-color-light);
+      }
+
+      .dark-mode .nav-link:hover,
+      .dark-mode .nav-link.active {
+        color: var(--nav-link-active-color-dark);
+      }
+
+      .faq-item {
+        text-align: left;
+        margin-bottom: 20px;
+      }
+
+      .faq-item h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--la-salle-green);
+        margin-bottom: 5px;
+      }
+
+      .dark-mode .faq-item h3 {
+        color: var(--link-color-dark);
+      }
+
+      .faq-item p {
+        font-size: 14px;
+        margin-top: 0;
+      }
+
+      /* NEW: Button group style for register/faculty */
+      .register-toggle {
+        display: flex;
+        justify-content: space-around;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .register-toggle button {
+        flex-grow: 1;
+        margin: 0;
+        padding: 10px 15px;
+        font-size: 14px;
+        text-transform: none;
+        letter-spacing: normal;
+        background-color: var(--input-border-light);
+        color: var(--text-color-light);
+        border: 1px solid var(--input-border-light);
+        transition: background-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .register-toggle button.active {
+        background-color: var(--la-salle-green);
+        color: white;
+        border-color: var(--la-salle-green);
+        transform: translateY(0);
+      }
+
+      .dark-mode .register-toggle button {
+        background-color: #383838;
+        border-color: #444;
+        color: var(--text-color-dark);
+      }
+
+      .dark-mode .register-toggle button.active {
+        background-color: #00a05a;
+        border-color: #00a05a;
+        color: white;
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
+        .form-container {
+          padding: 25px;
+        }
+        h2 {
+          font-size: 22px;
+        }
+        .logo {
+          width: 110px;
+        }
+        #toast-container {
+          top: 10px;
+          right: 10px;
+          gap: 6px;
+        }
+        .nav-bar {
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 20px;
+        }
+        .nav-link {
+          font-size: 13px;
+          padding: 8px 15px;
+          background-color: #f0f0f0;
+          border-radius: 8px;
+        }
+        .dark-mode .nav-link {
+          background-color: #383838;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <div id="mode-toggle">
+      <img
+        id="mode-icon"
+        src="https://api.iconify.design/mdi:moon-waning-crescent.svg"
+        alt="Toggle dark mode"
+      />
+    </div>
+
+    <div class="form-container">
+      <img src="logo.png" alt="LabLinX Logo" class="logo" />
+
+      <div id="auth-section" class="form-section active">
+        <div id="login-section">
+          <h2>Welcome to LabLinx</h2>
+          <form id="loginForm">
+            <label for="loginUsername">Username:</label>
+            <input
+              type="text"
+              id="loginUsername"
+              name="username"
+              required
+              placeholder="Enter your username"
+            />
+
+            <label for="loginPassword">Password:</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                required
+                placeholder="Enter your password"
+              />
+            </div>
+            <button type="submit">Login</button>
+
+            <p
+              style="text-align: center; margin: 20px 0 10px; font-weight: 600"
+            >
+              OR
+            </p>
+            <button type="button" id="microsoftLoginBtn" class="microsoft-btn">
+              <img
+                src="https://api.iconify.design/logos:microsoft-icon.svg"
+                alt="Microsoft logo"
+              />
+              Login with Microsoft
+            </button>
+          </form>
+          <p
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-top: 15px;
+            "
+          >
+            <a href="#" id="show-forgot-password">Forgot Password?</a>
+            <a href="#" id="show-register-menu">Register here</a>
+          </p>
+        </div>
+
+        <div id="registration-menu" style="display: none">
+          <h2>Register for LabLinx</h2>
+          <div class="register-toggle">
+            <button id="show-student-register" class="active">Student</button>
+            <button id="show-faculty-register">Faculty/Staff</button>
+          </div>
+
+          <div id="student-register-section">
+            <form id="registerForm">
+              <label for="lastName">Last Name:</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                required
+                placeholder="Enter your last name"
+              />
+
+              <label for="firstName">First Name:</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                required
+                placeholder="Enter your first name"
+              />
+
+              <label for="username">Username:</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                required
+                placeholder="Create a username"
+              />
+
+              <label for="studentID">Student ID (School ID):</label>
+              <input
+                type="text"
+                id="studentID"
+                name="studentID"
+                required
+                placeholder="Enter your Student ID"
+              />
+
+              <label for="email">School Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                placeholder="yourID@dlsud.edu.ph"
+              />
+
+              <label for="gradeLevel">Grade Level:</label>
+              <select id="gradeLevel" name="gradeLevel" required>
+                <option value="">Select Grade Level</option>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+              </select>
+
+              <button type="submit">Register as Student</button>
+            </form>
+            <p>Already have an account? <a id="show-login">Login here</a></p>
+          </div>
+
+          <div id="faculty-register-section" style="display: none">
+            <form id="facultyRegisterForm">
+              <input type="hidden" name="role" value="faculty" />
+
+              <label for="facultyLastName">Last Name:</label>
+              <input
+                type="text"
+                id="facultyLastName"
+                name="lastName"
+                required
+                placeholder="Enter your last name"
+              />
+
+              <label for="facultyFirstName">First Name:</label>
+              <input
+                type="text"
+                id="facultyFirstName"
+                name="firstName"
+                required
+                placeholder="Enter your first name"
+              />
+
+              <label for="facultyUsername">Username:</label>
+              <input
+                type="text"
+                id="facultyUsername"
+                name="username"
+                required
+                placeholder="Create a username"
+              />
+
+              <label for="facultySchoolID">School ID (Employee ID):</label>
+              <input
+                type="text"
+                id="facultySchoolID"
+                name="studentID"
+                required
+                placeholder="Enter your Employee ID (e.g., F1234)"
+              />
+
+              <label for="facultyEmail">School Email:</label>
+              <input
+                type="email"
+                id="facultyEmail"
+                name="email"
+                required
+                placeholder="facultyID@dlsud.edu.ph"
+              />
+
+              <button type="submit">Register as Faculty/Staff</button>
+            </form>
+            <p>
+              Already have an account? <a id="show-login-faculty">Login here</a>
+            </p>
+          </div>
+        </div>
+
+        <div id="forgot-password-section" style="display: none">
+          <h2>Reset Password</h2>
+          <form id="forgotPasswordForm">
+            <p style="text-align: left; margin-top: 0; margin-bottom: 20px">
+              Enter your school email and we'll send you a password reset link.
+            </p>
+            <label for="forgotEmail">School Email:</label>
+            <input
+              type="email"
+              id="forgotEmail"
+              name="email"
+              required
+              placeholder="yourID@dlsud.edu.ph"
+            />
+            <button type="submit">Send Reset Link</button>
+          </form>
+          <p>
+            Remember your password?
+            <a id="show-login-from-forgot">Login here</a>
+          </p>
+        </div>
+      </div>
+
+      <div id="faq-section" class="form-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>Q1: What if my registration is still pending?</h3>
+          <p>
+            A: New registrations require approval from a system administrator.
+            Please wait for a confirmation before you can log in. This usually
+            takes 1-2 business days. The confirmation will be sent to your
+            registered school email address. Please be sure to check your junk
+            email in Outlook for the confirmation.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h3>
+            Q2: Where can I find reminders and confirmation for my account or
+            equipment request?
+          </h3>
+          <p>
+            A: Be sure to check your junk email in Outlook to receive reminders
+            and confirmation of your account or equipment request, as automated
+            messages sometimes get filtered there.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h3>Q3: What if my registration is still pending?</h3>
+          <p>
+            A: New registrations require approval from a system administrator.
+            Please wait for a confirmation before you can log in. This usually
+            takes 1-2 business days.
+          </p>
+        </div>
+      </div>
+
+      <div id="contact-section" class="form-section">
+        <h2>Contact Us</h2>
+        <p>
+          If you have any questions or concerns, please fill out the form below.
+        </p>
+        <form id="contactForm">
+          <label for="contactName">Your Name:</label>
+          <input
+            type="text"
+            id="contactName"
+            name="contactName"
+            required
+            placeholder="Enter your full name"
+          />
+
+          <label for="contactEmail">Your Email:</label>
+          <input
+            type="email"
+            id="contactEmail"
+            name="contactEmail"
+            required
+            placeholder="Enter your email address"
+          />
+
+          <label for="contactMessage">Your Message:</label>
+          <textarea
+            id="contactMessage"
+            name="contactMessage"
+            required
+            placeholder="Type your message here..."
+          ></textarea>
+
+          <button type="submit">Send Message</button>
+        </form>
+      </div>
+
+      <div id="help-section" class="form-section">
+        <h2>Help</h2>
+        <p>Need assistance with LabLinx?</p>
+        <div class="help-links">
+          <p>
+            For common issues, please visit our
+            <a class="nav-link" href="#" data-section="faq-section">FAQ page</a
+            >.
+          </p>
+          <p>
+            For more specific inquiries, you can
+            <a class="nav-link" href="#" data-section="contact-section"
+              >contact our support team</a
+            >
+            directly.
+          </p>
+          <p>Our team is available to assist you during business hours.</p>
+        </div>
+      </div>
+
+      <div class="nav-bar">
+        <a href="#" class="nav-link active" data-section="auth-section">Home</a>
+        <a href="#" class="nav-link" data-section="faq-section">FAQ</a>
+        <a href="#" class="nav-link" data-section="contact-section"
+          >Contact Us</a
+        >
+        <a href="#" class="nav-link" data-section="help-section">Help</a>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const formContainer = document.querySelector('.form-container');
+        const sections = formContainer.querySelectorAll('.form-section');
+        const navLinks = document.querySelectorAll('.nav-bar .nav-link');
+
+        const loginSection = document.getElementById('login-section');
+        const registrationMenu = document.getElementById('registration-menu');
+        const studentRegisterSection = document.getElementById(
+          'student-register-section'
+        );
+        const facultyRegisterSection = document.getElementById(
+          'faculty-register-section'
+        );
+        const forgotPasswordSection = document.getElementById(
+          'forgot-password-section'
+        );
+
+        const showRegisterMenuLink =
+          document.getElementById('show-register-menu');
+        const showStudentRegisterButton = document.getElementById(
+          'show-student-register'
+        );
+        const showFacultyRegisterButton = document.getElementById(
+          'show-faculty-register'
+        );
+
+        const showLoginLink = document.getElementById('show-login');
+        const showLoginFacultyLink =
+          document.getElementById('show-login-faculty');
+        const showForgotPasswordLink = document.getElementById(
+          'show-forgot-password'
+        );
+        const showLoginFromForgotLink = document.getElementById(
+          'show-login-from-forgot'
+        );
+
+        const loginForm = document.getElementById('loginForm');
+        const studentRegisterForm = document.getElementById('registerForm'); // Keep original ID
+        const facultyRegisterForm = document.getElementById(
+          'facultyRegisterForm'
+        ); // NEW
+        const contactForm = document.getElementById('contactForm');
+        const forgotPasswordForm =
+          document.getElementById('forgotPasswordForm');
+
+        const modeToggle = document.getElementById('mode-toggle');
+        const modeIcon = document.getElementById('mode-icon');
+
+        const microsoftLoginBtn = document.getElementById('microsoftLoginBtn');
+
+        const showToast = (message) => {
+          const container = document.getElementById('toast-container');
+          const toast = document.createElement('div');
+          toast.className = 'toast';
+          toast.textContent = message;
+          container.appendChild(toast);
+
+          setTimeout(() => {
+            toast.classList.add('show');
+          }, 100);
+
+          setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+          }, 3000);
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+          if (error === 'ms_login_failed') {
+            showToast(
+              'Microsoft login failed. Your email is not registered in our system.'
+            );
+          } else if (error === 'ms_login_pending') {
+            showToast(
+              'Microsoft login successful, but your account is still pending approval.'
+            );
+          }
+          window.history.replaceState({}, document.title, '/login');
+        }
+
+        const switchSection = (targetId) => {
+          sections.forEach((section) => {
+            section.classList.remove('active');
+          });
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            targetSection.classList.add('active');
+          }
+        };
+
+        navLinks.forEach((link) => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('data-section');
+            switchSection(targetId);
+            navLinks.forEach((nav) => nav.classList.remove('active'));
+            link.classList.add('active');
+
+            if (targetId === 'auth-section') {
+              loginSection.style.display = 'block';
+              registrationMenu.style.display = 'none';
+              forgotPasswordSection.style.display = 'none';
+            }
+          });
+        });
+
+        const showRegistrationMenu = (e) => {
+          if (e) e.preventDefault();
+          loginSection.style.display = 'none';
+          forgotPasswordSection.style.display = 'none';
+          registrationMenu.style.display = 'block';
+
+          // Default to showing student registration
+          studentRegisterSection.style.display = 'block';
+          facultyRegisterSection.style.display = 'none';
+          showStudentRegisterButton.classList.add('active');
+          showFacultyRegisterButton.classList.remove('active');
+        };
+
+        showRegisterMenuLink.addEventListener('click', showRegistrationMenu);
+
+        const toggleRegisterForm = (type) => {
+          showStudentRegisterButton.classList.toggle(
+            'active',
+            type === 'student'
+          );
+          showFacultyRegisterButton.classList.toggle(
+            'active',
+            type === 'faculty'
+          );
+          studentRegisterSection.style.display =
+            type === 'student' ? 'block' : 'none';
+          facultyRegisterSection.style.display =
+            type === 'faculty' ? 'block' : 'none';
+        };
+
+        showStudentRegisterButton.addEventListener('click', () =>
+          toggleRegisterForm('student')
+        );
+        showFacultyRegisterButton.addEventListener('click', () =>
+          toggleRegisterForm('faculty')
+        );
+
+        const showLogin = (e) => {
+          if (e) e.preventDefault();
+          registrationMenu.style.display = 'none';
+          forgotPasswordSection.style.display = 'none';
+          loginSection.style.display = 'block';
+        };
+
+        showLoginLink.addEventListener('click', showLogin);
+        showLoginFacultyLink.addEventListener('click', showLogin);
+        showLoginFromForgotLink.addEventListener('click', showLogin);
+
+        showForgotPasswordLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          loginSection.style.display = 'none';
+          registrationMenu.style.display = 'none';
+          forgotPasswordSection.style.display = 'block';
+        });
+
+        function createPasswordToggle(toggleElement, inputElement) {
+          if (!toggleElement || !inputElement) return;
+          toggleElement.addEventListener('click', () => {
+            const isPassword = inputElement.type === 'password';
+            inputElement.type = isPassword ? 'text' : 'password';
+            toggleElement.src = isPassword
+              ? 'https://api.iconify.design/mdi:eye-off-outline.svg'
+              : 'https://api.iconify.design/mdi:eye-outline.svg';
+          });
+        }
+
+        const loginPasswordInput = document.getElementById('loginPassword');
+        const loginPasswordWrapper = document.querySelector(
+          '#login-section .password-wrapper'
+        );
+        if (loginPasswordWrapper && loginPasswordInput) {
+          const loginEyeIcon = document.createElement('img');
+          loginEyeIcon.src = 'https://api.iconify.design/mdi:eye-outline.svg';
+          loginEyeIcon.className = 'eye-icon';
+          loginEyeIcon.alt = 'Toggle password visibility';
+          loginPasswordWrapper.appendChild(loginEyeIcon);
+
+          createPasswordToggle(loginEyeIcon, loginPasswordInput);
+        }
+
+        modeToggle.addEventListener('click', () => {
+          document.body.classList.toggle('dark-mode');
+          const isDarkMode = document.body.classList.contains('dark-mode');
+          modeIcon.src = isDarkMode
+            ? 'https://api.iconify.design/mdi:white-balance-sunny.svg'
+            : 'https://api.iconify.design/mdi:moon-waning-crescent.svg';
+          localStorage.setItem('darkMode', isDarkMode);
+        });
+
+        const savedDarkMode = localStorage.getItem('darkMode');
+        if (savedDarkMode === 'true') {
+          document.body.classList.add('dark-mode');
+          modeIcon.src =
+            'https://api.iconify.design/mdi:white-balance-sunny.svg';
+        }
+        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+
+        loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(loginForm);
+          const data = Object.fromEntries(formData.entries());
+
+          try {
+            const response = await fetch(`${apiBaseUrl}/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+              window.location.href = response.url;
+            } else {
+              const errorText = await response.text();
+              showToast(errorText || 'Login failed.');
+            }
+          } catch (error) {
+            showToast('An error occurred. Please try again.');
+          }
+        });
+
+        // Student Registration Handler
+        studentRegisterForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          if (document.getElementById('gradeLevel').value === '') {
+            showToast('Please select a Grade Level to continue.');
+            return;
+          }
+
+          const emailInput = document.getElementById('email');
+          const emailValue = emailInput.value.toLowerCase();
+          if (
+            !emailValue.endsWith('@dlsud.edu.ph') &&
+            !emailValue.endsWith('@hs.dlsud.edu.ph')
+          ) {
+            showToast(
+              'Invalid email. Please use your @dlsud.edu.ph or @hs.dlsud.edu.ph address.'
+            );
+            return;
+          }
+
+          const formData = new FormData(studentRegisterForm);
+          const data = Object.fromEntries(formData.entries());
+          // Prepend '20' to student ID before saving
+          if (data.studentID) {
+            data.studentID = '20' + data.studentID;
+          }
+          data.role = 'student'; // Explicitly set role
+          data.gradeLevel = document.getElementById('gradeLevel').value;
+
+          try {
+            const response = await fetch(`${apiBaseUrl}/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+
+            const responseText = await response.text();
+            showToast(responseText);
+
+            if (response.ok) {
+              studentRegisterForm.reset();
+              showLogin();
+            }
+          } catch (error) {
+            showToast('An error occurred during registration.');
+          }
+        });
+
+        // Faculty Registration Handler (NEW)
+        facultyRegisterForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const emailInput = document.getElementById('facultyEmail');
+          const emailValue = emailInput.value.toLowerCase();
+          if (
+            !emailValue.endsWith('@dlsud.edu.ph') &&
+            !emailValue.endsWith('@hs.dlsud.edu.ph')
+          ) {
+            showToast(
+              'Invalid email. Please use your @dlsud.edu.ph or @hs.dlsud.edu.ph address.'
+            );
+            return;
+          }
+
+          const formData = new FormData(facultyRegisterForm);
+          const data = Object.fromEntries(formData.entries());
+          data.role = 'faculty'; // Explicitly set role
+          data.gradeLevel = 'N/A'; // Faculty/Staff don't have a grade level
+
+          try {
+            // Use the same /register endpoint, server handles the different role/fields
+            const response = await fetch(`${apiBaseUrl}/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+
+            const responseText = await response.text();
+            showToast(responseText);
+
+            if (response.ok) {
+              facultyRegisterForm.reset();
+              showLogin();
+            }
+          } catch (error) {
+            showToast('An error occurred during registration.');
+          }
+        });
+
+        contactForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          showToast("Message sent! We'll get back to you soon.");
+          contactForm.reset();
+        });
+
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          showToast(
+            'If an account with that email exists, a password reset link has been sent.'
+          );
+          forgotPasswordForm.reset();
+          showLogin();
+        });
+
+        if (microsoftLoginBtn) {
+          microsoftLoginBtn.addEventListener('click', () => {
+            window.location.href = `${apiBaseUrl}/auth/microsoft`;
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
