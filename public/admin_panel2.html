@@ -1381,7 +1381,7 @@ function updateMasterAndBulkActionUI() {
 
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
-        const apiBaseUrl = ' http://localhost:3000';
+        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com/';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
             if (typeof input === 'string' && input.startsWith('/')) {
@@ -3893,6 +3893,9 @@ window.openEditModal = (type, itemId, itemIds = [itemId]) => {
                         .report-header h3 { margin: 5px 0 0 0; font-size: 14pt; color: #007A5A; }
                         .report-info { text-align: left; margin-top: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
                         .report-info b { font-weight: 700; }
+                        summary { list-style: none; }
+                        summary::-webkit-details-marker { display: none; }
+                        summary::marker { display: none; }
                     </style>
                 </head>
                 <body>
