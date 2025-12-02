@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel - LabLinX DLSU-D</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     /* --- 1. Global Styles & Variables (DLSU Theme from admin_panel2) --- */
     :root {
@@ -514,6 +517,12 @@
                 <a href="javascript:void(0)" class="card-footer" onclick="showPage('inventory')"><span>View Details</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></a>
             </article>
         </section>
+        <div class="chart-container">
+            <div class="chart-card">
+                <h2>Request Status Overview</h2>
+                <canvas id="requestStatusBarChart"></canvas>
+            </div>
+        </div>
     </div>
 
     <div id="live-scan-content" class="page-content">
@@ -808,8 +817,9 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // --- 1. CONFIGURATION & STATE ---
-      const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+      const apiBaseUrl = ' http://localhost:3000';
       const originalFetch = window.fetch.bind(window);
+      let requestStatusBarChartInstance = null;
       window.fetch = (input, init) => {
         if (typeof input === 'string' && input.startsWith('/')) {
           return originalFetch(`${apiBaseUrl}${input}`, init);
@@ -972,12 +982,24 @@
       // --- 3. EVENT LISTENERS ---
       const setupEventListeners = () => {
         toggleBtn.addEventListener("click", () => body.classList.toggle("sidebar-collapsed"));
-        darkToggle.addEventListener("click", () => {
+        darkToggle.addEventListener("click", async () => {
             body.classList.toggle("dark");
             const isDarkMode = body.classList.contains("dark");
             localStorage.setItem("dark-mode", isDarkMode); // Save preference
             darkToggle.querySelector('.sun-icon').style.display = isDarkMode ? 'none' : 'block';
             darkToggle.querySelector('.moon-icon').style.display = isDarkMode ? 'block' : 'none';
+            // Refresh chart on dark mode toggle
+            if (document.getElementById('dashboard-content').classList.contains('active')) {
+                try {
+                    const requestsRes = await fetch('/api/admin-requests');
+                    if (requestsRes.ok) {
+                        const requests = await requestsRes.json();
+                        renderRequestStatusBarChart(requests);
+                    }
+                } catch (error) {
+                    console.error('Error refreshing chart:', error);
+                }
+            }
         });
         
         // Check dark mode on load
@@ -1486,9 +1508,13 @@
       // --- 6. DASHBOARD ---
       const updateDashboard = async () => {
         try {
-            const response = await fetch('/api/inventory');
-            if (!response.ok) throw new Error('Failed to fetch inventory');
-            const data = await response.json();
+            const [inventoryRes, requestsRes] = await Promise.all([
+                fetch('/api/inventory'),
+                fetch('/api/admin-requests')
+            ]);
+            
+            if (!inventoryRes.ok) throw new Error('Failed to fetch inventory');
+            const data = await inventoryRes.json();
             
             // Calculate metrics based on originalQuantity for accuracy
             const totalEquipment = data.reduce((sum, item) => sum + (item.originalQuantity || 0), 0);
@@ -1500,6 +1526,12 @@
             document.querySelector('#dashboard-content article:nth-of-type(2) .counter').setAttribute('data-target', borrowedItems);
             document.querySelector('#dashboard-content article:nth-of-type(3) .counter').setAttribute('data-target', maintenanceItems);
             animateCounters();
+            
+            // Fetch and render request status chart
+            if (requestsRes.ok) {
+                const requests = await requestsRes.json();
+                renderRequestStatusBarChart(requests);
+            }
         } catch (error) {
             showToast("Error fetching dashboard data.");
             console.error(error);
@@ -1521,6 +1553,50 @@
               update();
           });
       };
+      
+      function renderRequestStatusBarChart(requests) {
+          const ctx = document.getElementById('requestStatusBarChart');
+          if (!ctx) return;
+          
+          if (requestStatusBarChartInstance) requestStatusBarChartInstance.destroy();
+
+          const statusCounts = requests.reduce((acc, req) => {
+              acc[req.status] = (acc[req.status] || 0) + 1;
+              return acc;
+          }, {});
+
+          const labels = ['Pending', 'Approved', 'Rejected', 'Returned'];
+          const data = labels.map(label => statusCounts[label] || 0);
+          const textColor = body.classList.contains('dark') ? 'var(--text-light)' : 'var(--text-dark)';
+
+          requestStatusBarChartInstance = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: 'Number of Requests',
+                      data: data,
+                      backgroundColor: ['rgba(240, 173, 78, 0.8)', 'rgba(40, 167, 69, 0.8)', 'rgba(220, 53, 69, 0.8)', 'rgba(108, 117, 125, 0.8)'],
+                      borderColor: ['#f0ad4e', '#28a745', '#dc3545', '#6c757d'],
+                      borderWidth: 1
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  scales: { 
+                      y: { 
+                          beginAtZero: true, 
+                          ticks: { stepSize: 1, color: textColor } 
+                      },
+                      x: {
+                          ticks: { color: textColor }
+                      }
+                  },
+                  plugins: { legend: { display: false } }
+              }
+          });
+      }
       
       // --- 7. INVENTORY (ACTIVE & ARCHIVE) ---
       async function fetchInventory(type = ACTIVE_INVENTORY_TYPE) {
