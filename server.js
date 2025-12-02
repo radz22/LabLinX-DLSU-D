@@ -80,8 +80,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: true, credentials: true }));
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
     secret: 'labsystem-secret-key-super-secure',
@@ -571,7 +569,7 @@ setupDefaultAdmins();
 // ================== MIDDLEWARE & PAGE ROUTES ==================
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) return next();
-  res.status(401).redirect('/');
+  res.status(401).redirect('/login');
 };
 const isAdmin = (req, res, next) => {
   if (req.session.user && req.session.user.role === 'admin') return next();
@@ -591,6 +589,9 @@ const isSuperAdmin = (req, res, next) => {
 app.get('/', (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 );
+app.get('/login', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'login.html'))
+);
 app.get('/admin', isAuthenticated, (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'admin_panel.html'))
 );
@@ -606,6 +607,9 @@ app.get('/admin4', isAuthenticated, (req, res) =>
 app.get('/dashboard', isAuthenticated, (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'student_dashboard.html'))
 );
+
+// Serve static files from public directory (AFTER routes to avoid conflicts)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ================== AUTH ROUTES (WITH FACULTY FIX) ==================
 // This is the /login route from server1.js, which handles password-less students
@@ -758,7 +762,7 @@ app.post('/register', async (req, res) => {
 // This route now conditionally handles local (admin) vs. Microsoft (student) logout
 app.get('/logout', (req, res, next) => {
   // 1. Define the Microsoft logout URL for students
-  const postLogoutRedirectUri = 'http://localhost:3000'; // Your app's home page
+  const postLogoutRedirectUri = 'https://lablinx-dlsu-d-xf2i.onrender.com'; // Your app's home page
   const tenantID = MICROSOFT_TENANT_ID;
   const msLogoutUrl = `https://login.microsoftonline.com/${tenantID}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(
     postLogoutRedirectUri
@@ -789,10 +793,15 @@ app.get('/logout', (req, res, next) => {
       if (isStudentOrFaculty) {
         // <-- MODIFIED
         // Students/Faculty logged in via Microsoft, so redirect them to Microsoft's logout
-        res.redirect(msLogoutUrl);
+        // After Microsoft logout, redirect to login page
+        const loginRedirectUri = `${postLogoutRedirectUri}/login`;
+        const msLogoutUrlWithLogin = `https://login.microsoftonline.com/${tenantID}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(
+          loginRedirectUri
+        )}`;
+        res.redirect(msLogoutUrlWithLogin);
       } else {
         // Admins (or other roles) logged in with a password, so just go to the local login page
-        res.redirect('/');
+        res.redirect('/login');
       }
     });
   });
@@ -1705,7 +1714,7 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
           title: 'New Student Request',
           message: `${studentName} requested ${request.itemName} (${request.itemId}).`,
         }));
-        
+
         // Insert all notifications at once
         await Notification.insertMany(notificationsToCreate);
       }
