@@ -591,7 +591,6 @@
                 <input type="text" name="name" placeholder="Equipment Name" required />
                 <select name="category" required>
                     <option value="General" selected>General</option>
-                    <option value="Office Supplies">Office Supplies</option>
                 </select>
                 <input type="number" name="quantity" placeholder="Quantity" min="1" required />
                 <input type="text" name="location" placeholder="Location" required />
@@ -817,7 +816,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // --- 1. CONFIGURATION & STATE ---
-      const apiBaseUrl = 'http://localhost:3000';
+      const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
       const originalFetch = window.fetch.bind(window);
       let requestStatusBarChartInstance = null;
       window.fetch = (input, init) => {
