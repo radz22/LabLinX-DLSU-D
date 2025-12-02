@@ -1563,7 +1563,15 @@
                 );
                 if (activePage) {
                   const pageId = activePage.id.replace('-content', '');
-                  window.showPage(pageId);
+                  // Refresh the current page to show updated data
+                  if (pageId === 'notification') {
+                    // For notification page, fetch and render after refresh
+                    setTimeout(() => {
+                      renderNotifications();
+                    }, 100);
+                  } else {
+                    window.showPage(pageId);
+                  }
                 }
               }
             }
@@ -1764,8 +1772,10 @@
               checkSuspensionStatus();
               break;
             case 'notification':
-              renderNotifications();
-              markNotificationsAsRead();
+              fetchMyNotifications().then(() => {
+                renderNotifications();
+                markNotificationsAsRead();
+              });
               break;
           }
         };
@@ -2160,39 +2170,74 @@
             if (!response.ok) throw new Error('Could not fetch notifications.');
             notifications = await response.json();
             updateNotificationBadge();
+            // Render notifications if the notification page is currently active
+            if (
+              document
+                .getElementById('notification-content')
+                .classList.contains('active')
+            ) {
+              renderNotifications();
+            }
           } catch (error) {
             console.error(error);
             showToast(error.message);
+            // Show error in notification list if page is active
+            if (
+              document
+                .getElementById('notification-content')
+                .classList.contains('active')
+            ) {
+              const notificationList =
+                document.getElementById('notification-list');
+              if (notificationList) {
+                notificationList.innerHTML = `<p style="color: var(--text-subtle);">Error: ${
+                  error.message || 'Failed to load notifications.'
+                }</p>`;
+              }
+            }
           }
         };
 
         const renderNotifications = () => {
+          if (!notificationList) {
+            console.error('Notification list element not found');
+            return;
+          }
           notificationList.innerHTML = '';
+
+          if (!notifications || notifications.length === 0) {
+            notificationList.innerHTML =
+              '<p>You have no new notifications.</p>';
+            return;
+          }
+
           const sortedNotifications = notifications.sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
           );
-          if (sortedNotifications.length === 0) {
-            notificationList.innerHTML =
-              '<p>You have no new notifications.</p>';
-          } else {
-            sortedNotifications.forEach((n) => {
-              const item = document.createElement('div');
-              item.className = 'notification-item';
-              item.innerHTML = `
-                            <div class="notification-title">${n.title}</div>
-                            <div class="notification-message">${n.message}</div>
-                            <div class="notification-time">${new Date(
+
+          sortedNotifications.forEach((n) => {
+            const item = document.createElement('div');
+            item.className = 'notification-item';
+            item.innerHTML = `
+                            <div class="notification-title">${sanitizeHtml(
+                              n.title || 'No Title'
+                            )}</div>
+                            <div class="notification-message">${sanitizeHtml(
+                              n.message || 'No message'
+                            )}</div>
+                            <div class="notification-time">${
                               n.createdAt
-                            ).toLocaleString()}</div>
+                                ? new Date(n.createdAt).toLocaleString()
+                                : 'Unknown date'
+                            }</div>
                             <div class="notification-actions">
                                 <button class="btn-delete-notification" onclick="deleteNotification('${
                                   n._id
                                 }')">Delete</button>
                             </div>
                         `;
-              notificationList.appendChild(item);
-            });
-          }
+            notificationList.appendChild(item);
+          });
         };
 
         window.deleteNotification = async (notificationId) => {
