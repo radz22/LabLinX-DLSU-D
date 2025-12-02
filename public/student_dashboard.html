@@ -289,6 +289,114 @@
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1.75rem;
       }
+      .dashboard-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2.5rem;
+      }
+      .section-title {
+        margin-bottom: 1.5rem;
+        color: var(--primary-dark);
+        font-size: 1.5rem;
+      }
+      body.dark .section-title {
+        color: var(--accent-gold);
+      }
+      .all-time-returns-content {
+        text-align: center;
+        padding: 2rem 0;
+      }
+      .all-time-counter {
+        font-size: 4rem;
+        color: var(--status-approved);
+        margin-bottom: 1rem;
+      }
+      body.dark .all-time-counter {
+        color: var(--status-approved);
+      }
+      .all-time-label {
+        color: var(--text-subtle);
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+      body.dark .all-time-label {
+        color: var(--text-subtle-dark-mode);
+      }
+      .all-time-description {
+        color: var(--text-subtle);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        line-height: 1.5;
+      }
+      body.dark .all-time-description {
+        color: var(--text-subtle-dark-mode);
+      }
+      .deadline-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: var(--transition-fast);
+      }
+      body.dark .deadline-item {
+        border-bottom-color: var(--border-dark);
+      }
+      .deadline-item:last-child {
+        border-bottom: 1px solid var(--border-light);
+      }
+      body.dark .deadline-item:last-child {
+        border-bottom-color: var(--border-dark);
+      }
+      .deadline-item:hover {
+        background-color: #f9fafb;
+      }
+      body.dark .deadline-item:hover {
+        background-color: #1e293b;
+      }
+      .deadline-item-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        flex: 1;
+      }
+      body.dark .deadline-item-name {
+        color: var(--text-dark-mode);
+      }
+      .deadline-status {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .deadline-status.overdue {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .deadline-status.due-soon {
+        background-color: #fed7aa;
+        color: #9a3412;
+      }
+      .deadline-status.upcoming {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      body.dark .dashboard-sections h2 {
+        color: var(--accent-gold);
+      }
+      body.dark .deadline-status.overdue {
+        background-color: #7f1d1d;
+        color: #fca5a5;
+      }
+      body.dark .deadline-status.due-soon {
+        background-color: #7c2d12;
+        color: #fdba74;
+      }
+      body.dark .deadline-status.upcoming {
+        background-color: #14532d;
+        color: #86efac;
+      }
       .card {
         background-color: var(--card-bg-light);
         border-radius: 16px;
@@ -912,6 +1020,24 @@
           grid-template-columns: 1fr;
           gap: 1rem;
         }
+        .dashboard-sections {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+          margin-top: 1.5rem;
+        }
+        .section-title {
+          font-size: 1.25rem;
+          margin-bottom: 1rem;
+        }
+        .all-time-counter {
+          font-size: 3rem;
+        }
+        .all-time-label {
+          font-size: 0.9rem;
+        }
+        .all-time-description {
+          font-size: 0.85rem;
+        }
         .card {
           padding: 1.25rem;
           flex-direction: row;
@@ -1221,6 +1347,26 @@
         }
         .card-body .counter {
           font-size: 2rem;
+        }
+        .section-title {
+          font-size: 1.1rem;
+          margin-bottom: 0.875rem;
+        }
+        .all-time-counter {
+          font-size: 2.5rem;
+        }
+        .all-time-label {
+          font-size: 0.85rem;
+        }
+        .all-time-description {
+          font-size: 0.8rem;
+        }
+        .deadline-item {
+          padding: 0.875rem;
+        }
+        .deadline-status {
+          font-size: 0.75rem;
+          padding: 4px 10px;
         }
         .content-container {
           padding: 1rem;
@@ -1659,6 +1805,79 @@
               <span>Total Items Returned</span>
             </div>
           </article>
+          <article class="card">
+            <div
+              class="card-icon"
+              style="background-color: #fee2e2; color: #dc2626"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="card-body">
+              <h2 class="counter" id="overdueCount">0</h2>
+              <span>Overdue Items</span>
+            </div>
+          </article>
+          <article class="card">
+            <div
+              class="card-icon"
+              style="background-color: #fed7aa; color: #ea580c"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+            <div class="card-body">
+              <h2 class="counter" id="dueSoonCount">0</h2>
+              <span>Due in Next 3 Days</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="dashboard-sections">
+          <div class="content-container">
+            <h2 class="section-title">Upcoming Deadlines</h2>
+            <div id="upcoming-deadlines-list">
+              <p style="color: var(--text-subtle)">Loading...</p>
+            </div>
+          </div>
+          <div class="content-container">
+            <h2 class="section-title">All-Time Returns</h2>
+            <div class="all-time-returns-content">
+              <h2 class="counter all-time-counter" id="allTimeReturnsCount">
+                0
+              </h2>
+              <p class="all-time-label">Total Items Safely Returned</p>
+              <p class="all-time-description">
+                This counter tracks all successful return transactions since
+                your registration.
+              </p>
+            </div>
+          </div>
         </section>
       </div>
 
@@ -1829,6 +2048,7 @@
           <div
             id="countdown-timer"
             style="
+              display: none;
               margin-bottom: 1.5rem;
               padding: 1rem;
               background-color: #dbeafe;
@@ -2385,9 +2605,101 @@
           const returned = myRequests.filter(
             (r) => r.status === 'Returned'
           ).length;
+
+          // Calculate overdue items (Approved requests past due date)
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const overdue = myRequests.filter((r) => {
+            if (r.status !== 'Approved' || !r.dueDate) return false;
+            const dueDate = new Date(r.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            return dueDate < now;
+          }).length;
+
+          // Calculate items due in next 3 days
+          const threeDaysFromNow = new Date(now);
+          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+          const dueSoon = myRequests.filter((r) => {
+            if (r.status !== 'Approved' || !r.dueDate) return false;
+            const dueDate = new Date(r.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            return dueDate >= now && dueDate <= threeDaysFromNow;
+          }).length;
+
           document.getElementById('borrowedCount').textContent = borrowed;
           document.getElementById('pendingCount').textContent = pending;
           document.getElementById('returnedCount').textContent = returned;
+          document.getElementById('overdueCount').textContent = overdue;
+          document.getElementById('dueSoonCount').textContent = dueSoon;
+
+          // Update upcoming deadlines list
+          renderUpcomingDeadlines();
+
+          // Update all-time returns (same as returned count for now)
+          document.getElementById('allTimeReturnsCount').textContent = returned;
+        };
+
+        const renderUpcomingDeadlines = () => {
+          const deadlinesList = document.getElementById(
+            'upcoming-deadlines-list'
+          );
+          if (!deadlinesList) return;
+
+          // Get all approved requests with due dates
+          const approvedRequests = myRequests
+            .filter((r) => r.status === 'Approved' && r.dueDate)
+            .map((r) => ({
+              ...r,
+              dueDateObj: new Date(r.dueDate),
+            }))
+            .sort((a, b) => a.dueDateObj - b.dueDateObj);
+
+          if (approvedRequests.length === 0) {
+            deadlinesList.innerHTML =
+              '<p style="color: var(--text-subtle);">No upcoming deadlines.</p>';
+            return;
+          }
+
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+
+          deadlinesList.innerHTML = approvedRequests
+            .map((req) => {
+              const dueDate = req.dueDateObj;
+              dueDate.setHours(0, 0, 0, 0);
+              const daysDiff = Math.floor(
+                (dueDate - now) / (1000 * 60 * 60 * 24)
+              );
+
+              let statusClass = 'upcoming';
+              let statusText = '';
+
+              if (daysDiff < 0) {
+                statusClass = 'overdue';
+                statusText = 'OVERDUE';
+              } else if (daysDiff <= 3) {
+                statusClass = 'due-soon';
+                statusText = 'DUE SOON';
+              } else {
+                statusText = dueDate.toLocaleDateString('en-US', {
+                  month: '2-digit',
+                  day: '2-digit',
+                  year: 'numeric',
+                });
+              }
+
+              const safeItemName = sanitizeHtml(
+                req.itemName || req.itemId || 'Unknown Item'
+              );
+
+              return `
+                <div class="deadline-item">
+                  <span class="deadline-item-name">${safeItemName}</span>
+                  <span class="deadline-status ${statusClass}">${statusText}</span>
+                </div>
+              `;
+            })
+            .join('');
         };
 
         // --- 4. UI Rendering & Filtering ---
@@ -3146,6 +3458,15 @@
                 '<p style="color: var(--text-subtle);">No pending reports.</p>';
               document.getElementById('incident-report-form').style.display =
                 'none';
+              // Hide and clear countdown timer when no pending reports
+              const countdownTimer = document.getElementById('countdown-timer');
+              if (countdownTimer) {
+                countdownTimer.style.display = 'none';
+              }
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+              }
               return;
             }
 
@@ -3196,8 +3517,19 @@
                 ).style.display = 'none';
               }
 
+              // Show countdown timer
+              const countdownTimer = document.getElementById('countdown-timer');
+              if (countdownTimer) {
+                countdownTimer.style.display = 'block';
+              }
+
               if (mostUrgent.deadlineAt) {
                 startCountdown(new Date(mostUrgent.deadlineAt));
+              } else {
+                // Hide countdown if no deadline
+                if (countdownTimer) {
+                  countdownTimer.style.display = 'none';
+                }
               }
 
               // Show a message for rejected reports
@@ -3256,6 +3588,15 @@
             } else {
               document.getElementById('incident-report-form').style.display =
                 'none';
+              // Hide countdown timer when form is hidden
+              const countdownTimer = document.getElementById('countdown-timer');
+              if (countdownTimer) {
+                countdownTimer.style.display = 'none';
+              }
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+              }
             }
 
             pendingList.innerHTML = `
@@ -3319,18 +3660,26 @@
         const startCountdown = (deadline) => {
           if (countdownInterval) clearInterval(countdownInterval);
 
+          const countdownDisplay = document.getElementById('countdown-display');
+          const countdownTimer = document.getElementById('countdown-timer');
+
+          if (!countdownDisplay || !countdownTimer) {
+            console.warn('Countdown timer elements not found');
+            return;
+          }
+
           const updateCountdown = () => {
             const now = new Date();
             const diff = deadline - now;
 
             if (diff <= 0) {
-              document.getElementById('countdown-display').textContent =
-                'OVERDUE';
-              document.getElementById('countdown-timer').style.backgroundColor =
-                '#fee2e2';
-              document.getElementById('countdown-timer').style.color =
-                '#991b1b';
-              clearInterval(countdownInterval);
+              countdownDisplay.textContent = 'OVERDUE';
+              countdownTimer.style.backgroundColor = '#fee2e2';
+              countdownTimer.style.color = '#991b1b';
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+              }
               return;
             }
 
@@ -3338,9 +3687,11 @@
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            document.getElementById(
-              'countdown-display'
-            ).textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
+            countdownDisplay.textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
+
+            // Reset timer styles if they were changed
+            countdownTimer.style.backgroundColor = '#dbeafe';
+            countdownTimer.style.color = '#1e40af';
           };
 
           updateCountdown();
@@ -3438,9 +3789,25 @@
               if (!response.ok)
                 throw new Error(result.message || 'Failed to submit report.');
 
-              showToast('Incident report submitted successfully!');
-              document.getElementById('incident-report-form').reset();
-              if (countdownInterval) clearInterval(countdownInterval);
+              showToast('Incident report submitted successfully!', 'success');
+
+              // Clear countdown timer
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+              }
+
+              // Reset form including hidden fields
+              const form = document.getElementById('incident-report-form');
+              form.reset();
+              document.getElementById('report-incident-id').value = '';
+              document.getElementById('report-id').value = '';
+
+              // Hide other description group
+              document.getElementById('other-description-group').style.display =
+                'none';
+
+              // Refresh data
               await fetchPendingReports();
               await fetchMyNotifications();
               updateNotificationBadge();
