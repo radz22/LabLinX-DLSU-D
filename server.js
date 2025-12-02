@@ -1694,17 +1694,20 @@ app.post('/api/request-item', isAuthenticated, async (req, res) => {
     // Insert all requests at once
     const createdRequests = await ItemRequest.insertMany(requestsToCreate);
 
-    // Send notification to admin (only once, not per request)
+    // Send individual notification to admin for each request
     const adminUsername = categoryAdminMap[category];
-    if (adminUsername) {
+    if (adminUsername && createdRequests.length > 0) {
       const targetAdmin = await User.findOne({ username: adminUsername });
       if (targetAdmin) {
-        const adminNotification = new Notification({
+        // Create a separate notification for each individual request
+        const notificationsToCreate = createdRequests.map((request) => ({
           userId: targetAdmin._id,
-          title: 'New Student Request', // This title is fine for faculty too
-          message: `${studentName} requested ${quantity}x ${itemName}.`,
-        });
-        await adminNotification.save();
+          title: 'New Student Request',
+          message: `${studentName} requested ${request.itemName} (${request.itemId}).`,
+        }));
+        
+        // Insert all notifications at once
+        await Notification.insertMany(notificationsToCreate);
       }
     }
 
