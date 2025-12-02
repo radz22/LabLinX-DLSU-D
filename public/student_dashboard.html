@@ -176,6 +176,10 @@
         top: 10px;
         right: 15px;
         display: none;
+        min-width: 18px;
+        height: 18px;
+        text-align: center;
+        line-height: 14px;
       }
       .nav-bottom {
         margin-top: auto;
@@ -259,6 +263,10 @@
 
       .page-content {
         display: none;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
       }
       .page-content.active {
         display: block;
@@ -296,9 +304,11 @@
         background-color: var(--card-bg-dark);
         border-color: var(--border-dark);
       }
-      .card:hover {
-        transform: translateY(-10px) scale(1.02);
-        box-shadow: var(--shadow-lg);
+      @media (hover: hover) and (pointer: fine) {
+        .card:hover {
+          transform: translateY(-10px) scale(1.02);
+          box-shadow: var(--shadow-lg);
+        }
       }
       .card-icon {
         width: 56px;
@@ -351,10 +361,24 @@
         padding: 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-light);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }
       body.dark table th,
       body.dark table td {
         border-bottom: 1px solid var(--border-dark);
+      }
+      @media (max-width: 768px) {
+        table th,
+        table td {
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        table th:first-child,
+        table td:first-child {
+          max-width: 120px;
+        }
       }
 
       table th {
@@ -757,6 +781,13 @@
         main {
           margin-left: 220px;
         }
+        .dashboard-cards {
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 1.25rem;
+        }
+        .card {
+          padding: 1.5rem;
+        }
       }
 
       @media (max-width: 768px) {
@@ -791,7 +822,7 @@
         }
         #sidebar nav a {
           padding: 0;
-          width: 25%;
+          flex: 1;
           height: 100%;
           flex-direction: column;
           align-items: center;
@@ -799,9 +830,28 @@
           border-radius: 0;
           gap: 4px;
           margin-bottom: 0;
+          min-width: 0;
         }
         #sidebar nav a span {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        #sidebar nav a svg {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+        }
+        #sidebar nav a .notification-badge {
+          top: 5px;
+          right: 5px;
+          font-size: 0.6rem;
+          min-width: 16px;
+          height: 16px;
+          line-height: 12px;
+          padding: 2px 4px;
         }
         #sidebar nav a.active {
           color: var(--accent-gold);
@@ -826,18 +876,499 @@
           margin-left: 0;
         }
         header {
-          padding: 0 1.5rem;
+          padding: 0 1rem;
+          height: auto;
+          min-height: 60px;
+          flex-wrap: wrap;
+        }
+        .header-user-info {
+          font-size: 0.9rem;
+          flex: 1;
+          min-width: 0;
+        }
+        #studentName {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .header-actions {
+          gap: 1rem;
         }
         main {
-          padding: 1.5rem;
+          padding: 1rem;
+          padding-bottom: 5rem;
         }
         h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
+        }
+        .page-subtitle {
+          font-size: 0.95rem;
+          margin-bottom: 1.5rem;
+        }
+        .dashboard-cards {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .card {
+          padding: 1.25rem;
+          flex-direction: row;
+          gap: 1rem;
+        }
+        .card-icon {
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+        }
+        .card-icon svg {
+          width: 24px;
+          height: 24px;
+        }
+        .card-body .counter {
+          font-size: 2.25rem;
+        }
+        .card-body span {
+          font-size: 0.9rem;
+        }
+        .content-container {
+          padding: 1.25rem;
+        }
+        .content-container > div[style*='overflow-x'] {
+          -webkit-overflow-scrolling: touch;
+          overflow-x: auto;
+          margin: 0 -1.25rem;
+          padding: 0 1.25rem;
+        }
+        table {
+          font-size: 0.85rem;
+          min-width: 600px;
+          width: 100%;
+        }
+        table th,
+        table td {
+          padding: 10px 8px;
+        }
+        table th {
+          font-size: 0.75rem;
         }
         .filter-row {
           flex-direction: column;
           align-items: stretch;
           gap: 1rem;
+        }
+        .search-bar,
+        .filter-select {
+          width: 100%;
+        }
+        .category-buttons {
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .btn-category {
+          padding: 8px 16px;
+          font-size: 0.85rem;
+          min-height: 36px;
+        }
+        .equipment-group-toggle {
+          min-width: 36px;
+          min-height: 36px;
+        }
+        .equipment-group-subtitle {
+          font-size: 0.8rem;
+          margin-left: 0;
+          margin-top: 4px;
+          display: block;
+        }
+        .equipment-group-count {
+          font-size: 0.7rem;
+        }
+        #lab-equipment-content .filter-controls {
+          gap: 1rem;
+        }
+        #lab-equipment-content .filter-row {
+          gap: 0.75rem;
+        }
+        #lab-equipment-content table {
+          min-width: 700px;
+        }
+        #lab-equipment-content table th:nth-child(1),
+        #lab-equipment-content table td:nth-child(1) {
+          min-width: 120px;
+        }
+        #lab-equipment-content table th:nth-child(2),
+        #lab-equipment-content table td:nth-child(2) {
+          min-width: 150px;
+        }
+        #lab-equipment-content table td:last-child .btn,
+        #item-requested-content table td:last-child .btn {
+          padding: 8px 12px;
+          font-size: 0.8rem;
+          white-space: nowrap;
+        }
+        #lab-equipment-content table td:last-child,
+        #item-requested-content table td:last-child {
+          min-width: 100px;
+        }
+        #report-dashboard-content {
+          overflow-x: hidden;
+          width: 100%;
+          max-width: 100%;
+        }
+        #report-dashboard-content .content-container {
+          margin-bottom: 1.5rem;
+          overflow-x: hidden;
+          width: 100%;
+          max-width: 100%;
+        }
+        #report-dashboard-content h2 {
+          font-size: 1.25rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #suspension-banner {
+          padding: 0.875rem !important;
+          margin-bottom: 1.25rem !important;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #report-dashboard-content .content-container > div[style*='padding'] {
+          padding: 0.875rem !important;
+          margin-bottom: 1.25rem !important;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #suspension-banner strong,
+        #report-dashboard-content
+          .content-container
+          > div[style*='padding']
+          strong {
+          font-size: 0.95rem;
+          display: block;
+          margin-bottom: 0.5rem;
+        }
+        #suspension-banner p,
+        #report-dashboard-content .content-container > div[style*='padding'] p {
+          font-size: 0.875rem;
+          line-height: 1.5;
+        }
+        #countdown-timer {
+          padding: 0.875rem !important;
+          font-size: 0.9rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #countdown-timer strong {
+          font-size: 0.95rem;
+          display: block;
+          word-wrap: break-word;
+        }
+        #countdown-display {
+          display: block;
+          margin-top: 0.25rem;
+          font-size: 1.1rem;
+          word-break: break-word;
+        }
+        #report-dashboard-content .form-grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        #report-dashboard-content .form-group {
+          margin-bottom: 1.25rem;
+        }
+        #report-dashboard-content .form-group label {
+          font-size: 0.9rem;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+        #report-dashboard-content .form-group input,
+        #report-dashboard-content .form-group select,
+        #report-dashboard-content .form-group textarea {
+          font-size: 0.95rem;
+          padding: 10px 12px;
+        }
+        #report-dashboard-content .form-group textarea {
+          min-height: 100px;
+          resize: vertical;
+        }
+        #report-dashboard-content table {
+          min-width: 500px;
+        }
+        #report-dashboard-content table th,
+        #report-dashboard-content table td {
+          padding: 8px 6px;
+          font-size: 0.8rem;
+        }
+        #pending-reports-list {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        #pending-reports-list table {
+          width: 100%;
+          min-width: 500px;
+        }
+        #pending-reports-list table th,
+        #pending-reports-list table td {
+          padding: 10px 8px;
+          font-size: 0.85rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #pending-reports-list table th:first-child,
+        #pending-reports-list table td:first-child {
+          min-width: 100px;
+        }
+        #pending-reports-list table th:nth-child(2),
+        #pending-reports-list table td:nth-child(2) {
+          min-width: 120px;
+        }
+        #pending-reports-list table th:last-child,
+        #pending-reports-list table td:last-child {
+          min-width: 150px;
+        }
+        .rejection-notice {
+          padding: 0.875rem !important;
+          margin-bottom: 1.25rem !important;
+        }
+        .rejection-notice strong {
+          font-size: 0.95rem !important;
+        }
+        .rejection-notice p {
+          font-size: 0.875rem !important;
+          line-height: 1.5 !important;
+        }
+        .modal-content {
+          width: 95%;
+          padding: 1.5rem;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+        .modal-header h2 {
+          font-size: 1.3rem;
+        }
+        .form-group {
+          margin-bottom: 1rem;
+        }
+        .form-group label {
+          font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+          font-size: 0.95rem;
+          padding: 10px 12px;
+        }
+        .form-actions {
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .form-actions .btn {
+          width: 100%;
+        }
+        .notification-item {
+          padding: 1rem;
+        }
+        .notification-title {
+          font-size: 1rem;
+        }
+        .btn {
+          padding: 10px 18px;
+          font-size: 0.85rem;
+          min-height: 44px;
+          touch-action: manipulation;
+        }
+        .status-badge {
+          padding: 4px 10px;
+          font-size: 0.75rem;
+        }
+        .equipment-group-toggle {
+          min-width: 44px;
+          min-height: 44px;
+        }
+        .btn-request,
+        .btn-cancel {
+          min-height: 44px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        header {
+          padding: 0 0.75rem;
+        }
+        .header-user-info {
+          font-size: 0.85rem;
+        }
+        main {
+          padding: 0.75rem;
+          padding-bottom: 5rem;
+        }
+        h1 {
+          font-size: 1.25rem;
+        }
+        .page-subtitle {
+          font-size: 0.9rem;
+        }
+        .card {
+          padding: 1rem;
+        }
+        .card-body .counter {
+          font-size: 2rem;
+        }
+        .content-container {
+          padding: 1rem;
+        }
+        .content-container > div[style*='overflow-x'] {
+          margin: 0 -1rem;
+          padding: 0 1rem;
+        }
+        table {
+          min-width: 550px;
+        }
+        table th,
+        table td {
+          padding: 8px 6px;
+          font-size: 0.8rem;
+        }
+        #lab-equipment-content table {
+          min-width: 650px;
+        }
+        #lab-equipment-content table th,
+        #lab-equipment-content table td {
+          padding: 8px 5px;
+          font-size: 0.75rem;
+        }
+        .equipment-group-subtitle {
+          font-size: 0.75rem;
+          display: block;
+          margin-top: 2px;
+        }
+        .btn-category {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+        }
+        #report-dashboard-content .content-container {
+          margin-bottom: 1.25rem;
+          padding: 1rem;
+          overflow-x: hidden;
+          width: 100%;
+          max-width: 100%;
+        }
+        #report-dashboard-content
+          .content-container
+          > div[style*='overflow-x'] {
+          margin: 0 -1rem;
+          padding: 0 1rem;
+        }
+        #report-dashboard-content h2 {
+          font-size: 1.1rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #suspension-banner {
+          padding: 0.75rem !important;
+          margin-bottom: 1rem !important;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #report-dashboard-content .content-container > div[style*='padding'] {
+          padding: 0.75rem !important;
+          margin-bottom: 1rem !important;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #suspension-banner strong,
+        #report-dashboard-content
+          .content-container
+          > div[style*='padding']
+          strong {
+          font-size: 0.9rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #suspension-banner p,
+        #report-dashboard-content .content-container > div[style*='padding'] p {
+          font-size: 0.8rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #countdown-timer {
+          padding: 0.75rem !important;
+          font-size: 0.85rem;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #countdown-timer strong {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #countdown-display {
+          font-size: 1rem;
+          word-break: break-word;
+        }
+        #report-dashboard-content .form-group {
+          margin-bottom: 1rem;
+        }
+        #report-dashboard-content .form-group label {
+          font-size: 0.85rem;
+        }
+        #report-dashboard-content .form-group input,
+        #report-dashboard-content .form-group select,
+        #report-dashboard-content .form-group textarea {
+          font-size: 0.9rem;
+          padding: 8px 10px;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        #report-dashboard-content .form-group textarea {
+          min-height: 80px;
+          resize: vertical;
+        }
+        #report-dashboard-content .form-group label {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        #report-dashboard-content table {
+          min-width: 400px;
+        }
+        .rejection-notice {
+          padding: 0.75rem !important;
+        }
+        .rejection-notice strong {
+          font-size: 0.9rem !important;
+        }
+        .rejection-notice p {
+          font-size: 0.8rem !important;
+        }
+        #sidebar nav a span {
+          font-size: 0.65rem;
+        }
+        #sidebar nav a svg {
+          width: 18px;
+          height: 18px;
+        }
+        .modal-content {
+          padding: 1.25rem;
+        }
+        .btn {
+          min-height: 44px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+          min-height: 44px;
         }
       }
     </style>
@@ -1261,8 +1792,17 @@
           <h2 style="margin-bottom: 1rem; color: var(--primary-dark)">
             Pending Reports
           </h2>
-          <div id="pending-reports-list">
-            <p style="color: var(--text-subtle)">Loading...</p>
+          <div
+            style="
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              width: 100%;
+              max-width: 100%;
+            "
+          >
+            <div id="pending-reports-list" style="width: 100%">
+              <p style="color: var(--text-subtle)">Loading...</p>
+            </div>
           </div>
         </section>
         <section class="content-container">
@@ -1490,7 +2030,7 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // --- 1. Global State and DOM Elements ---
-        const apiBaseUrl = 'https://lablinx-dlsu-d-xf2i.onrender.com';
+        const apiBaseUrl = 'http://localhost:3000';
         const originalFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
           if (typeof input === 'string' && input.startsWith('/')) {
@@ -2743,11 +3283,13 @@
                           : 'status-Returned';
                       return `
                       <tr>
-                        <td>${report.equipmentId || 'N/A'}</td>
+                        <td style="word-wrap: break-word; overflow-wrap: break-word;">${
+                          report.equipmentId || 'N/A'
+                        }</td>
                         <td><span class="status-badge ${statusClass}">${
                         report.status
                       }</span></td>
-                        <td>${deadline}</td>
+                        <td style="word-wrap: break-word; overflow-wrap: break-word;">${deadline}</td>
                       </tr>
                     `;
                     })
